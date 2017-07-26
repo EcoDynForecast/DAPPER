@@ -1,0 +1,62 @@
+{\rtf1\ansi\ansicpg1252\cocoartf1504\cocoasubrtf830
+{\fonttbl\f0\fswiss\fcharset0 Helvetica;}
+{\colortbl;\red255\green255\blue255;\red0\green0\blue0;}
+{\*\expandedcolortbl;;\csgenericrgb\c0\c0\c0;}
+\margl1440\margr1440\vieww24060\viewh8700\viewkind0
+\pard\tx560\tx1120\tx1680\tx1852\tx2240\tx2668\tx2800\tx3360\tx3920\tx4480\tx5040\tx5600\tx6160\tx6720\pardirnatural\partightenfactor0
+
+\f0\fs24 \cf2 \CocoaLigature0 ### FOR gfortran without openmp #### \
+\
+gfortran -c -fPIC prob_functions_mod.f90\
+\pard\tx560\tx1120\tx1680\tx2240\tx2668\tx2800\tx3360\tx3920\tx4480\tx5040\tx5600\tx6160\tx6720\pardirnatural\partightenfactor0
+\cf2 gfortran -c -fPIC R3PG_MODEL_MOD.f90\
+gfortran -c -fPIC  DAPPER_plot_mod.f90\
+gfortran -shared  -fPIC -o DAPPER_MCMC.so DAPPER_MCMC_mod.f90 DAPPER_plot_mod.o R3PG_MODEL_MOD.o prob_functions_mod.o\
+gfortran -shared  -fPIC -o r3pg_interface.so R3PG_R_INTERFACE.f90 R3PG_MODEL_MOD.o\
+\
+\pard\tx560\tx1120\tx1680\tx1852\tx2240\tx2668\tx2800\tx3360\tx3920\tx4480\tx5040\tx5600\tx6160\tx6720\pardirnatural\partightenfactor0
+\cf2 ### FOR gfortran with openmp #### \
+\
+\pard\tx560\tx1120\tx1680\tx1852\tx2240\tx2668\tx2800\tx3360\tx3920\tx4480\tx5040\tx5600\tx6160\tx6720\tx10876\pardirnatural\partightenfactor0
+\cf2 gfortran -c -fPIC prob_functions_mod.f90 -fopenmp\
+gfortran -c -fPIC R3PG_MODEL_MOD.f90 -fopenmp\
+gfortran -c -fPIC  DAPPER_plot_mod.f90 -fopenmp\
+gfortran -shared  -fPIC -o DAPPER_MCMC.so DAPPER_MCMC_mod.f90 DAPPER_plot_mod.o R3PG_MODEL_MOD.o prob_functions_mod.o -fopenmp\
+gfortran -shared  -fPIC -o r3pg_interface.so R3PG_R_INTERFACE.f90 R3PG_MODEL_MOD.o -fopenmp\
+\
+\pard\tx560\tx1120\tx1680\tx1852\tx2240\tx2668\tx2800\tx3360\tx3920\tx4480\tx5040\tx5600\tx6160\tx6720\pardirnatural\partightenfactor0
+\cf2 ### FOR intel without openmp #### \
+\
+ifort -c -fPIC prob_functions_mod.f90\
+\pard\tx560\tx1120\tx1680\tx2240\tx2668\tx2800\tx3360\tx3920\tx4480\tx5040\tx5600\tx6160\tx6720\pardirnatural\partightenfactor0
+\cf2 ifort -c -fPIC R3PG_MODEL_MOD.f90\
+ifort -c -fPIC  DAPPER_plot_mod.f90\
+ifort -shared  -fPIC -o DAPPER_MCMC.so DAPPER_MCMC_mod.f90 DAPPER_plot_mod.o R3PG_MODEL_MOD.o prob_functions_mod.o\expnd0\expndtw0\kerning0
+\CocoaLigature1 \
+\kerning1\expnd0\expndtw0 \CocoaLigature0 ifort -shared  -fPIC -o r3pg_interface.so R3PG_R_INTERFACE.f90 R3PG_MODEL_MOD.o\
+\
+\pard\tx560\tx1120\tx1680\tx1852\tx2240\tx2668\tx2800\tx3360\tx3920\tx4480\tx5040\tx5600\tx6160\tx6720\pardirnatural\partightenfactor0
+\cf2 ### FOR intel with openmp #### \
+\
+ifort -c -fPIC prob_functions_mod.f90 \expnd0\expndtw0\kerning0
+\CocoaLigature1 -openmp\kerning1\expnd0\expndtw0 \CocoaLigature0 \
+\pard\tx560\tx1120\tx1680\tx2240\tx2668\tx2800\tx3360\tx3920\tx4480\tx5040\tx5600\tx6160\tx6720\pardirnatural\partightenfactor0
+\cf2 ifort -c -fPIC R3PG_MODEL_MOD.f90 \expnd0\expndtw0\kerning0
+\CocoaLigature1 -openmp\kerning1\expnd0\expndtw0 \CocoaLigature0 \
+ifort -c -fPIC  DAPPER_plot_mod.f90 \expnd0\expndtw0\kerning0
+\CocoaLigature1 -openmp\kerning1\expnd0\expndtw0 \CocoaLigature0 \
+ifort -shared  -fPIC -o DAPPER_MCMC.so DAPPER_MCMC_mod.f90 DAPPER_plot_mod.o R3PG_MODEL_MOD.o prob_functions_mod.o  \expnd0\expndtw0\kerning0
+\CocoaLigature1 -openmp\
+\kerning1\expnd0\expndtw0 \CocoaLigature0 ifort -shared  -fPIC -o r3pg_interface.so R3PG_R_INTERFACE.f90 R3PG_MODEL_MOD.o \expnd0\expndtw0\kerning0
+\CocoaLigature1 -openmp
+\b\fs26 \
+\
+
+\b0\fs20 \cf0 \kerning1\expnd0\expndtw0 \CocoaLigature0 \
+\
+\pard\tx560\tx1120\tx1680\tx1852\tx2240\tx2668\tx2800\tx3360\tx3920\tx4480\tx5040\tx5600\tx6160\tx6720\tx10876\pardirnatural\partightenfactor0
+\cf0 \
+\pard\tx560\tx1120\tx1680\tx2240\tx2668\tx2800\tx3360\tx3920\tx4480\tx5040\tx5600\tx6160\tx6720\pardirnatural\partightenfactor0
+\cf0 \
+\
+}
