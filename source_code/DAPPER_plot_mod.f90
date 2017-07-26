@@ -187,7 +187,8 @@ subroutine likelihood(plotnum &
 	else
     	SD1(1) = new_pars(52)
     endif
-	
+    
+	!-------------------------------------------------------------------------------------  
     !SET FR FOR EXPERIMENTAL TREATMENTS BASED ON THE CONTROL PLOT FR
     index = index_guide(3)+plotnum-1
     if(DroughtLevel<1 .AND. FertFlag==0) then
@@ -219,7 +220,37 @@ subroutine likelihood(plotnum &
      	new_pars(index) = new_pars(index2)
     endif
     
-    !PLOT LEVEL PARAMETERS THAT ARE FROM A REGIONAL DISTRIBUTION     
+	!NOTE: INDEX GUIDE IS THE VECTOR THAT IDS WHERE DIFFERENT PARAMETERS ARE IN THE LONG PARAMETER VECTOR
+  	new_FR = new_pars(index_guide(3)+plotnum-1)
+  	control_plotnum = control_plot_index(plotnum)
+  	control_FR = new_pars(index_guide(3) + control_plotnum - 1)
+  	  	
+  	! THIS IS A TEMPORARY SOLUTION SO THAT IRRIGATION IS TO THE SOIL RATHER THAN THE TOP OF THE CANOPY
+  	IrrigRate = 0.0
+  	if(IrrFlag == 1) then
+		IrrigRate = 650.0/9.0
+    endif
+	!-------------------------------------------------------------------------------------  
+
+	!-------------------------------------------------------------------------------------  
+	!---PROBABILITY OF FR 
+  	!---THIS IS WHERE THE N FERTILIZATION TREATMENT SIMULATED BY FORCING THE ESTIMATED FR TO BE GREATER THAN THE CONTROL
+    prob_FR = 0.0
+    if(new_FR < 0.0 .OR. new_FR > 1.0) then
+        prob_FR = -1e30
+    endif
+    if(FertFlag == 1) then
+    	if(new_FR<control_FR) then
+    	      prob_FR=-1e30
+    	endif
+    endif	
+    if(fit_plot(control_plotnum) == 0) then 
+  		prob_FR = log(uniform_pdf(new_FR,0D+00,1D+00))  
+  	endif
+   	!-------------------------------------------------------------------------------------  
+  	
+  	
+  	!----- PLOT LEVEL PARAMETERS THAT ARE FROM A REGIONAL DISTRIBUTION -------------------    
     prob_plot_params = 0.0
     !WsX1000 Variation
     index = index_guide(5) + plotnum -1
@@ -254,44 +285,21 @@ subroutine likelihood(plotnum &
    	pars(20) = new_pars(index_guide(7)+plotnum - 1)
    	!Mort_rate (plot level variability in parameter)
    	pars(40) = new_pars(index_guide(9)+plotnum - 1)
+   	!-------------------------------------------------------------------------------------  
    	
-   	
-	!NOTE: INDEX GUIDE IS THE VECTOR THAT IDS WHERE DIFFERENT PARAMETERS ARE IN THE LONG PARAMETER VECTOR
-  	new_FR = new_pars(index_guide(3)+plotnum-1)
-  	control_plotnum = control_plot_index(plotnum)
-  	control_FR = new_pars(index_guide(3) + control_plotnum - 1)
-  	  	
-  	! THIS IS A TEMPORARY SOLUTION SO THAT IRRIGATION IS TO THE SOIL RATHER THAN THE TOP OF THE CANOPY
-  	IrrigRate = 0.0
-  	if(IrrFlag == 1) then
-		IrrigRate = 650.0/9.0
-    endif
-
-	!---PROBABILITY OF FR 
-  	!---THIS IS WHERE THE N FERTILIZATION TREATMENT SIMULATED BY FORCING THE ESTIMATED FR TO BE GREATER THAN THE CONTROL
-    prob_FR = 0.0
-    if(new_FR < 0.0 .OR. new_FR > 1.0) then
-        prob_FR = -1e30
-    endif
-    if(FertFlag == 1) then
-    	if(new_FR<control_FR) then
-    	      prob_FR=-1e30
-    	endif
-    endif	
-    if(fit_plot(control_plotnum) == 0) then 
-  		prob_FR = log(uniform_pdf(new_FR,0D+00,1D+00))  
-  	endif
-  	
+  
   	!---LIKELIHOOD CALCULATIONS (PLOT LEVEL) -------------
     LL(:) = 0.0
 	modeled(:) = 0.0
-   
+	
+	
+   	!---INITIAL CONDITIONS -------------
+   	! --A BIT COMPILICATED
 	site(1) =  PlantedYear !PlantedYear
     site(2) =  PlantedMonth !"PlantedMonth"
     site(3) =  months(mo_start_end(plotnum,1)) !"InitialYear"
     site(4) =  years(mo_start_end(plotnum,1))
     site(5) =  StartAge
-    !site(6) =  Initial_WF
     site(7) =  latent(4,plotnum,mo_start_end(plotnum,1))-Initial_WR_H !"WRi" 
     site(8) =  latent(2,plotnum,mo_start_end(plotnum,1))!"WSi" 
     site(9) =  latent(5,plotnum,mo_start_end(plotnum,1))!"StemNoi"
@@ -314,7 +322,6 @@ subroutine likelihood(plotnum &
     endif
 	site(24) = latent(7,plotnum,mo_start_end(plotnum,1))*0.2
 	site(25) = 0.0  !Bud C
-	!site(26) = latent(1,plotnum,mo_start_end(plotnum,1))
 	site(27) = latent(6,plotnum,mo_start_end(plotnum,1))
 	
 	if(use_fol_state(plotnum) == 1) then
@@ -324,6 +331,9 @@ subroutine likelihood(plotnum &
 		site(6) = Initial_WF
 		site(26) = latent(1,plotnum,mo_start_end(plotnum,1))
 	endif
+	
+	
+	!---START LOOPING THOUGHT MONTHS -------------
 					
     do mo = (mo_start_end(plotnum,1)+1),mo_start_end(plotnum,2)
     	
@@ -348,10 +358,10 @@ subroutine likelihood(plotnum &
 		 if(use_fol_state(plotnum) .EQ. 1) then	
 			modeled(1) = output(22) !output(4) !Pine LAI
          else
-         		 	!print *, 'here'
          	modeled(1) = output(4) !output(4) !Pine LAI
          endif
-                  
+         
+         !--- PROCESS MODEL OUTPUT       
          modeled(2) = output(5) !WS
          modeled(3) = output(6) !+ output(43) !WCR
          modeled(4) = output(7) !+ output(58) !WR
@@ -383,11 +393,14 @@ subroutine likelihood(plotnum &
 			modeled(18) = modeled(18) + output(21)  !Fol production
 
     	endif 
+    	
+    	! ASSIGN THE PREDATIONS THAT ARE USED IN THE LATENT STATE CALCULATIONS
                            
          pred_new(:,plotnum,mo) =  modeled(:)
          
+         
+        !-------  COMPARE MODEL PREDICTIONS TO LATENT STATES AND COMPARED LATENT STATES TO OBSERVATIONS
 		!STATE-SPACE DATA STREAM
-
 		do data_stream=1,7
 			if(data_stream == 4) then 
 				if(latent(data_stream,plotnum,mo) .NE. -99) then
@@ -411,9 +424,6 @@ subroutine likelihood(plotnum &
                     	if(obs(data_stream,plotnum,mo) .NE. -99) then                           
 						LL(data_stream)  = LL(data_stream)  + log(normal_pdf(latent(data_stream,plotnum,mo),&
 							obs(data_stream,plotnum,mo),obs_uncert(data_stream,plotnum,mo)))
-						!if(data_stream == 6) then
-						!	print *, latent(data_stream,plotnum,mo),pred_new(data_stream,plotnum,mo),obs(data_stream,plotnum,mo) 
-						!endif
 						endif		
 					endif
 	
@@ -427,16 +437,10 @@ subroutine likelihood(plotnum &
 				  	pred_new(data_stream,plotnum,mo),SD1(data_stream)+modeled(data_stream)*SD2(data_stream)))
 				LL(data_stream)  = LL(data_stream)  + log(normal_pdf(latent(data_stream,plotnum,mo),&
 					obs(data_stream,plotnum,mo),obs_uncert(data_stream,plotnum,mo)))	
-				if(data_stream == 15 .AND. plotnum == 7) then
-					!print *, latent(data_stream,plotnum,mo),obs(data_stream,plotnum,mo),pred_new(data_stream,plotnum,mo), &
-					!					SD1(data_stream)+modeled(data_stream)*SD2(data_stream), &
-					!					 LL(data_stream),obs_uncert(data_stream,plotnum,mo)
-					endif
     		endif
 		end do
 				    
 		!ANNUAL PRODUCTION AND TURNOVER FLUXES
-    	
     	if(first_full_year == 1 .AND. months(mo)==12) then 
     		do data_stream = 17,18
         		if(obs(data_stream,plotnum,mo) .NE. -99) then
@@ -450,6 +454,8 @@ subroutine likelihood(plotnum &
 
 		!Updating inputs for the next month simulation
 		!This is not internally updated when doing only a single month simulation
+		! COMPLICATED BECAUSE THERE ARE 3 OPTIONS FOR SIMULATIONS
+		
 		site(5) =  output(3)+ (1.0/12.) !StartAge !StartAge
 
 		if(state_space > 0) then
@@ -542,19 +548,11 @@ subroutine likelihood(plotnum &
    
 	end do !END LOOPING THROUGH OUTPUT MONTHS AND SEARCHING FOR CORRESPONDING OBSERVATIONS
 	
+	! SUM UP OVER TIME AND STATE-STREAMS
 	prob_new(plotnum)= LL(1) + LL(2) + LL(3) + LL(4) + LL(5) + LL(6) + LL(7) + &
 					   LL(12) + LL(14) + LL(15) + LL(16) + &
 					   LL(17)+ LL(18) + prob_FR + prob_plot_params
-	!prob_new(plotnum)= LL(4)
-    !prob_new(plotnum)= LL(2) !+ sum(LL(6:7))+ sum(LL(9:15)) + prob_FR
-    !if(plotnum == 7) then
-    !print *, plotnum, prob_new(plotnum)
-    !print *, LL(1), LL(2), LL(3), LL(4)
-    !print *, LL(5), LL(6), LL(7)
-    !print *, LL(12), LL(14), LL(15)
-    !print *, LL(16), LL(17), LL(18), prob_FR,prob_plot_params
-    !print *, control_FR, new_FR
-    !endif
+
 end subroutine likelihood
 
 end module DAPPER_plot_mod

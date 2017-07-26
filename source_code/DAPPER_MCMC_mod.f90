@@ -209,9 +209,11 @@ subroutine DAPPER_MCMC( &
                     endif
             end do
 
+			! FR set parameters to new values
         	FR1_new = new_pars(49)
         	FR2_new = new_pars(50)
         	FR3_new = new_pars(51)
+        	! Deal with the different options for FR models (SI vs FR model is fr_model == 2)
           if(fr_model == 2) then 
                 do plotnum = 1,nplots
                         MeanTemp = initdata(plotnum,26)
@@ -242,7 +244,7 @@ subroutine DAPPER_MCMC( &
 		!10 = Hardwood stem density
 		!11 = Available soil water
 		!12 = GEP
-		!13 = NEE
+		!13 = NEE  !NOT USED PLACE
 		!14 = ET
 		!15 = Ctrans Pine
 		!16 = Ctrans Hardwood
@@ -250,9 +252,10 @@ subroutine DAPPER_MCMC( &
 		!18 = Foliage production
 		!19 = Pine foliage
 		!20 = Hardwood foliage
-		!#21 = Total LAI
+		!21 = Total LAI
 		!22 = Bud_h
         
+        !assign the process error parameters to the correct data stream
 		SD1(1) = new_pars(52)
 		SD1(2) = new_pars(53)
 		SD1(3) = new_pars(54)
@@ -273,6 +276,7 @@ subroutine DAPPER_MCMC( &
 		SD1(18) = new_pars(62)	
 		Foliage_SD = new_pars(77)
 		
+		!SD2 is the process error term that scales with the size of the prediction
 		SD2(1) = new_pars(63)
 		SD2(2) = new_pars(64)
 		SD2(3) = new_pars(65)
@@ -298,11 +302,15 @@ subroutine DAPPER_MCMC( &
    			!$OMP PARALLEL	
 			!$OMP DO PRIVATE(plotnum,V,Vv,tmp_sd,data_stream,mo)
     		do plotnum = 1,nplots
+    		
+    			!Deals with the fact that some plots using LAI as the state and other use Foliage biomass
     		    if(use_fol_state(plotnum) == 1) then
     				SD1(1) = Foliage_SD
     			else
     				SD1(1) = new_pars(52)
     			endif
+    			
+    			!Direct sampling of the latent states
     			if(pgroup == data_uncertainity_npar_group) then
         !STATE-SPACE WITHOUT GAP-FILLING
    			   		if(state_space == 1) then
@@ -370,7 +378,7 @@ subroutine DAPPER_MCMC( &
     	  						endif   	  							
     	  					end do
         	  			end do
-    !STATE-SPACE WITH GAP-FILLING
+    				!STATE-SPACE WITH GAP-FILLING
         	  		elseif(state_space == 2) then
         	  		    	do data_stream=1,7
     			   			!update initial value
@@ -460,7 +468,7 @@ subroutine DAPPER_MCMC( &
     	  						endif   	  							
     	  					end do
         	  			end do
-		!NON-STATE SPACE
+					!NON-STATE SPACE
         	  		else
   						do data_stream=1,7
   							!Initial condition
@@ -561,7 +569,7 @@ subroutine DAPPER_MCMC( &
        					prior = prior + log(uniform_pdf(new_pars(p), prior_parameter1(p), prior_parameter2(p)))
      				else if(prior_dist(p)==2 ) then !normal distribution
       					prior = prior + log(normal_pdf(new_pars(p), prior_parameter1(p), prior_parameter2(p)))
-     				else if(prior_dist(p)==3) then
+     				else if(prior_dist(p)==3) then !Holding for new distribution
        					!prior = prior + dlnorm(new_pars[p], meanlog=prior_parameter1[p], sdlog=prior_parameter2[p], log = TRUE)
      				else 
        					print *, 'PRIOR DISTRIBUTION NOT SPECIFIED!'
@@ -583,7 +591,7 @@ subroutine DAPPER_MCMC( &
      			prior=-1e30
    			end if
    
-   			if(new_pars(1) < new_pars(2)) then  !T OPT has to be between MAX and MIN
+   			if(new_pars(1) < new_pars(2)) then  !Allocation to foliage declines as the forest ages
      			prior=-1e30
    			end if 
 
@@ -633,9 +641,11 @@ subroutine DAPPER_MCMC( &
    			r = exp(pnew-pnow)
    			
    			
+   			! METROLOPIS HASTING STEP
   			!---IF THE CURRENT SET OF PARAMETERS IS MORE PROBABLE THAN THE PREVIOUS SET THEN ALWAYS ACCEPT
 			!---IF THE CURRENT SET OF PARAMETERS IS LESS PROBABLE THAN THE PREVIOUS SET THEN ACCEPT IN PROPORTION TO HOW MUCH WORSE
 			if(pgroup == data_uncertainity_npar_group .AND. pnew>-1e30) then
+				!Always accept the latent states because they are directly sampled
 				global_accept(pgroup) = global_accept(pgroup) + 1
         		local_accept(pgroup) = local_accept(pgroup) + 1
         		current_pars = new_pars
@@ -643,6 +653,7 @@ subroutine DAPPER_MCMC( &
         		pred = pred_new
         		pnow = pnew
         	elseif(pgroup == data_uncertainity_npar_group .AND. pnew<=-1e30) then
+        		!If the latent state cause the model to break then don't accept
         		latent = latent_old     	
         	else
     			if(z<r .AND. pnew>-1e30) then
@@ -659,8 +670,6 @@ subroutine DAPPER_MCMC( &
         			pnow = pnow
     			end if		
     		end if
-    		
-    		!print *, current_like
 
         	!---ADAPT THE JUMP SIZE USED IN RANDOM WALK TO ACHIEVE A GOAL ACCEPTANCE RATE
         	if(mod(iter,nadapt) == 0 .AND. iter .GE. start_adapt) then
