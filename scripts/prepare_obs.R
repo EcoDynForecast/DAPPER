@@ -5,7 +5,7 @@ prepare_obs <- function(obs_set,FR_fert_assumption,use_fol){
   for(s in 1:length(all_studies)){
     d = read.csv(paste(input_directory,all_studies[s],'_plotlist.csv',sep=''))
     d$Treatment = as.factor(d$Treatment)
-    if(all_studies[s] != '/Duke/TIER4_Duke' ){
+    if(all_studies[s] != '/Duke/TIER4_Duke'){
       d$Initial_LAI = -99
       d$Initial_LAI_code = -99  
       d$Initial_WR_code = -99
@@ -27,9 +27,7 @@ prepare_obs <- function(obs_set,FR_fert_assumption,use_fol){
                               initdata$PlotID != 11302  &
                               initdata$PlotID != 11311  &
                               initdata$PlotID != 11392), ]
-  
-  StudyName = initdata$StudyName
-  Treatment = initdata$Treatment
+
   initdata = data.frame(PlotID = initdata$PlotID,SiteID = initdata$SiteID,LAT_WGS84=initdata$LAT_WGS84,
                         Planting_year = initdata$Planting_year,PlantMonth = initdata$PlantMonth,
                         PlantDensityHa = initdata$PlantDensityHa,Initial_ASW = initdata$Initial_ASW, ASW_min = initdata$ASW_min,
@@ -41,10 +39,11 @@ prepare_obs <- function(obs_set,FR_fert_assumption,use_fol){
                         Mean_temp = initdata$mean_annual_temp,mean_precip = initdata$mean_annual_precip, MatchedFRPlotID = initdata$matched_FR_plotid, 
                         InitYear = initdata$Initial_year,InitMonth = initdata$Initial_month, StartAge = initdata$Initial_age,Initial_WCR = initdata$Initial_WCR,
                         IrrFlag = initdata$IrrFlag,IrrLevel = initdata$IrrLevel,Initial_LAI = initdata$Initial_LAI,Initial_LAI_code = initdata$Initial_LAI_code,
-                        Initial_WR_code = initdata$Initial_WR_code)
+                        Initial_WR_code = initdata$Initial_WR_code, StudyName = initdata$StudyName, Treatment = initdata$Treatment)
   
 
   initdata$SoilClass = 1.0 
+
   
   if(FR_fert_assumption == 1){
     initdata$FR[which(initdata$PlotID > 20000 & initdata$PlotID < 30000)] = -99
@@ -99,7 +98,7 @@ prepare_obs <- function(obs_set,FR_fert_assumption,use_fol){
   }
   observations = observations[which(observations$AgeMeas <= 30),]
   
-
+  observations$ind_removed = -99
 
   
   met_in = NULL
@@ -116,14 +115,13 @@ prepare_obs <- function(obs_set,FR_fert_assumption,use_fol){
     fert = initdata$FertFlag[which(initdata$PlotID == observations$PlotID[i])]
     irr = initdata$IrrFlag[which(initdata$PlotID == observations$PlotID[i])]
     drought = initdata$DroughtLevel[which(initdata$PlotID == observations$PlotID[i])]
-    #print(c(observations$PlotID[i],fert,irr,drought))
     if(fert == 1 | irr == 1 | drought < 1){
       observations$FOL[i] = -99        
     }
   } 
   
   initdata = initdata[which(!is.na(initdata$ASW_max) & initdata$ASW_max > 0.0),]
-  
+
   #-----ORGANIZE CONTROL PLOT ID (FOR USE WITH EXPERIMENTAL DATA)
   control_plot_index = which(initdata$FertFlag == 0 & (initdata$CO2flag == -99 | initdata$CO2flag == 0)  & initdata$DroughtLevel == 1.0 & initdata$IrrFlag == 0.0)
   control_plot_fert_index = which((initdata$CO2flag == -99 | initdata$CO2flag == 0) & initdata$DroughtLevel == 1.0 & initdata$IrrFlag == 0.0) 
@@ -216,8 +214,6 @@ prepare_obs <- function(obs_set,FR_fert_assumption,use_fol){
   
   #-------SELECT WHICH PLOTS TO USE---------------------------------
   plotlist = initdata$PlotID[index]  #[1:64] #initdata$PlotID[1:276] #initdata$PlotID[101:112]
-  StudyName = StudyName[index]
-  Treatment = Treatment[index]
   nplots = length(plotlist)
   observations =  observations[observations$PlotID %in% plotlist, ]
   initdata = initdata[initdata$PlotID %in% plotlist, ]
@@ -233,16 +229,16 @@ prepare_obs <- function(obs_set,FR_fert_assumption,use_fol){
   for(plotnum in 1:nplots){
     tmp = observations[which(observations$PlotID == initdata$PlotID[plotnum] & observations$Nha != -99),]
     if(length(tmp$PlotID) > 1){
-    for(i in 2:length(tmp$PlotID)){
-      observations$ind_removed[which(observations$PlotID == initdata$PlotID[plotnum] & observations$Nha != -99)][i] = tmp$Nha[i-1]-tmp$Nha[i] 
-    }
+    for(i in 1:length(tmp$PlotID)-1){
+      observations$ind_removed[which(observations$PlotID == initdata$PlotID[plotnum] & observations$Nha != -99)][i] = tmp$Nha[i]-tmp$Nha[i+1] 
+          }
     }
   }
   
   observations$ind_removed[which(observations$ind_removed < 300)] = 0.0 
   
   
-  return(list(plotlist = plotlist,StudyName = StudyName,Treatment = Treatment,nplots= nplots,observations= observations,initdata= initdata,met_in=met_in,co2_in=co2_in,
+  return(list(plotlist = plotlist,nplots= nplots,observations= observations,initdata= initdata,met_in=met_in,co2_in=co2_in,
               use_fol_state = use_fol_state))
   
 }

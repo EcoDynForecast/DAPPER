@@ -295,6 +295,7 @@ subroutine R3PG_MODEL(output_dim,met,pars,site,thin_event,nopars,nomet, &
     end do
 
 	!print *, LAI_h, WF_h, WBud_h
+	
  	!--------------------------
  	!---  START SIMULATION
  	!--------------------------
@@ -650,7 +651,7 @@ subroutine R3PG_MODEL(output_dim,met,pars,site,thin_event,nopars,nomet, &
 		OUTPUT(output_index,1) = calyear
 		OUTPUT(output_index,2) = calmonth
 		OUTPUT(output_index,3) = StandAge
-				
+	
 		!STATE VARIABLES OR VARIABLES THAT HAVE OBSERVATIONS
 		OUTPUT(output_index,4) = LAI
 		OUTPUT(output_index,5) = WS

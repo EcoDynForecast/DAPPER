@@ -148,7 +148,7 @@ init_state_space <- function(){
     site = array(site_in)
     
     #THIS DEALS WITH THINNING BASED ON PROPORTION OF STEMS REMOVED
-    thin_event = array(0,dim=c(nplots,nmonths))
+    #thin_event = array(0,dim=c(nplots,nmonths))
     
     
     output_dim = noutput_variables  # NUMBER OF OUTPUT VARIABLES

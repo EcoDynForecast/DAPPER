@@ -1,0 +1,50 @@
+### For MAC or LINUX: gfortran without openmp #### 
+
+gfortran -c -fPIC prob_functions_mod.f90
+gfortran -c -fPIC R3PG_MODEL_MOD.f90
+gfortran -c -fPIC  DAPPER_plot_mod.f90
+gfortran -shared  -fPIC -o DAPPER_MCMC.so DAPPER_MCMC_mod.f90 DAPPER_plot_mod.o R3PG_MODEL_MOD.o prob_functions_mod.o
+gfortran -shared  -fPIC -o r3pg_interface.so R3PG_R_INTERFACE.f90 R3PG_MODEL_MOD.o
+
+### For MAC or LINUX: gfortran with openmp #### 
+
+gfortran -c -fPIC prob_functions_mod.f90 -fopenmp
+gfortran -c -fPIC R3PG_MODEL_MOD.f90 -fopenmp
+gfortran -c -fPIC  DAPPER_plot_mod.f90 -fopenmp
+gfortran -shared  -fPIC -o DAPPER_MCMC.so DAPPER_MCMC_mod.f90 DAPPER_plot_mod.o R3PG_MODEL_MOD.o prob_functions_mod.o -fopenmp
+gfortran -shared  -fPIC -o r3pg_interface.so R3PG_R_INTERFACE.f90 R3PG_MODEL_MOD.o -fopenmp
+
+### For MAC or LINUX:  intel without openmp #### 
+
+ifort -c -fPIC prob_functions_mod.f90
+ifort -c -fPIC R3PG_MODEL_MOD.f90
+ifort -c -fPIC  DAPPER_plot_mod.f90
+ifort -shared  -fPIC -o DAPPER_MCMC.so DAPPER_MCMC_mod.f90 DAPPER_plot_mod.o R3PG_MODEL_MOD.o prob_functions_mod.o
+ifort -shared  -fPIC -o r3pg_interface.so R3PG_R_INTERFACE.f90 R3PG_MODEL_MOD.o
+
+### For MAC or LINUX:  intel with openmp #### 
+
+ifort -c -fPIC prob_functions_mod.f90 -openmp
+ifort -c -fPIC R3PG_MODEL_MOD.f90 -openmp
+ifort -c -fPIC  DAPPER_plot_mod.f90 -openmp
+ifort -shared  -fPIC -o DAPPER_MCMC.so DAPPER_MCMC_mod.f90 DAPPER_plot_mod.o R3PG_MODEL_MOD.o prob_functions_mod.o  -openmp
+ifort -shared  -fPIC -o r3pg_interface.so R3PG_R_INTERFACE.f90 R3PG_MODEL_MOD.o -openmp
+
+### For PC:  gfortran without openmp #### 
+
+Download 
+https://sourceforge.net/projects/mingw-w64/
+
+gfortran -c -fPIC prob_functions_mod.f90
+gfortran -c -fPIC R3PG_MODEL_MOD.f90
+gfortran -c -fPIC  DAPPER_plot_mod.f90
+gfortran -shared  -fPIC -o DAPPER_MCMC.so DAPPER_MCMC_mod.f90 DAPPER_plot_mod.o R3PG_MODEL_MOD.o prob_functions_mod.o
+gfortran -shared  -fPIC -o r3pg_interface.dll R3PG_R_INTERFACE.f90 R3PG_MODEL_MOD.o
+
+
+
+
+
+
+
+

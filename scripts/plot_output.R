@@ -425,9 +425,10 @@ plot_output <- function(){
         ylim_range = c(0,max(c(observed,modeled[data_stream,]),na.rm=TRUE)) #range(c(observed,modeled[data_stream,]))
         plot(modeled_age[which(!is.nan(modeled[data_stream,]))],modeled[data_stream,which(!is.nan(modeled[data_stream,]))],type='l',xlim=xlim_range,ylim=ylim_range,col='black',xlab='plot age (yr)',ylab=ylab[data_stream])
         points(observed_y,observed,col='gray',pch=20)
-        if(data_stream == 1) {title(paste(plotlist[plotnum],StudyName[plotnum],sep=' '))}
-        if(data_stream == 2) {title(paste('Treat: ',Treatment[plotnum],sep=''))}
-        if(data_stream == 3) {title(paste('Fit site?: ',fit_plot[plotnum],sep=''))} 
+        if(data_stream == 1) {title(paste(plotlist[plotnum],tmp_initdata$StudyName,sep=' '))}
+        if(data_stream == 2) {title(paste('Treat: ',tmp_initdata$Treatment,sep=''))}
+        if(data_stream == 3) {title(paste('plotnum: ',plotnum,sep=''))} 
+        if(data_stream == 4) {title(paste('Fit site?: ',fit_plot[plotnum],sep=''))} 
       }
     }
     

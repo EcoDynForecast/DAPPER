@@ -15,6 +15,7 @@ use_dk_pars = 1  #0 = do not use 3 specific parameters for the Duke site, 1 = us
 nstreams = 18
 state_space = 1
 plotFR = 1
+windows_machine = FALSE
 
 load(paste(working_directory,'/chains/',restart_chain,sep=''))
 
@@ -70,7 +71,11 @@ process_model_pars = 51
 npars =80
 
 #---- ENTER THE FORTRAN LIBRARY NAMES HERE ----------
-code_library_plot = paste(working_directory,'/source_code/r3pg_interface.so',sep='')
+if(windows_machine){
+  code_library_plot = paste(working_directory,'/source_code/r3pg_interface.dll',sep='')
+}else{
+  code_library_plot = paste(working_directory,'/source_code/r3pg_interface.so',sep='')
+}
 
 final_pdf = paste(working_directory,'/figures/',run_name,'.pdf',sep='')
 

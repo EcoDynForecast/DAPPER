@@ -8,7 +8,6 @@ initial_conditions_npar_group = 1  #Parameter group for the initial condition (N
 obs_uncertainity = 1 #NOT USED #0 = no observational uncertainity; 1 = include observational uncertainity
 
 
-
 #----MCMC TUNING INFORMATION-------------------------
 jump_size_init = 0.1
 lower_accept_bound=0.23
@@ -73,8 +72,13 @@ if(fr_model == 1 & FR_separate_npar_groups == TRUE){ #when fitting FR there are 
 }
 
 #---- ENTER THE FORTRAN LIBRARY NAMES HERE ----------
+if(windows_machine){
+  code_library_iter = paste(working_directory,'/source_code/DAPPER_MCMC.dll',sep='')
+  code_library_plot = paste(working_directory,'/source_code/r3pg_interface.dll',sep='')
+}else{
 code_library_iter = paste(working_directory,'/source_code/DAPPER_MCMC.so',sep='')
 code_library_plot = paste(working_directory,'/source_code/r3pg_interface.so',sep='')
+}
 
 final_pdf = paste(working_directory,'/figures/',run_name,'_chain_',chain_number,'.pdf',sep='')
 #----------------------------------------------------
@@ -82,8 +86,6 @@ final_pdf = paste(working_directory,'/figures/',run_name,'_chain_',chain_number,
 #---  PREPARE OBSERVATIONS ---------------------------
 obs_list = prepare_obs(obs_set,FR_fert_assumption,use_fol)
 plotlist = obs_list$plotlist
-StudyName = obs_list$StudyName
-Treatment = obs_list$Treatment
 nplots= obs_list$nplots
 observations= obs_list$observations
 initdata= obs_list$initdata
@@ -209,7 +211,7 @@ if(only_create_plot == FALSE){
     fortran_output=.Fortran("DAPPER_MCMC"
                               ,nopars = as.integer(length(init_pars))
                               ,nplots	= as.integer(nplots)
-                              ,initdata_dim =  as.integer(dim(initdata)[2])
+                              ,initdata_dim =  as.integer(dim(initdata[,1:34])[2])
                               ,control_plot_index = as.integer(control_plot_index)
                               ,index_guide = as.integer(index_guide)
                               ,nosamples = as.integer(length(sample_index))
@@ -237,7 +239,7 @@ if(only_create_plot == FALSE){
                               ,months =as.integer(months)
                               ,mo_start_end = as.integer(mo_start_end)
                               ,met = as.double(met)
-                              ,initdata =data.matrix(initdata)
+                              ,initdata =data.matrix(initdata[,1:34])
                               ,obs = as.double(obs)
                               ,thin_event =as.double(thin_event)
                               ,init_pars = as.double(init_pars)

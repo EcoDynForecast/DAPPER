@@ -307,11 +307,11 @@ prepare_state_space_obs <- function(){
     #    }
     
     if(length(tmp$ind_removed[which(tmp$ind_removed != 0.0)]) >0){
-      for(i in 1:(length(tmp$ind_removed[which(tmp$ind_removed != -99)]))){
-        meas_year = tmp$YearMeas[which(tmp$ind_removed != -99)][i]
-        meas_month = tmp$MonthMeas[which(tmp$ind_removed != -99)][i]
+      for(i in 1:(length(tmp$ind_removed[which(tmp$ind_removed != 0.0)]))){
+        meas_year = tmp$YearMeas[which(tmp$ind_removed != 0.0)][i]
+        meas_month = tmp$MonthMeas[which(tmp$ind_removed != 0.0)][i]
         index = (meas_year - earliestYear)*12+1 + (meas_month-earliestMonth)
-        thin_event[plotnum,index] = tmp$ind_removed[which(tmp$ind_removed != -99)][i]
+        thin_event[plotnum,index+1] = tmp$ind_removed[which(tmp$ind_removed != 0.0)][i]
       }
     }
     

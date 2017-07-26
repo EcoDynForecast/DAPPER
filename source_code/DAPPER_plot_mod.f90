@@ -539,12 +539,9 @@ subroutine likelihood(plotnum &
         site(17) = output(23) !WF_H
   		site(24) =  output(11)!WCR_h
    		
-   		!print *,months(mo),site(27),site(25)
-   		
    
 	end do !END LOOPING THROUGH OUTPUT MONTHS AND SEARCHING FOR CORRESPONDING OBSERVATIONS
 	
-	!print *, plotnum, LL(1)
 	prob_new(plotnum)= LL(1) + LL(2) + LL(3) + LL(4) + LL(5) + LL(6) + LL(7) + &
 					   LL(12) + LL(14) + LL(15) + LL(16) + &
 					   LL(17)+ LL(18) + prob_FR + prob_plot_params
