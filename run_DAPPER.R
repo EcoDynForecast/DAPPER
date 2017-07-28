@@ -2,18 +2,18 @@ rm(list = ls())
 #---CONTROL INFORMATION----------------------------
 working_directory =  '/Users/quinn/Dropbox (VTFRS)/Research/DAPPER/'
 input_directory = '/Users/quinn/Dropbox (VTFRS)/Research/DAPPER_inputdata/'
-niter = 1 #150000 #10000 #500000#15000000 #5000000 # 5000000
+niter = 100 #150000 #10000 #500000#15000000 #5000000 # 5000000
 chain_number = 1
 burn =  1 #75000 #25000 #15000000 # 100000 #2500000 #10000000 #500000 #2500000
-thin_interval = 10 # 10 #10 #10 #10 # 50 #500 #100 #100 #100
+thin_interval = 1 # 10 #10 #10 #10 # 50 #500 #100 #100 #100
 run_name = 'test'
 restart_from_chain = FALSE
 restart_chain = 'state_space.1.2017-06-25.16.52.16.Rdata'
 priors_file = 'default_priors.csv'
 create_plot = TRUE
 only_create_plot = FALSE
-obs_set = 23 #Select which plots are used in analysis.  See prepare_obs.R for number guide 
-focal_plotID = NA #40001 #Setting a value here causes only a single plot to be simulated and fit
+obs_set = 9 #Select which plots are used in analysis.  See prepare_obs.R for number guide 
+focal_plotID = 41001 #Setting a value here causes only a single plot to be simulated and fit
 val_set = 0  #Select which plots are withheld from fitting.  0 includes all plot
 fr_model = 1  # 1 = estimate FR for each plot, 2 = empirical FR model
 FR_fert_assumption = 1 #0 = assume fertilization plots have FR = 1, 1 = do not assume fertilization plots have FR = 1
@@ -23,16 +23,16 @@ use_dk_pars = 1  #0 = do not use 3 specific parameters for the Duke site, 1 = us
 use_age_edc = 0  #0 = do not use an ecological constraint on the age function (see code); 1 = use the constraint
 use_sm_edc = 0  #0 = do not use an ecological constraint on the soil moisture function (see code); 1 = use the constraint
 use_fr_edc = 0   #0 = do note use an ecological constraint on the SI - FR function (see code); 1 = use the constraint
-nstreams = 18
+nstreams = 19
 state_space = 1 
 tracked_plotnum = 1
 windows_machine = FALSE
 #----------------------------------------------------
 all_studies = c(
-  #'/SETRES/TIER4_SETRES',
-  #'/PINEMAP/TIER3_PINEMAP',
-  #'/NC2/TIER4_NC2',
-  #'/Duke/TIER4_Duke',
+  '/SETRES/TIER4_SETRES',
+  '/PINEMAP/TIER3_PINEMAP',
+  '/NC2/TIER4_NC2',
+  '/Duke/TIER4_Duke'
   #'/FMC_Thinning/TIER1_FMC_Thinning',
   #'/FBRC_AMERIFLU/TIER2_AMERIFLU',
   #'/FBRC_IMPAC/TIER1_IMPAC',
@@ -61,7 +61,7 @@ all_studies = c(
   #'/PMRC_WGCD01_TIER1/TIER1_WGCD01',
   #'/PMRC_WGCD01_TIER2/TIER2_WGCD01',
   #'/TAMU_GSSS/TIER1_GSSS'
-  '/FIA/VA_FIA_test'
+  #'/FIA/VA_FIA_test'
 )
 
 #---SELECT COMPONENTS THAT ARE ALLOWED TO HAVE UNCERTAINITY--

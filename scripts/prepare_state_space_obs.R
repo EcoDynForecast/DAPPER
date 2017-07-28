@@ -171,7 +171,7 @@ prepare_state_space_obs <- function(){
         #if(obs[6,plotnum,index]  == 0.0){
         #  obs[6,plotnum,index] = -99
         #}
-        if(meas_month != 8 & tmp$PlotID[1] > 40000 & tmp$PlotID[1] < 41000){obs[6,plotnum,index]=-99}
+        if(meas_month != 8 & tmp$PlotID[1] > 40000 & tmp$PlotID[1] < 42000){obs[6,plotnum,index]=-99}
         
         obs_uncert[6,plotnum,index] = tmp$LAI_H[which(tmp$LAI_H != -99)][i]*obs_uncertainity_proportion
         if(obs_uncert[6,plotnum,index] == 0.0){obs_uncert[6,plotnum,index]= 0.001}
@@ -244,7 +244,7 @@ prepare_state_space_obs <- function(){
         meas_month = tmp$MonthMeas[which(tmp$Ctrans_H != -99)][i]
         index = (meas_year - earliestYear)*12+1 + (meas_month-earliestMonth)
         obs[16,plotnum,index] = tmp$Ctrans_H[which(tmp$Ctrans_H != -99)][i]
-        if((meas_month != 8) & tmp$PlotID[1] > 40000 & tmp$PlotID[1] < 41000){obs[16,plotnum,index]=-99}
+        if((meas_month != 8) & tmp$PlotID[1] > 40000 & tmp$PlotID[1] < 42000){obs[16,plotnum,index]=-99}
         obs_uncert[16,plotnum,index] = tmp$Ctrans_sd[which(tmp$Ctrans_H != -99)][i]
       }
     }  
@@ -269,6 +269,18 @@ prepare_state_space_obs <- function(){
         obs_uncert[18,plotnum,index] = tmp$FOL_PROD_TOTAL[which(tmp$FOL_PROD_TOTAL != -99)][i]*obs_uncertainity_proportion
       }
     }
+    
+        #Total LAI
+        if(length(tmp$LAI_TOTAL[which(tmp$LAI_TOTAL != -99)]) >0){
+          for(i in 1:(length(tmp$LAI_TOTAL[which(tmp$LAI_TOTAL != -99)]))){
+            meas_year = tmp$YearMeas[which(tmp$LAI_TOTAL != -99)][i]
+            meas_month = tmp$MonthMeas[which(tmp$LAI_TOTAL != -99)][i]
+            index = (meas_year - earliestYear)*12+1 + (meas_month-earliestMonth)
+            obs[19,plotnum,index] = tmp$LAI_TOTAL[which(tmp$LAI_TOTAL != -99)][i]
+            if((meas_month != 8) & tmp$PlotID[1] > 40000 & tmp$PlotID[1] < 42000){obs[19,plotnum,index]=-99}
+            obs_uncert[19,plotnum,index] = tmp$LAI_TOTAL[which(tmp$LAI_TOTAL != -99)][i]*obs_uncertainity_proportion
+          }
+        }
     
     #### EXTRA STOCKS #######
     
@@ -295,25 +307,8 @@ prepare_state_space_obs <- function(){
     #        obs_uncert[20,plotnum,index] = tmp$FOL[which(tmp$FOL != -99)][i]*obs_uncertainity_proportion
     #      }
     #    }
-    #    #Total LAI
-    #    if(length(tmp$LAI_TOTAL[which(tmp$LAI_TOTAL != -99)]) >0){
-    #      for(i in 1:(length(tmp$LAI_TOTAL[which(tmp$LAI_TOTAL != -99)]))){
-    #        meas_year = tmp$YearMeas[which(tmp$LAI_TOTAL != -99)][i]
-    #        meas_month = tmp$MonthMeas[which(tmp$LAI_TOTAL != -99)][i]
-    #        index = (meas_year - earliestYear)*12+1 + (meas_month-earliestMonth)
-    #        obs[21,plotnum,index] = tmp$LAI_TOTAL[which(tmp$LAI_TOTAL != -99)][i]
-    #        obs_uncert[21,plotnum,index] = tmp$LAI_TOTAL[which(tmp$LAI_TOTAL != -99)][i]*obs_uncertainity_proportion
-    #      }
-    #    }
-    
-    if(length(tmp$ind_removed[which(tmp$ind_removed != 0.0)]) >0){
-      for(i in 1:(length(tmp$ind_removed[which(tmp$ind_removed != 0.0)]))){
-        meas_year = tmp$YearMeas[which(tmp$ind_removed != 0.0)][i]
-        meas_month = tmp$MonthMeas[which(tmp$ind_removed != 0.0)][i]
-        index = (meas_year - earliestYear)*12+1 + (meas_month-earliestMonth)
-        thin_event[plotnum,index+1] = tmp$ind_removed[which(tmp$ind_removed != 0.0)][i]
-      }
-    }
+
+
     
   }
   

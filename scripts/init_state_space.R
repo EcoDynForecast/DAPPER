@@ -10,6 +10,8 @@ init_state_space <- function(){
   init_state_space_WR_H= array(-99,dim=c(nplots,nmonths))
   init_state_space_stem_density_H= array(-99,dim=c(nplots,nmonths))
   
+  lai_ratio=array(-99,dim=c(nplots,nmonths))
+  
   
   
   gap = array(0,dim=c(nstreams))
@@ -25,7 +27,7 @@ init_state_space <- function(){
   dyn.load(code_library_plot)
   
   for(plotnum in 1:nplots){
-
+    
     new_pars = init_pars
     
     pars = new_pars[1:npars_used_by_fortran]
@@ -107,15 +109,15 @@ init_state_space <- function(){
     }
     
     if(use_fol_state[plotnum] == 0){
-    SLA = 3.5754 + (5.4287 - 3.5754) * exp(-log(2) * (StartAge / 5.9705)^2)
-    SLA_h = 16.2
-    LAI = WFi* SLA * 0.1
-    LAI_h = WFi_H * SLA_h *0.1
+      SLA = 3.5754 + (5.4287 - 3.5754) * exp(-log(2) * (StartAge / 5.9705)^2)
+      SLA_h = 16.2
+      LAI = WFi* SLA * 0.1
+      LAI_h = WFi_H * SLA_h *0.1
     }else{
       LAI = -99
       LAI_h = -99
     }
-
+    
     site_in = c(PlantedYear, #PlantedYear
                 PlantedMonth, #"PlantedMonth"
                 InitialYear, #"InitialYear"
@@ -191,7 +193,7 @@ init_state_space <- function(){
     age[plotnum,mo_start_end[plotnum,1]:mo_start_end[plotnum,2]]  = output[,3]
     
     if(use_fol_state[plotnum]== 0){
-    init_state_space_LAI[plotnum,mo_start_end[plotnum,1]:mo_start_end[plotnum,2]] = output[,4]
+      init_state_space_LAI[plotnum,mo_start_end[plotnum,1]:mo_start_end[plotnum,2]] = output[,4]
     }else{
       init_state_space_LAI[plotnum,mo_start_end[plotnum,1]:mo_start_end[plotnum,2]] = output[,22]
     }
@@ -209,6 +211,8 @@ init_state_space <- function(){
     
     init_state_space_ASW[plotnum,mo_start_end[plotnum,1]:mo_start_end[plotnum,2]] = output[,14]
     
+    lai_ratio[plotnum,mo_start_end[plotnum,1]:mo_start_end[plotnum,2]] = output[,4]/(output[,9] + output[,4])
+    
     if(state_space == 0 | state_space == 1){
       for(mo in (mo_start_end[plotnum,1]+1):mo_start_end[plotnum,2]){
         if(months[mo] != 8 & PlotID < 40000 & PlotID >= 41000){
@@ -222,6 +226,7 @@ init_state_space <- function(){
         if(obs[5,plotnum,mo] == -99){init_state_space_stem_density[plotnum,mo]=-99}
         if(obs[6,plotnum,mo] == -99){init_state_space_LAI_H[plotnum,mo]=-99}
         if(obs[7,plotnum,mo] == -99){init_state_space_WS_H[plotnum,mo]=-99}
+        if(obs[19,plotnum,mo] == -99){init_state_space_WS_H[plotnum,mo]=-99}
         
         if(obs[1,plotnum,mo] != -99){init_state_space_LAI[plotnum,mo]=obs[1,plotnum,mo]}
         if(obs[2,plotnum,mo] != -99){init_state_space_WS[plotnum,mo]=obs[2,plotnum,mo]}
@@ -230,6 +235,12 @@ init_state_space <- function(){
         if(obs[5,plotnum,mo] != -99){init_state_space_stem_density[plotnum,mo]=obs[5,plotnum,mo]}
         if(obs[6,plotnum,mo] != -99){init_state_space_LAI_H[plotnum,mo]=obs[6,plotnum,mo]}
         if(obs[7,plotnum,mo] != -99){init_state_space_WS_H[plotnum,mo]=obs[7,plotnum,mo]}
+        
+        if(obs[19,plotnum,mo] != -99){
+          init_state_space_LAI[plotnum,mo]=obs[19,plotnum,mo]*lai_ratio[plotnum,mo]
+          init_state_space_LAI_H[plotnum,mo]=obs[19,plotnum,mo]*(1-lai_ratio[plotnum,mo])
+        }
+        
       }
     }else if(state_space == 2){
       for(mo in (mo_start_end[plotnum,1]+1):mo_start_end[plotnum,2]){
@@ -245,31 +256,53 @@ init_state_space <- function(){
     
     
     for(data_stream in 1:7){
-      prev_mo[data_stream] = (mo_start_end[plotnum,1]+1)
-      gap[data_stream] = 0
-      for(mo in (mo_start_end[plotnum,1]+1):mo_start_end[plotnum,2]){
-        gap[data_stream] =  gap[data_stream] + 1
-        if(obs[data_stream,plotnum,mo] != -99){
-          if(state_space == 1){
-            obs_gap[data_stream,plotnum,mo] = gap[data_stream]
-            obs_gap_next[data_stream,plotnum,prev_mo[data_stream]] = gap[data_stream]
-            prev_mo[data_stream] = mo
-            gap[data_stream] = 0
-          }else if(state_space == 0){
-            obs_gap[data_stream,plotnum,mo] = 1 #gap[data_stream]
+      if(data_stream == 1 | data_stream == 6){
+        prev_mo[data_stream] = (mo_start_end[plotnum,1]+1)
+        gap[data_stream] = 0
+        for(mo in (mo_start_end[plotnum,1]+1):mo_start_end[plotnum,2]){
+          gap[data_stream] =  gap[data_stream] + 1
+          if(obs[data_stream,plotnum,mo] != -99 | obs[19,plotnum,mo] != -99){
+            if(state_space == 1){
+              obs_gap[data_stream,plotnum,mo] = gap[data_stream]
+              obs_gap_next[data_stream,plotnum,prev_mo[data_stream]] = gap[data_stream]
+              prev_mo[data_stream] = mo
+              gap[data_stream] = 0
+            }else if(state_space == 0){
+              obs_gap[data_stream,plotnum,mo] = 1 #gap[data_stream]
+            }
+          }
+          if(state_space == 2){
+            obs_gap[data_stream,plotnum,mo] = 1
+            obs_gap_next[data_stream,plotnum,] = 1
           }
         }
-        if(state_space == 2){
-          obs_gap[data_stream,plotnum,mo] = 1
-          obs_gap_next[data_stream,plotnum,] = 1
+      }else{
+        prev_mo[data_stream] = (mo_start_end[plotnum,1]+1)
+        gap[data_stream] = 0
+        for(mo in (mo_start_end[plotnum,1]+1):mo_start_end[plotnum,2]){
+          gap[data_stream] =  gap[data_stream] + 1
+          if(obs[data_stream,plotnum,mo] != -99){
+            if(state_space == 1){
+              obs_gap[data_stream,plotnum,mo] = gap[data_stream]
+              obs_gap_next[data_stream,plotnum,prev_mo[data_stream]] = gap[data_stream]
+              prev_mo[data_stream] = mo
+              gap[data_stream] = 0
+            }else if(state_space == 0){
+              obs_gap[data_stream,plotnum,mo] = 1 #gap[data_stream]
+            }
+          }
+          if(state_space == 2){
+            obs_gap[data_stream,plotnum,mo] = 1
+            obs_gap_next[data_stream,plotnum,] = 1
+          }
         }
       }
     }
-    
   }
-  return(list(init_state_space_LAI=init_state_space_LAI,init_state_space_WS=init_state_space_WS,init_state_space_WR=init_state_space_WR,
-              init_state_space_WCR = init_state_space_WCR,init_state_space_stem_density=init_state_space_stem_density,
-              init_state_space_LAI_H=init_state_space_LAI_H,init_state_space_WS_H=init_state_space_WS_H,init_state_space_WR_H=init_state_space_WR_H,
-              init_state_space_WCR_H = init_state_space_WCR_H,init_state_space_stem_density_H=init_state_space_stem_density_H,
-              init_state_space_ASW=init_state_space_ASW,age=age,obs_gap=obs_gap,obs_gap_next = obs_gap_next))
-}
+    return(list(init_state_space_LAI=init_state_space_LAI,init_state_space_WS=init_state_space_WS,init_state_space_WR=init_state_space_WR,
+                init_state_space_WCR = init_state_space_WCR,init_state_space_stem_density=init_state_space_stem_density,
+                init_state_space_LAI_H=init_state_space_LAI_H,init_state_space_WS_H=init_state_space_WS_H,init_state_space_WR_H=init_state_space_WR_H,
+                init_state_space_WCR_H = init_state_space_WCR_H,init_state_space_stem_density_H=init_state_space_stem_density_H,
+                init_state_space_ASW=init_state_space_ASW,age=age,obs_gap=obs_gap,obs_gap_next = obs_gap_next))
+  }
+  

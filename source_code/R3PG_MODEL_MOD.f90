@@ -568,6 +568,10 @@ subroutine R3PG_MODEL(output_dim,met,pars,site,thin_event,nopars,nomet, &
         	WR = WR  - delStemN * (WR / StemNo)
         	WS = WS - delStemN * (WS / StemNo)
         	WCR = WCR - delStemN * (WCR / StemNo)
+       		WS_h = WS_h - WS_h*(delStemN/StemNo)
+     		WF_h = WF_h - WF_h*(delStemN/StemNo)
+     		WR_h = WR_h - WR_h*(delStemN/StemNo)
+     		WCR_h = WCR_h - WCR_h*(delStemN/StemNo) 	
         	StemNo = StemNo - delStemN
         endif
 

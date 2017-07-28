@@ -62,6 +62,7 @@ prepare_obs <- function(obs_set,FR_fert_assumption,use_fol){
   for(s in 1:length(all_studies)){
     d = read.csv(paste(input_directory,all_studies[s],'_obs.csv',sep=''))
     d$Treatment = as.factor(d$Treatment)
+    d$StudyName = as.factor(d$StudyName)
     d$PlotSizeHa = as.numeric(d$PlotSizeHa)
     d$ind_removed = as.numeric(d$ind_removed)
     d$ind_removed_prop = as.numeric(d$ind_removed_prop)
@@ -225,18 +226,6 @@ prepare_obs <- function(obs_set,FR_fert_assumption,use_fol){
       use_fol_state[plotnum] = 1
     }
   }
-  
-  for(plotnum in 1:nplots){
-    tmp = observations[which(observations$PlotID == initdata$PlotID[plotnum] & observations$Nha != -99),]
-    if(length(tmp$PlotID) > 1){
-    for(i in 1:length(tmp$PlotID)-1){
-      observations$ind_removed[which(observations$PlotID == initdata$PlotID[plotnum] & observations$Nha != -99)][i] = tmp$Nha[i]-tmp$Nha[i+1] 
-          }
-    }
-  }
-  
-  observations$ind_removed[which(observations$ind_removed < 300)] = 0.0 
-  
   
   return(list(plotlist = plotlist,nplots= nplots,observations= observations,initdata= initdata,met_in=met_in,co2_in=co2_in,
               use_fol_state = use_fol_state))

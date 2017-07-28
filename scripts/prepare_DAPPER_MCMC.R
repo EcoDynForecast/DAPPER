@@ -106,6 +106,22 @@ obs_uncert = state_space_obs$obs_uncert
 init_obs = state_space_obs$init_obs
 init_uncert = state_space_obs$init_uncert
 
+
+thin_event = array(0,dim=c(nplots,nmonths))
+for(plotnum in 1:nplots){
+  prev_nha = obs[5,plotnum,which(obs[5,plotnum,]!=-99)][1] 
+  for(mo in (mo_start_end[plotnum,1]+1):mo_start_end[plotnum,2])
+    if(obs[5,plotnum,mo] != -99){
+      thin_event[plotnum,mo-1] =  prev_nha - obs[5,plotnum,mo] 
+      if(thin_event[plotnum,mo-1] < 200){
+        thin_event[plotnum,mo-1] = 0.0
+      }
+      prev_nha = obs[5,plotnum,mo]
+    }
+}
+
+
+
 #----SET CONTROL PLOT INDEX---------------------------------------
 # this assigns the control plot to match with the treatment plot
 

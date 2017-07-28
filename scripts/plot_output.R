@@ -416,8 +416,7 @@ plot_output <- function(){
   
     modeled_age = output[,3]
     
-    for(data_stream in 1:nstreams){
-      
+    for(data_stream in 1:(nstreams-1)){
       if(data_stream != 8 & data_stream != 9 & data_stream != 10 & data_stream != 11 & data_stream != 13 & data_stream != 17 & data_stream != 18){
         observed = obs[data_stream,plotnum,which(obs[data_stream,plotnum,]!=-99)]
         observed_y =age[plotnum,which(obs[data_stream,plotnum,]!=-99)]

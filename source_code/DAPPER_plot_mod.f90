@@ -356,7 +356,7 @@ subroutine likelihood(plotnum &
 				OUTPUT)
 				
 		 if(use_fol_state(plotnum) .EQ. 1) then	
-			modeled(1) = output(22) !output(4) !Pine LAI
+			modeled(1) = output(22) !output(4) !Pine Foliage
          else
          	modeled(1) = output(4) !output(4) !Pine LAI
          endif
@@ -376,7 +376,8 @@ subroutine likelihood(plotnum &
          modeled(13) = output(16) ! NEE
          modeled(14) = output(17) ! ET  
          modeled(15) = output(18) ! Ctrans Pine           
-         modeled(16) = output(19) ! Ctrans Hardwood     
+         modeled(16) = output(19) ! Ctrans Hardwood   
+         modeled(19) =  output(4)  + output(9)
          
         !ANNUAL PRODUCTION AND TURNOVER FLUXES
 		if(output(2) > 1 .AND. mo == 1) then
@@ -394,9 +395,13 @@ subroutine likelihood(plotnum &
 
     	endif 
     	
+    		
+    	
     	! ASSIGN THE PREDATIONS THAT ARE USED IN THE LATENT STATE CALCULATIONS
                            
          pred_new(:,plotnum,mo) =  modeled(:)
+         
+         !print *, years(mo), months(mo),modeled(2), obs(2,plotnum,mo), thin_event(plotnum,mo)
          
          
         !-------  COMPARE MODEL PREDICTIONS TO LATENT STATES AND COMPARED LATENT STATES TO OBSERVATIONS
@@ -415,7 +420,32 @@ subroutine likelihood(plotnum &
 							log(normal_pdf(latent(data_stream,plotnum,mo),&  !added together
 							obs(data_stream,plotnum,mo),obs_uncert(data_stream,plotnum,mo)))
 					endif	
-				endif				
+				endif
+	
+			elseif(data_stream == 1) then
+				if(latent(19,plotnum,mo) .NE. -99) then
+					LL(data_stream)  = LL(data_stream)  + &
+						log(normal_pdf((latent(1,plotnum,mo)+latent(6,plotnum,mo)),modeled(19), &
+				  		(SD1(data_stream)+modeled(19)* SD2(data_stream))*obs_gap(data_stream,plotnum,mo)))
+                    if(obs(19,plotnum,mo) .NE. -99) then
+						LL(data_stream)  = LL(data_stream)  + &
+							log(normal_pdf(latent(1,plotnum,mo)+latent(6,plotnum,mo),&  
+							obs(19,plotnum,mo),obs_uncert(19,plotnum,mo)))
+					endif	
+				
+				 else
+				 if(latent(data_stream,plotnum,mo) .NE. -99) then
+				 LL(data_stream)  = LL(data_stream)  + log(normal_pdf(latent(data_stream,plotnum,mo),&
+				  		pred_new(data_stream,plotnum,mo),(SD1(data_stream)+modeled(data_stream)*SD2(data_stream)) &
+                                     *obs_gap(data_stream,plotnum,mo)))
+                    	if(obs(data_stream,plotnum,mo) .NE. -99) then                           
+						LL(data_stream)  = LL(data_stream)  + log(normal_pdf(latent(data_stream,plotnum,mo),&
+							obs(data_stream,plotnum,mo),obs_uncert(data_stream,plotnum,mo)))
+						endif						
+				endif
+				endif
+				
+								
 			else
 					if(latent(data_stream,plotnum,mo) .NE. -99) then
 						LL(data_stream)  = LL(data_stream)  + log(normal_pdf(latent(data_stream,plotnum,mo),&
@@ -424,9 +454,8 @@ subroutine likelihood(plotnum &
                     	if(obs(data_stream,plotnum,mo) .NE. -99) then                           
 						LL(data_stream)  = LL(data_stream)  + log(normal_pdf(latent(data_stream,plotnum,mo),&
 							obs(data_stream,plotnum,mo),obs_uncert(data_stream,plotnum,mo)))
-						endif		
+						endif	
 					endif
-	
     			endif
     	enddo
     	
@@ -475,7 +504,6 @@ subroutine likelihood(plotnum &
 					site(6) = output(22)
 					site(26) = modeled(1)
 				endif
-    
         	endif
         	if(latent(2,plotnum,mo) .NE. -99.0) then
         		site(8) = latent(2,plotnum,mo) !WSi
@@ -549,6 +577,7 @@ subroutine likelihood(plotnum &
 	end do !END LOOPING THROUGH OUTPUT MONTHS AND SEARCHING FOR CORRESPONDING OBSERVATIONS
 	
 	! SUM UP OVER TIME AND STATE-STREAMS
+	
 	prob_new(plotnum)= LL(1) + LL(2) + LL(3) + LL(4) + LL(5) + LL(6) + LL(7) + &
 					   LL(12) + LL(14) + LL(15) + LL(16) + &
 					   LL(17)+ LL(18) + prob_FR + prob_plot_params

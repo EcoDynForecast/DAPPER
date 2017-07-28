@@ -194,7 +194,7 @@ priormatrix[77,] = c(3,0.0,100,1,0,100)  #Foliage SD
 
 
 priors = cbind.data.frame(parnames,initial_value = priormatrix[,1],dist_par1 = priormatrix[,2], dist_par2 = priormatrix[,3],dist_type=priormatrix[,4],fit_par =priormatrix[,5],par_group =priormatrix[,5] ,row.names=NULL)
-write.csv(priors,'/Users/quinn/Dropbox/Research/DAPER/priors/default_priors.csv')
+write.csv(priors,'/Users/quinn/Dropbox/Research/DAPPER/priors/default_priors.csv')
 
 
 ####

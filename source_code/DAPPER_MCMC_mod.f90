@@ -558,7 +558,6 @@ subroutine DAPPER_MCMC( &
 	 			
 			!---SUM UP LIKELIHOOD ACROSS PLOTS	
 			like_new = sum(prob_new)
-
 					
 			!--CALCULATE PROBABILITY OF ALL PRIORS (MULTIPLY INDIVIDUAL PROABILITIES)
    			prior = 0
