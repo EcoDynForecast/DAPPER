@@ -293,8 +293,6 @@ subroutine R3PG_MODEL(output_dim,met,pars,site,thin_event,nopars,nomet, &
         end if
     	dayofyr = dayofyr + daysInMonth(i)
     end do
-
-	!print *, LAI_h, WF_h, WBud_h
 	
  	!--------------------------
  	!---  START SIMULATION
@@ -680,6 +678,7 @@ subroutine R3PG_MODEL(output_dim,met,pars,site,thin_event,nopars,nomet, &
 		OUTPUT(output_index,24) = LAI + LAI_h
 		OUTPUT(output_index,25) = -99  !WBud
 		OUTPUT(output_index,26) = WBud_h
+		
 		
 		!OTHER VARIABLES
 		OUTPUT(output_index,27) = delLitter

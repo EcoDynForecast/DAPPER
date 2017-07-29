@@ -54,6 +54,7 @@ plot_output <- function(){
   for(i in 1:dim(accepted_pars_thinned_burned)[2]){
     new_pars[i] = median(accepted_pars_thinned_burned[,i])
   }
+  #new_pars = accepted_pars_thinned_burned[dim(accepted_pars_thinned_burned)[1],]
   
   FR1_new = new_pars[49]
   FR2_new = new_pars[50]
@@ -246,7 +247,7 @@ plot_output <- function(){
     )
     
     site = array(site_in)
-    
+
     output_dim = noutput_variables  # NUMBER OF OUTPUT VARIABLES
     nosite = length(site_in)  # LENGTH OF SITE ARRAY
     nomet = 6  # NUMBER OF VARIABLES IN METEROLOGY (met)

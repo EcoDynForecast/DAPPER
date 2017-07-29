@@ -445,11 +445,6 @@ subroutine DAPPER_MCMC( &
             							 	+latent(data_stream,plotnum,mo)/tmp_sd)
             							 latent(data_stream,plotnum,mo) = normal_sample(Vv,V) 
     	  							endif	
-    	  						!if(iter == niter .AND. data_stream == 5 .AND. plotnum == 1) then
-    	  						!	print *, mo, diff
-    	  						!	print *, latent(data_stream,plotnum,mo-1),latent(data_stream,plotnum,mo)
-    	  						!	print *, pred(data_stream,plotnum,mo), obs(data_stream,plotnum,mo)
-    	  						!endif
     	  						if(latent(data_stream,plotnum,mo) < 0) then
     	  							latent(data_stream,plotnum,mo) = 0.00001
     	  						endif
@@ -478,6 +473,7 @@ subroutine DAPPER_MCMC( &
     			   			!Equation 9.38b Clark 2007 
     			   			Vv = V*((init_obs(data_stream,plotnum)/init_uncert(data_stream,plotnum)))
     			   			latent(data_stream,plotnum,mo_start_end(plotnum,1)) = normal_sample(Vv,V)
+    			   		
     	  					if(latent(data_stream,plotnum,mo_start_end(plotnum,1)) < 0) then
     	  						latent(data_stream,plotnum,mo_start_end(plotnum,1)) = 0.00001
     	  					endif

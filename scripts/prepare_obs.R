@@ -5,7 +5,7 @@ prepare_obs <- function(obs_set,FR_fert_assumption,use_fol){
   for(s in 1:length(all_studies)){
     d = read.csv(paste(input_directory,all_studies[s],'_plotlist.csv',sep=''))
     d$Treatment = as.factor(d$Treatment)
-    if(all_studies[s] != '/Duke/TIER4_Duke'){
+    if(all_studies[s] != '/Duke/TIER4_Duke' & all_studies[s] != '/NC2/TIER4_NC2'  & all_studies[s] != '/Waycross/TIER4_Waycross' & all_studies[s] != '/SETRES/TIER4_SETRES'){
       d$Initial_LAI = -99
       d$Initial_LAI_code = -99  
       d$Initial_WR_code = -99
@@ -94,12 +94,16 @@ prepare_obs <- function(obs_set,FR_fert_assumption,use_fol){
                             GEP_sd = observations$GEP_sd, ET_sd = observations$ET_sd,WRest_sd = observations$WRest_sd,Ctrans_sd = observations$Ctrans_sd, ROOT_PROD_TOTAL = observations$ROOT_PROD_TOTAL)
   
   observations$ROOT_FINE[which(observations$PlotID < 40000)] = -99
+  observations$FOL[which(observations$PlotID > 42000 & observations$PlotID < 43000)] = -99
   if(use_fol == FALSE){
     observations$FOL[which(observations$PlotID < 42000 | observations$PlotID >= 43000)] = -99
   }
+  
   observations = observations[which(observations$AgeMeas <= 30),]
   
   observations$ind_removed = -99
+  
+  #observations$LAI_TOTAL = -99
 
   
   met_in = NULL

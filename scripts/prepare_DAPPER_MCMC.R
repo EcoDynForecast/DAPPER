@@ -217,7 +217,6 @@ like_chain = array(-999,dim=c(length(sample_index)))
 tracked_plot = array(-99, dim=c(length(sample_index),nstreams,nmonths))
 #----------------------------------------------------------------
 
-
 #------RUN FORTRAN CODE---------------------------------
 if(only_create_plot == FALSE){
   #----LOAD FORTRAN CODE------------------------------------

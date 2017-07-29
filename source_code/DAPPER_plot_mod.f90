@@ -323,7 +323,7 @@ subroutine likelihood(plotnum &
 	site(24) = latent(7,plotnum,mo_start_end(plotnum,1))*0.2
 	site(25) = 0.0  !Bud C
 	site(27) = latent(6,plotnum,mo_start_end(plotnum,1))
-	
+		
 	if(use_fol_state(plotnum) == 1) then
 		site(6) = latent(1,plotnum,mo_start_end(plotnum,1))
 		site(26) = -99
@@ -332,14 +332,13 @@ subroutine likelihood(plotnum &
 		site(26) = latent(1,plotnum,mo_start_end(plotnum,1))
 	endif
 	
-	
 	!---START LOOPING THOUGHT MONTHS -------------
 					
     do mo = (mo_start_end(plotnum,1)+1),mo_start_end(plotnum,2)
     	
     	site(3) = years(mo)
         site(4)  = months(mo)
-        
+                
        	call R3PG_MODEL(output_dim,&
                 met(plotnum,:,mo), &
                 pars, &
@@ -400,10 +399,7 @@ subroutine likelihood(plotnum &
     	! ASSIGN THE PREDATIONS THAT ARE USED IN THE LATENT STATE CALCULATIONS
                            
          pred_new(:,plotnum,mo) =  modeled(:)
-         
-         !print *, years(mo), months(mo),modeled(2), obs(2,plotnum,mo), thin_event(plotnum,mo)
-         
-         
+                  
         !-------  COMPARE MODEL PREDICTIONS TO LATENT STATES AND COMPARED LATENT STATES TO OBSERVATIONS
 		!STATE-SPACE DATA STREAM
 		do data_stream=1,7
@@ -443,7 +439,7 @@ subroutine likelihood(plotnum &
 							obs(data_stream,plotnum,mo),obs_uncert(data_stream,plotnum,mo)))
 						endif						
 				endif
-				endif
+			endif
 				
 								
 			else

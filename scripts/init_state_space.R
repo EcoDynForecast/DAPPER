@@ -12,8 +12,6 @@ init_state_space <- function(){
   
   lai_ratio=array(-99,dim=c(nplots,nmonths))
   
-  
-  
   gap = array(0,dim=c(nstreams))
   prev_mo= array(0,dim=c(nstreams))
   obs_gap = array(-99,dim=c(nstreams,nplots,nmonths))
@@ -204,6 +202,7 @@ init_state_space <- function(){
     
     
     init_state_space_LAI_H[plotnum,mo_start_end[plotnum,1]:mo_start_end[plotnum,2]] = output[,9]
+    init_state_space_LAI_H[plotnum,mo_start_end[plotnum,1]] = LAI_h
     init_state_space_WS_H[plotnum,mo_start_end[plotnum,1]:mo_start_end[plotnum,2]] = output[,10]
     init_state_space_WCR_H[plotnum,mo_start_end[plotnum,1]:mo_start_end[plotnum,2]] = output[,11]
     init_state_space_WR_H[plotnum,mo_start_end[plotnum,1]:mo_start_end[plotnum,2]] = output[,12]
