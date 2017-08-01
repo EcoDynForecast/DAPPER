@@ -5,11 +5,13 @@ prepare_obs <- function(obs_set,FR_fert_assumption,use_fol){
   for(s in 1:length(all_studies)){
     d = read.csv(paste(input_directory,all_studies[s],'_plotlist.csv',sep=''))
     d$Treatment = as.factor(d$Treatment)
+    d$StudyName = as.factor(d$StudyName)
     if(all_studies[s] != '/Duke/TIER4_Duke' & all_studies[s] != '/NC2/TIER4_NC2'  & all_studies[s] != '/Waycross/TIER4_Waycross' & all_studies[s] != '/SETRES/TIER4_SETRES'){
       d$Initial_LAI = -99
       d$Initial_LAI_code = -99  
       d$Initial_WR_code = -99
     }
+    
     initdata = rbind(initdata,d)
   }
   
@@ -66,7 +68,11 @@ prepare_obs <- function(obs_set,FR_fert_assumption,use_fol){
     d$PlotSizeHa = as.numeric(d$PlotSizeHa)
     d$ind_removed = as.numeric(d$ind_removed)
     d$ind_removed_prop = as.numeric(d$ind_removed_prop)
-    observations = rbind(observations,d)
+    if(all_studies[s] == '/FIA/VA_FIA'){  
+      observations = rbind(observations,d[,1:55])
+    }else{
+      observations = rbind(observations,d) 
+    }
   }
   
   observations$ROOT_FINE[which(observations$PlotID > 42000 & observations$PlotID < 43000 & observations$ROOT_FINE>-99)]  = observations$ROOT_FINE[which(observations$PlotID > 42000 & observations$PlotID < 43000 & observations$ROOT_FINE>-99)]/0.54
@@ -99,7 +105,13 @@ prepare_obs <- function(obs_set,FR_fert_assumption,use_fol){
     observations$FOL[which(observations$PlotID < 42000 | observations$PlotID >= 43000)] = -99
   }
   
-  observations = observations[which(observations$AgeMeas <= 30),]
+  
+  observations$FOL[which(observations$PlotID > 100000)] = -99
+  observations$ROOT_COARSE[which(observations$PlotID > 100000)] = -99
+  observations$ROOT_FINE[which(observations$PlotID > 100000)] = -99
+  observations$WOODY_H[which(observations$PlotID > 100000)] = -99
+  observations$FOL_H[which(observations$PlotID > 100000)] = -99 
+  #observations = observations[which(observations$AgeMeas <= 30),]
   
   observations$ind_removed = -99
   
@@ -151,7 +163,7 @@ prepare_obs <- function(obs_set,FR_fert_assumption,use_fol){
   not_new = which(initdata$PlotID < 50000)
   nc2 = which(initdata$PlotID == 41001)
   IMP = which(initdata$PlotID > 50000 | initdata$PlotID < 20000)
-  test = which(initdata$PlotID >= 30001 & initdata$PlotID <= 30004 )
+  test = which(initdata$PlotID >= 100000)
   
   all_plots =  seq(1,length(initdata$PlotID),1)
   
@@ -208,11 +220,11 @@ prepare_obs <- function(obs_set,FR_fert_assumption,use_fol){
     }else if(obs_set == 20){
       index = nc2
     }else if(obs_set == 21){
-      index = wcross
+      index = not_new
     }else if(obs_set == 22){
       index = duke_nc2_setres_wcross_pinemap
     }else if(obs_set == 23){
-      index = IMP
+      index = test
     }
   }else{
     

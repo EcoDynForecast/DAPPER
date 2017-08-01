@@ -2,17 +2,17 @@ rm(list = ls())
 #---CONTROL INFORMATION----------------------------
 working_directory =  '/Users/quinn/Dropbox (VTFRS)/Research/DAPPER/'
 input_directory = '/Users/quinn/Dropbox (VTFRS)/Research/DAPPER_inputdata/'
-niter = 20000 #150000 #10000 #500000#15000000 #5000000 # 5000000
+niter = 30000 #150000 #10000 #500000#15000000 #5000000 # 5000000
 chain_number = 1
-burn =  10000 #75000 #25000 #15000000 # 100000 #2500000 #10000000 #500000 #2500000
+burn =  15000 #75000 #25000 #15000000 # 100000 #2500000 #10000000 #500000 #2500000
 thin_interval = 10 # 10 #10 #10 #10 # 50 #500 #100 #100 #100
-run_name = 'test4'
+run_name = 'test7'
 restart_from_chain = FALSE
 restart_chain = 'state_space.1.2017-06-25.16.52.16.Rdata'
 priors_file = 'default_priors.csv'
 create_plot = TRUE
 only_create_plot = FALSE
-obs_set = 22 #Select which plots are used in analysis.  See prepare_obs.R for number guide 
+obs_set = 21 #Select which plots are used in analysis.  See prepare_obs.R for number guide 
 focal_plotID = NA #30001 #Setting a value here causes only a single plot to be simulated and fit
 val_set = 0  #Select which plots are withheld from fitting.  0 includes all plot
 fr_model = 1  # 1 = estimate FR for each plot, 2 = empirical FR model
@@ -33,7 +33,7 @@ all_studies = c(
   '/PINEMAP/TIER3_PINEMAP',
   '/NC2/TIER4_NC2',
   '/Duke/TIER4_Duke',
-  '/Waycross/TIER4_Waycross'
+  '/Waycross/TIER4_Waycross',
   #'/FMC_Thinning/TIER1_FMC_Thinning',
   #'/FBRC_AMERIFLU/TIER2_AMERIFLU',
   #'/FBRC_IMPAC/TIER1_IMPAC',
@@ -62,7 +62,7 @@ all_studies = c(
   #'/PMRC_WGCD01_TIER1/TIER1_WGCD01',
   #'/PMRC_WGCD01_TIER2/TIER2_WGCD01',
   #'/TAMU_GSSS/TIER1_GSSS'
-  #'/FIA/VA_FIA_test'
+  '/FIA/VA_FIA'
 )
 
 #---SELECT COMPONENTS THAT ARE ALLOWED TO HAVE UNCERTAINITY--

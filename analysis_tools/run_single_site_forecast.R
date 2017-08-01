@@ -4,7 +4,7 @@ working_directory = '/Users/quinn/Dropbox (VTFRS)/Research/DAPPER'
 input_directory = '/Users/quinn/Dropbox (VTFRS)/Research/DAPPER_inputdata/'
 run_name = 'with_trans'
 #restart_chain = 'duke_state_space_without_trans_2.1.2017-07-21.13.19.13.Rdata'
-restart_chain = 'duke_state_space.1.2017-07-24.06.59.06.Rdata'
+restart_chain = 'test4.1.2017-08-01.11.54.11.Rdata'
 priors_file = 'default_priors.csv'
 obs_set = 14 #14 #Select which plots are used in analysis.  See prepare_obs.R for number guide 
 focal_plotID = 40001 #14 #Select which plots are used in analysis.  See prepare_obs.R for number guide 
@@ -12,7 +12,7 @@ fr_model = 1  # 1 = estimate FR for each plot, 2 = empirical FR model
 FR_fert_assumption = 0 #0 = assume fertilization plots have FR = 1, 1 = do not assume fertilization plots have FR = 1
 use_fol = TRUE  #TRUE= use allometric estimates of foliage biomass in fitting
 use_dk_pars = 1  #0 = do not use 3 specific parameters for the Duke site, 1 = use the 3 specific parameters
-nstreams = 18
+nstreams = 19
 state_space = 1
 plotFR = 1
 windows_machine = FALSE
@@ -161,7 +161,7 @@ dyn.load(code_library_plot)
 
 plotnum = 1
 
-nsamples = 100
+nsamples = 1000
 
 age = array(-99,dim=c(nsamples,nplots,nmonths))
 lai  = array(-99,dim=c(nsamples,nplots,nmonths))
@@ -380,13 +380,13 @@ for(s in 1:nsamples){
     site[17] = output[23] #WF_H	
     
     age[s,plotnum,mo] = output[3]
-    lai[s,plotnum,mo]  = output[4]
-    stem[s,plotnum,mo]  = output[5]
-    stem_density[s,plotnum,mo] = output[8]
-    coarse_root[s,plotnum,mo] = output[6]
-    fine_root[s,plotnum,mo] = output[7]
+    lai[s,plotnum,mo]  = site[26]
+    stem[s,plotnum,mo]  = site[8]
+    stem_density[s,plotnum,mo] = site[9]
+    coarse_root[s,plotnum,mo] = site[20]
+    fine_root[s,plotnum,mo] = site[7]
     fol[s,plotnum,mo] = output[22]
-    total[s,plotnum,mo] = output[22] + output[5] + output[6] + output[7]
+    total[s,plotnum,mo] = fol[s,plotnum,mo] +  stem[s,plotnum,mo] +  fine_root[s,plotnum,mo] + coarse_root[s,plotnum,mo]
     fSW[s,plotnum,mo] = output[49]
     ET[s,plotnum,mo]= output[17]
     Total_Ctrans[s,plotnum,mo]= output[18] + output[19]
@@ -436,51 +436,51 @@ for(i in 1:length(modeled_age)){
   WUE_ET_quant[i,] = quantile(WUE_ET[,,i],c(0.025,0.5,0.975))
 }
 
-pdf(paste(working_directory,'/figures/',run_name,'.pdf',sep=''))
+pdf(paste(working_directory,'/figures/',run_name,'.pdf',sep=''),width = 11,height = 11)
 par(mfrow=c(3,4),mar = c(4,4,2,2),oma = c(3,3,2,2))
 plot(modeled_age,LAI_quant[,2],type='l',ylim=range(LAI_quant),xlab = 'Stand Age',ylab = 'Leaf Area Index')
 polygon(c(modeled_age,rev(modeled_age)),c(LAI_quant[,1],rev(LAI_quant[,3])),col="lightblue",border=NA)
-points(modeled_age,LAI_quant[,2],type='l',col="blue",lwd=2)
+points(modeled_age,LAI_quant[,2],type='l',col="blue",lwd=1)
 
 plot(modeled_age,stem_quant[,2],type='l',ylim=range(stem_quant), xlab = 'Stand Age',ylab = 'Stem Biomass (Mg/ha)')
 polygon(c(modeled_age,rev(modeled_age)),c(stem_quant[,1],rev(stem_quant[,3])),col="lightblue",border=NA)
-points(modeled_age,stem_quant[,2],type='l',col="blue",lwd=2)
+points(modeled_age,stem_quant[,2],type='l',col="blue",lwd=1)
 
 plot(modeled_age,total_quant[,2],type='l',ylim=range(total_quant), xlab = 'Stand Age',ylab = 'Total Biomass (Mg/ha)')
 polygon(c(modeled_age,rev(modeled_age)),c(total_quant[,1],rev(total_quant[,3])),col="lightblue",border=NA)
-points(modeled_age,total_quant[,2],type='l',col="blue",lwd=2)
+points(modeled_age,total_quant[,2],type='l',col="blue",lwd=1)
 
 plot(modeled_age,stem_density_quant[,2],type='l',ylim=range(stem_density_quant), xlab = 'Stand Age',ylab = 'Stem Density (ind/ha)')
 polygon(c(modeled_age,rev(modeled_age)),c(stem_density_quant[,1],rev(stem_density_quant[,3])),col="lightblue",border=NA)
-points(modeled_age,stem_density_quant[,2],type='l',col="blue",lwd=2)
+points(modeled_age,stem_density_quant[,2],type='l',col="blue",lwd=1)
 
 plot(modeled_age,fSW_quant[,2],type='l',ylim=c(0,1), xlab = 'Stand Age',ylab = 'fSW')
 polygon(c(modeled_age,rev(modeled_age)),c(fSW_quant[,1],rev(fSW_quant[,3])),col="lightblue",border=NA)
-points(modeled_age,fSW_quant[,2],type='l',col="blue",lwd=2)
+points(modeled_age,fSW_quant[,2],type='l',col="blue",lwd=1)
 
 plot(modeled_age,ET_quant[,2],type='l',ylim=range(c(ET_quant)), xlab = 'Stand Age',ylab = 'ET')
 polygon(c(modeled_age,rev(modeled_age)),c(ET_quant[,1],rev(ET_quant[,3])),col="lightblue",border=NA)
-points(modeled_age,ET_quant[,2],type='l',col="blue",lwd=2)
+points(modeled_age,ET_quant[,2],type='l',col="blue",lwd=1)
 
 plot(modeled_age,Total_Ctrans_quant[,2],type='l',ylim=range(c(Total_Ctrans_quant)), xlab = 'Stand Age',ylab = 'Transpiration')
 polygon(c(modeled_age,rev(modeled_age)),c(Total_Ctrans_quant[,1],rev(Total_Ctrans_quant[,3])),col="lightblue",border=NA)
-points(modeled_age,Total_Ctrans_quant[,2],type='l',col="blue",lwd=2)
+points(modeled_age,Total_Ctrans_quant[,2],type='l',col="blue",lwd=1)
 
 plot(modeled_age,GPP_quant[,2],type='l',ylim=range(c(GPP_quant)), xlab = 'Stand Age',ylab = 'GPP')
 polygon(c(modeled_age,rev(modeled_age)),c(GPP_quant[,1],rev(GPP_quant[,3])),col="lightblue",border=NA)
-points(modeled_age,GPP_quant[,2],type='l',col="blue",lwd=2)
+points(modeled_age,GPP_quant[,2],type='l',col="blue",lwd=1)
 
 plot(modeled_age,runoff_quant[,2],type='l',ylim=range(runoff_quant), xlab = 'Stand Age',ylab = 'Runoff')
 polygon(c(modeled_age,rev(modeled_age)),c(runoff_quant[,1],rev(runoff_quant[,3])),col="lightblue",border=NA)
-points(modeled_age,runoff_quant[,2],type='l',col="blue",lwd=2)
+points(modeled_age,runoff_quant[,2],type='l',col="blue",lwd=1)
 
 plot(modeled_age,WUE_ctrans_quant[,2],type='l',ylim=range(c(WUE_ctrans_quant)), xlab = 'Stand Age',ylab = 'WUE (ET)')
 polygon(c(modeled_age,rev(modeled_age)),c(WUE_ctrans_quant[,1],rev(WUE_ctrans_quant[,3])),col="lightblue",border=NA)
-points(modeled_age,WUE_ctrans_quant[,2],type='l',col="blue",lwd=2)
+points(modeled_age,WUE_ctrans_quant[,2],type='l',col="blue",lwd=1)
 
 plot(modeled_age,WUE_ET_quant[,2],type='l',ylim=range(c(WUE_ET_quant)), xlab = 'Stand Age',ylab = 'WUE (Transpiration')
 polygon(c(modeled_age,rev(modeled_age)),c(WUE_ET_quant[,1],rev(WUE_ET_quant[,3])),col="lightblue",border=NA)
-points(modeled_age,WUE_ET_quant[,2],type='l',col="blue",lwd=2)
+points(modeled_age,WUE_ET_quant[,2],type='l',col="blue",lwd=1)
 
 par(mfrow=c(1,1),mar = c(4,4,2,2),oma = c(3,3,2,2))
 plot(density(stem[,1,length(modeled_age)]),xlim=c(0,300),ylim=c(0,1),col='red')

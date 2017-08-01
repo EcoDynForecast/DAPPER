@@ -120,7 +120,9 @@ for(plotnum in 1:nplots){
     }
 }
 
-thin_event[which(plotlist != 41001),] =0.0
+if(length(which(plotlist != 41001))>0){
+  thin_event[which(plotlist != 41001),] =0.0
+}
 
 
 #----SET CONTROL PLOT INDEX---------------------------------------

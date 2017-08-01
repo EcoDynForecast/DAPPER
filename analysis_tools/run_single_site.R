@@ -12,7 +12,7 @@ fr_model = 1  # 1 = estimate FR for each plot, 2 = empirical FR model
 FR_fert_assumption = 0 #0 = assume fertilization plots have FR = 1, 1 = do not assume fertilization plots have FR = 1
 use_fol = TRUE  #TRUE= use allometric estimates of foliage biomass in fitting
 use_dk_pars = 1  #0 = do not use 3 specific parameters for the Duke site, 1 = use the 3 specific parameters
-nstreams = 18
+nstreams = 19
 state_space = 1
 plotFR = 0.5
 windows_machine = FALSE
