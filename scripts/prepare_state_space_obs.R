@@ -47,6 +47,9 @@ prepare_state_space_obs <- function(){
     SLA_H = 16.2
     if(use_fol_state[plotnum] == 0){
       init_obs[1,plotnum] = tmp2$Initial_LAI
+      if(tmp2$Initial_LAI == -99){
+        init_obs[1,plotnum] = tmp2$Initial_WF*SLA * 0.1
+      }
       if(tmp2$Initial_LAI_code == 0){
         init_uncert[1,plotnum] = init_obs[1,plotnum]*0.25
       }else{

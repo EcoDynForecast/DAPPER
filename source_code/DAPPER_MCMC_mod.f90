@@ -332,7 +332,6 @@ subroutine DAPPER_MCMC( &
     	  					if(latent(data_stream,plotnum,mo_start_end(plotnum,1)) < 0) then
     	  						latent(data_stream,plotnum,mo_start_end(plotnum,1)) = 0.00001
     	  					endif    	  					
-  	  				
     	  				end do
     					do mo = (mo_start_end(plotnum,1)+1),(mo_start_end(plotnum,2))
     						do data_stream=1,7
@@ -624,7 +623,7 @@ subroutine DAPPER_MCMC( &
  
 			!PNEW IS THE PROBABILITY FROM THE CURRENT ITERATION, SUMMED ACROSS ALL PLOTS
 
-             pnew = like_new + prior
+             pnew = like_new  + prior
              
 			if(pnew < -1e30) then
       			pnew=-1e30

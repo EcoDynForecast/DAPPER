@@ -137,12 +137,13 @@ prepare_obs <- function(obs_set,FR_fert_assumption,use_fol){
   control_plot_co2_drought_index = which((initdata$FertFlag == 0))
   flux_sites = which(initdata$PlotID == 40001 | initdata$PlotID == 41001)
   duke_nc2 = which(initdata$PlotID > 40000 & initdata$PlotID < 42000)
+  duke_nc2_setres_wcross_pinemap = which(initdata$PlotID > 30000 & initdata$PlotID < 44000)
   not_duke_nc2 = which(initdata$PlotID < 40000 | initdata$PlotID >= 42000)
   setres = which(initdata$PlotID > 42000 & initdata$PlotID < 43000)
   pinemap_tier3 = which(initdata$PlotID > 30000 & initdata$PlotID < 40000)
   duke =  which(initdata$PlotID > 40000 & initdata$PlotID < 41000) 
   duke_wcross =  which(initdata$PlotID > 40000 & initdata$PlotID < 41000 | (initdata$PlotID > 43000)) 
-  wcross =  which(initdata$PlotID > 43000) 
+  wcross =  which(initdata$PlotID > 43000 & initdata$PlotID < 44000) 
   pinemap_setres = which(initdata$PlotID > 30000 & initdata$PlotID < 40000 | (initdata$PlotID > 42000 & initdata$PlotID < 43000)) 
   pinemap_setres_fluxes = which(initdata$PlotID > 30000 & initdata$PlotID < 40000 | (initdata$PlotID > 42000 & initdata$PlotID < 43000) | (initdata$PlotID == 40001 | initdata$PlotID == 41001))  
   no_drought = which(initdata$DroughtLevel == 1.0 & initdata$IrrFlag == 0.0)
@@ -150,6 +151,7 @@ prepare_obs <- function(obs_set,FR_fert_assumption,use_fol){
   not_new = which(initdata$PlotID < 50000)
   nc2 = which(initdata$PlotID == 41001)
   IMP = which(initdata$PlotID > 50000 | initdata$PlotID < 20000)
+  test = which(initdata$PlotID >= 30001 & initdata$PlotID <= 30004 )
   
   all_plots =  seq(1,length(initdata$PlotID),1)
   
@@ -198,7 +200,7 @@ prepare_obs <- function(obs_set,FR_fert_assumption,use_fol){
     }else if(obs_set == 16){
       index = pinemap_setres_fluxes
     }else if (obs_set == 17){
-      index =duke_wcross
+      index =wcross
     }else if(obs_set == 18){
       index = no_drought
     }else if(obs_set == 19){
@@ -208,7 +210,7 @@ prepare_obs <- function(obs_set,FR_fert_assumption,use_fol){
     }else if(obs_set == 21){
       index = wcross
     }else if(obs_set == 22){
-      index = not_new 
+      index = duke_nc2_setres_wcross_pinemap
     }else if(obs_set == 23){
       index = IMP
     }

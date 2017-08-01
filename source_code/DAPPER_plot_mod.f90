@@ -295,8 +295,8 @@ subroutine likelihood(plotnum &
 	
    	!---INITIAL CONDITIONS -------------
    	! --A BIT COMPILICATED
-	site(1) =  PlantedYear !PlantedYear
-    site(2) =  PlantedMonth !"PlantedMonth"
+	site(1) =  PlantedYear !PlantedYear  !NOT USED
+    site(2) =  PlantedMonth !"PlantedMonth" !NOT USED
     site(3) =  months(mo_start_end(plotnum,1)) !"InitialYear"
     site(4) =  years(mo_start_end(plotnum,1))
     site(5) =  StartAge
@@ -306,7 +306,7 @@ subroutine likelihood(plotnum &
     site(10) = ASW_max
     site(11) = LAT_WGS84 !"Lat"
     site(12) = new_FR !"FR" 
-    site(13) = SoilClass !"SoilClass"
+    site(13) = SoilClass !"SoilClass" !NOT USED
     site(14) = ASW_max !"MaxASW"
     site(15) = ASW_min !"MinASW"
     site(16) = 1
@@ -333,7 +333,7 @@ subroutine likelihood(plotnum &
 	endif
 	
 	!---START LOOPING THOUGHT MONTHS -------------
-					
+
     do mo = (mo_start_end(plotnum,1)+1),mo_start_end(plotnum,2)
     	
     	site(3) = years(mo)
@@ -394,8 +394,6 @@ subroutine likelihood(plotnum &
 
     	endif 
     	
-    		
-    	
     	! ASSIGN THE PREDATIONS THAT ARE USED IN THE LATENT STATE CALCULATIONS
                            
          pred_new(:,plotnum,mo) =  modeled(:)
@@ -409,16 +407,17 @@ subroutine likelihood(plotnum &
 					pred_new(data_stream,plotnum,mo) = modeled(4) + modeled(9)
 			 		LL(data_stream)  = LL(data_stream)  + &
 						log(normal_pdf(latent(data_stream,plotnum,mo),& !added together
-				  		pred_new(data_stream,plotnum,mo),(SD1(data_stream)+pred_new(data_stream,plotnum,mo)*SD2(data_stream)) &
-                                                *obs_gap(data_stream,plotnum,mo)))
+				  			pred_new(data_stream,plotnum,mo),(SD1(data_stream)+ &
+				  			pred_new(data_stream,plotnum,mo)*SD2(data_stream)) &
+                        	*obs_gap(data_stream,plotnum,mo)))
                     if(obs(data_stream,plotnum,mo) .NE. -99) then
 						LL(data_stream)  = LL(data_stream)  + &
 							log(normal_pdf(latent(data_stream,plotnum,mo),&  !added together
 							obs(data_stream,plotnum,mo),obs_uncert(data_stream,plotnum,mo)))
 					endif	
 				endif
-	
 			elseif(data_stream == 1) then
+				! DEALS WITH THE SITUTION WHERE LAI IS TOTAL (PINE + HARDWOOD)
 				if(latent(19,plotnum,mo) .NE. -99) then
 					LL(data_stream)  = LL(data_stream)  + &
 						log(normal_pdf((latent(1,plotnum,mo)+latent(6,plotnum,mo)),modeled(19), &
@@ -428,31 +427,29 @@ subroutine likelihood(plotnum &
 							log(normal_pdf(latent(1,plotnum,mo)+latent(6,plotnum,mo),&  
 							obs(19,plotnum,mo),obs_uncert(19,plotnum,mo)))
 					endif	
-				
+				! DEALS WITH THE SITUTION WHERE LAI ONLY PINE
 				 else
-				 if(latent(data_stream,plotnum,mo) .NE. -99) then
-				 LL(data_stream)  = LL(data_stream)  + log(normal_pdf(latent(data_stream,plotnum,mo),&
-				  		pred_new(data_stream,plotnum,mo),(SD1(data_stream)+modeled(data_stream)*SD2(data_stream)) &
-                                     *obs_gap(data_stream,plotnum,mo)))
+				 	if(latent(data_stream,plotnum,mo) .NE. -99) then
+				 		LL(data_stream)  = LL(data_stream)  + log(normal_pdf(latent(data_stream,plotnum,mo),&
+				  			pred_new(data_stream,plotnum,mo),(SD1(data_stream)+modeled(data_stream)*SD2(data_stream)) &
+                            *obs_gap(data_stream,plotnum,mo)))
                     	if(obs(data_stream,plotnum,mo) .NE. -99) then                           
-						LL(data_stream)  = LL(data_stream)  + log(normal_pdf(latent(data_stream,plotnum,mo),&
+							LL(data_stream)  = LL(data_stream)  + log(normal_pdf(latent(data_stream,plotnum,mo),&
 							obs(data_stream,plotnum,mo),obs_uncert(data_stream,plotnum,mo)))
 						endif						
+					endif
 				endif
-			endif
-				
-								
 			else
-					if(latent(data_stream,plotnum,mo) .NE. -99) then
-						LL(data_stream)  = LL(data_stream)  + log(normal_pdf(latent(data_stream,plotnum,mo),&
+				if(latent(data_stream,plotnum,mo) .NE. -99) then
+					LL(data_stream)  = LL(data_stream)  + log(normal_pdf(latent(data_stream,plotnum,mo),&
 				  		pred_new(data_stream,plotnum,mo),(SD1(data_stream)+modeled(data_stream)*SD2(data_stream)) &
-                                                *obs_gap(data_stream,plotnum,mo)))
-                    	if(obs(data_stream,plotnum,mo) .NE. -99) then                           
+                        *obs_gap(data_stream,plotnum,mo)))
+                    if(obs(data_stream,plotnum,mo) .NE. -99) then                           
 						LL(data_stream)  = LL(data_stream)  + log(normal_pdf(latent(data_stream,plotnum,mo),&
 							obs(data_stream,plotnum,mo),obs_uncert(data_stream,plotnum,mo)))
-						endif	
-					endif
-    			endif
+					endif	
+				endif
+    		endif
     	enddo
     	
     	!FLUXES
@@ -529,9 +526,7 @@ subroutine likelihood(plotnum &
         	
         	if(latent(6,plotnum,mo) .NE. -99.0) then
         		site(27) = latent(6,plotnum,mo) ! Hardwood LAI
-        		site(27) = modeled(6)
         		site(25) =  output(26)
-        		!site(25) =  output(26)*(latent(6,plotnum,mo)/pred_new(6,plotnum,mo))
         	else
         		site(27) = modeled(6)
         		site(25) =  output(26)
@@ -552,7 +547,6 @@ subroutine likelihood(plotnum &
 					site(6) = output(22)
 					site(26) = modeled(1)
 			endif
-        	site(26) = modeled(1)  !LAI Pine
         	site(8) =  modeled(2) !WS
         	site(20) = modeled(3) !WCR
 			site(7) = modeled(4) !WRi
@@ -573,7 +567,7 @@ subroutine likelihood(plotnum &
 	end do !END LOOPING THROUGH OUTPUT MONTHS AND SEARCHING FOR CORRESPONDING OBSERVATIONS
 	
 	! SUM UP OVER TIME AND STATE-STREAMS
-	
+
 	prob_new(plotnum)= LL(1) + LL(2) + LL(3) + LL(4) + LL(5) + LL(6) + LL(7) + &
 					   LL(12) + LL(14) + LL(15) + LL(16) + &
 					   LL(17)+ LL(18) + prob_FR + prob_plot_params

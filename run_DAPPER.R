@@ -2,21 +2,21 @@ rm(list = ls())
 #---CONTROL INFORMATION----------------------------
 working_directory =  '/Users/quinn/Dropbox (VTFRS)/Research/DAPPER/'
 input_directory = '/Users/quinn/Dropbox (VTFRS)/Research/DAPPER_inputdata/'
-niter = 5000 #150000 #10000 #500000#15000000 #5000000 # 5000000
+niter = 20000 #150000 #10000 #500000#15000000 #5000000 # 5000000
 chain_number = 1
-burn =  2500 #75000 #25000 #15000000 # 100000 #2500000 #10000000 #500000 #2500000
-thin_interval = 1 # 10 #10 #10 #10 # 50 #500 #100 #100 #100
-run_name = 'test'
+burn =  10000 #75000 #25000 #15000000 # 100000 #2500000 #10000000 #500000 #2500000
+thin_interval = 10 # 10 #10 #10 #10 # 50 #500 #100 #100 #100
+run_name = 'test4'
 restart_from_chain = FALSE
 restart_chain = 'state_space.1.2017-06-25.16.52.16.Rdata'
 priors_file = 'default_priors.csv'
 create_plot = TRUE
 only_create_plot = FALSE
-obs_set = 14 #Select which plots are used in analysis.  See prepare_obs.R for number guide 
-focal_plotID = NA #43001 #Setting a value here causes only a single plot to be simulated and fit
+obs_set = 22 #Select which plots are used in analysis.  See prepare_obs.R for number guide 
+focal_plotID = NA #30001 #Setting a value here causes only a single plot to be simulated and fit
 val_set = 0  #Select which plots are withheld from fitting.  0 includes all plot
 fr_model = 1  # 1 = estimate FR for each plot, 2 = empirical FR model
-FR_fert_assumption = 1 #0 = assume fertilization plots have FR = 1, 1 = do not assume fertilization plots have FR = 1
+FR_fert_assumption = 0 #0 = assume fertilization plots have FR = 1, 1 = do not assume fertilization plots have FR = 1
 FR_separate_npar_groups = TRUE  #Assigns a different parameter group to groups of FR values
 use_fol = TRUE  #TRUE= use allometric estimates of foliage biomass in fitting
 use_dk_pars = 1  #0 = do not use 3 specific parameters for the Duke site, 1 = use the 3 specific parameters
@@ -24,7 +24,7 @@ use_age_edc = 0  #0 = do not use an ecological constraint on the age function (s
 use_sm_edc = 0  #0 = do not use an ecological constraint on the soil moisture function (see code); 1 = use the constraint
 use_fr_edc = 0   #0 = do note use an ecological constraint on the SI - FR function (see code); 1 = use the constraint
 nstreams = 19
-state_space = 0 
+state_space = 1
 tracked_plotnum = 1
 windows_machine = FALSE
 #----------------------------------------------------

@@ -230,7 +230,12 @@ subroutine R3PG_MODEL(output_dim,met,pars,site,thin_event,nopars,nomet, &
 	pfsPower = Log(pFS20 / pFS2) / Log(20.0D0 / 2.0D0)
     pfsConst = pFS2 / 2.0D0 ** pfsPower
    
+    WF1 = WFi
+    WF2 = 0.0
     WS = WSi
+    WCR =WCRi
+    WR = WRi 
+    StemNo = StemNoi
     
     if(LAI_i .NE. -99) then  !OVERWRITE INITIAL FOLIAGE IF INITIAL LAI IS SUPPLIED
     	LAI = LAI_i
@@ -246,19 +251,7 @@ subroutine R3PG_MODEL(output_dim,met,pars,site,thin_event,nopars,nomet, &
     	endif        
     endif
     
-    !if(InitialMonth-1 < 3 .OR. InitialMonth-1 > 10) then
-    !	WF2 = WFi
-    !	WF1 = 0.0
-    !else
-    !	WF2 = WFi*0.5
-    !	WF1 = WFi*0.5
-    !endif
-    
-    WF1 = WFi
-    
-    WCR =WCRi
-    WR = WRi 
-    StemNo = StemNoi
+
     !Hardwood LAI   
     if(LAI_i_h .NE. -99) then
     	LAI_h = LAI_i_h
@@ -287,12 +280,14 @@ subroutine R3PG_MODEL(output_dim,met,pars,site,thin_event,nopars,nomet, &
  	metmonth = 1
  	calyear = InitialYear
  	
+ 	
  	do i = 1,(InitialMonth-1)
     	if (i == 1) then 
             dayofyr = -15
         end if
     	dayofyr = dayofyr + daysInMonth(i)
     end do
+    
 	
  	!--------------------------
  	!---  START SIMULATION
@@ -438,6 +433,8 @@ subroutine R3PG_MODEL(output_dim,met,pars,site,thin_event,nopars,nomet, &
         GPPc = (GPPmolc * 12.0) / 100.0D0      !ton/ha	
     	GPPdm = (GPPc * 2.0)
     	NPP = GPPdm * y !assumes respiratory rate is constant
+
+    
  
     	!---UNDERSTORY HARDWOOD
         fCalphax_h = fCalpha700_h / (2 - fCalpha700_h)
@@ -477,18 +474,23 @@ subroutine R3PG_MODEL(output_dim,met,pars,site,thin_event,nopars,nomet, &
         delWR = nlc*pR
         delWS = nlc*(1/pFS)
         delWCR = nlc*(1/pFS)*pCRS
+        
 
     	!calculate litterfall & root turnover
     	delRoots = Rttover * WR
     	
         WF1 = WF1 + delWF	
         
+        delLitter = 0.0
         if(calmonth > 9 .OR. calmonth < 5) then
         delLitter = WF1*mF
         WF1 = WF1 -  delLitter
         endif
         
-        WF2 = 0
+        WF2 = 0.0
+        
+  
+
         
         !if(calmonth == 10) then
     	!	WF2 = WF2+WF1
@@ -550,8 +552,8 @@ subroutine R3PG_MODEL(output_dim,met,pars,site,thin_event,nopars,nomet, &
         WR_h = WR_h + delWR_h - delRoots_h
         WS_h = WS_h + delWS_h
         WCR_h = WCR_h + delWCR_h
-
         
+ 
     	TotalW_h = WF_h + WR_h + WS_h + WCR_h
     	TotalLitter_h = TotalLitter_h + delLitter_h 
     	
@@ -614,6 +616,8 @@ subroutine R3PG_MODEL(output_dim,met,pars,site,thin_event,nopars,nomet, &
      	    wSmax = wSx1000 * (1000.0D0 / StemNo) ** thinPower 
      	endif
      	
+     	  
+     	
      	!---Understory hardwood mortality
      	!---ASSUME SAME AS PINES BECAUSE HARDWOOD STEM DENSITY DATA NOT AVIALABLE
      	WS_h = WS_h - (WS_h*mort_rate_h)
@@ -630,6 +634,7 @@ subroutine R3PG_MODEL(output_dim,met,pars,site,thin_event,nopars,nomet, &
 		!-----------------------------------
 		!-- DO VOLUME CALCULATIONS
 		!----------------------------------- 
+	
 
         !avStemMass updated in calculateMortality (before this sub)
         avDBH = (AvStemMass / stemConst) ** (1.0D0 / stemPower)
@@ -653,7 +658,7 @@ subroutine R3PG_MODEL(output_dim,met,pars,site,thin_event,nopars,nomet, &
 		OUTPUT(output_index,1) = calyear
 		OUTPUT(output_index,2) = calmonth
 		OUTPUT(output_index,3) = StandAge
-	
+		
 		!STATE VARIABLES OR VARIABLES THAT HAVE OBSERVATIONS
 		OUTPUT(output_index,4) = LAI
 		OUTPUT(output_index,5) = WS

@@ -134,9 +134,9 @@ priormatrix[17,] = c(0.037,0.0408,0.0028,2,0,12)  #CoeffCond
 priormatrix[18,] = c(3.0,0.0,10,1,0,13)  # BLcond 
 priormatrix[19,] = c(400,230,25,2,0,14) #wSx1000 c(170,100,450,1,0) 3PGPAPERS
 priormatrix[20,] = c(1.1,1.0,2.5,1,0,15)  #thinPower
-priormatrix[21,] = c(0.083,0.05,0.3,1,0,100) #mF
+priormatrix[21,] = c(0.1,0.05,0.3,1,0,100) #mF
 priormatrix[22,] = c(0.0,0.0,1.0,1,1,100)  #mR
-priormatrix[23,] = c(0.4,0.1,1,1,0,16) #mS
+priormatrix[23,] = c(0.7,0.5,1,1,0,16) #mS
 priormatrix[24,] = c(.04,0.0167,0.2,1,0,17)  #Rttover  c(.04,0.0167,0.0417,1,0,17) 
 priormatrix[25,] = c(0.20,0.15,0.35,1,0,18) #pCR for DUKE CAN BE m0  VAGUE 3PG PAPERS 
 priormatrix[26,] = c(0.9,0.4,1,1,1,100) #mS for DUKE CAN BE fN0 VAGUE 3PG PAPERS
@@ -190,7 +190,7 @@ priormatrix[73,] = c(0.0,0.0,1000,1,1,100)  #Foliage production SD_2
 priormatrix[74,] = c(20,0.0,200,1,1,100) #plot level uncertainity in WSx1000
 priormatrix[75,] = c(0.1,0.0,2,1,1,100) #plot level uncertainity in ThinPower
 priormatrix[76,] = c(0.01,0.0,2,1,1,100) #plot level uncertainity in mort_rate
-priormatrix[77,] = c(3,0.0,100,1,0,100)  #Foliage SD
+priormatrix[77,] = c(0.2,0.0,100,1,0,100)  #Foliage SD
 
 
 priors = cbind.data.frame(parnames,initial_value = priormatrix[,1],dist_par1 = priormatrix[,2], dist_par2 = priormatrix[,3],dist_type=priormatrix[,4],fit_par =priormatrix[,5],par_group =priormatrix[,5] ,row.names=NULL)
