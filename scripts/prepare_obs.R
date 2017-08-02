@@ -29,6 +29,10 @@ prepare_obs <- function(obs_set,FR_fert_assumption,use_fol){
                               initdata$PlotID != 11302  &
                               initdata$PlotID != 11311  &
                               initdata$PlotID != 11392), ]
+  
+  initdata = initdata[which(initdata$MeasureLength > 1), ]
+  
+  initdata = initdata[which(initdata$ThinTreatment == 1), ]
 
   initdata = data.frame(PlotID = initdata$PlotID,SiteID = initdata$SiteID,LAT_WGS84=initdata$LAT_WGS84,
                         Planting_year = initdata$Planting_year,PlantMonth = initdata$PlantMonth,
@@ -111,7 +115,7 @@ prepare_obs <- function(obs_set,FR_fert_assumption,use_fol){
   observations$ROOT_FINE[which(observations$PlotID > 100000)] = -99
   observations$WOODY_H[which(observations$PlotID > 100000)] = -99
   observations$FOL_H[which(observations$PlotID > 100000)] = -99 
-  #observations = observations[which(observations$AgeMeas <= 30),]
+  observations = observations[which(observations$AgeMeas <= 30),]
   
   observations$ind_removed = -99
   
@@ -126,6 +130,10 @@ prepare_obs <- function(obs_set,FR_fert_assumption,use_fol){
   
   co2_in = read.csv(paste(input_directory,'/CO2/CO2_Concentrations_from_CMIP5_1950-2095.csv',sep=''))
   
+  initdata = initdata[which(!is.na(initdata$ASW_max) & initdata$ASW_max > 0.0),]
+  
+  observations = observations[observations$PlotID %in% initdata$PlotID, ]
+  
   #-----------------------------------------------------------------
   #  Remove foliage data for treatment plots because based on model
   for(i in 1:length(observations$FOL)){
@@ -137,7 +145,7 @@ prepare_obs <- function(obs_set,FR_fert_assumption,use_fol){
     }
   } 
   
-  initdata = initdata[which(!is.na(initdata$ASW_max) & initdata$ASW_max > 0.0),]
+
 
   #-----ORGANIZE CONTROL PLOT ID (FOR USE WITH EXPERIMENTAL DATA)
   control_plot_index = which(initdata$FertFlag == 0 & (initdata$CO2flag == -99 | initdata$CO2flag == 0)  & initdata$DroughtLevel == 1.0 & initdata$IrrFlag == 0.0)

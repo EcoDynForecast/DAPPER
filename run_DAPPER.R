@@ -2,10 +2,10 @@ rm(list = ls())
 #---CONTROL INFORMATION----------------------------
 working_directory =  '/Users/quinn/Dropbox (VTFRS)/Research/DAPPER/'
 input_directory = '/Users/quinn/Dropbox (VTFRS)/Research/DAPPER_inputdata/'
-niter = 30000 #150000 #10000 #500000#15000000 #5000000 # 5000000
+niter = 1 #150000 #10000 #500000#15000000 #5000000 # 5000000
 chain_number = 1
-burn =  15000 #75000 #25000 #15000000 # 100000 #2500000 #10000000 #500000 #2500000
-thin_interval = 10 # 10 #10 #10 #10 # 50 #500 #100 #100 #100
+burn =  1 #75000 #25000 #15000000 # 100000 #2500000 #10000000 #500000 #2500000
+thin_interval = 1 # 10 #10 #10 #10 # 50 #500 #100 #100 #100
 run_name = 'test7'
 restart_from_chain = FALSE
 restart_chain = 'state_space.1.2017-06-25.16.52.16.Rdata'
@@ -34,7 +34,7 @@ all_studies = c(
   '/NC2/TIER4_NC2',
   '/Duke/TIER4_Duke',
   '/Waycross/TIER4_Waycross',
-  #'/FMC_Thinning/TIER1_FMC_Thinning',
+  '/FMC_Thinning/TIER1_FMC_Thinning',
   #'/FBRC_AMERIFLU/TIER2_AMERIFLU',
   #'/FBRC_IMPAC/TIER1_IMPAC',
   #'/FBRC_IMPAC2/TIER2_IMPAC2',
@@ -49,7 +49,7 @@ all_studies = c(
   #'/FPC_RS6/TIER1_RS6',
   #'/FPC_RS7/TIER1_RS7',
   #'/FPC_RS8/TIER1_RS8',
-  #'/FPC_RW18/TIER2_RW18',
+  '/FPC_RW18/TIER2_RW18'
   #'/FPC_RW19/TIER2_RW19',
   #'/FPC_RW20/TIER2_RW20',
   #'/PMRC_CPCD96_TIER1/TIER1_CPCD96',
@@ -62,7 +62,7 @@ all_studies = c(
   #'/PMRC_WGCD01_TIER1/TIER1_WGCD01',
   #'/PMRC_WGCD01_TIER2/TIER2_WGCD01',
   #'/TAMU_GSSS/TIER1_GSSS'
-  '/FIA/VA_FIA'
+  #'/FIA/VA_FIA'
 )
 
 #---SELECT COMPONENTS THAT ARE ALLOWED TO HAVE UNCERTAINITY--
