@@ -474,11 +474,11 @@ plot(modeled_age,runoff_quant[,2],type='l',ylim=range(runoff_quant), xlab = 'Sta
 polygon(c(modeled_age,rev(modeled_age)),c(runoff_quant[,1],rev(runoff_quant[,3])),col="lightblue",border=NA)
 points(modeled_age,runoff_quant[,2],type='l',col="blue",lwd=1)
 
-plot(modeled_age,WUE_ctrans_quant[,2],type='l',ylim=range(c(WUE_ctrans_quant)), xlab = 'Stand Age',ylab = 'WUE (ET)')
+plot(modeled_age,WUE_ctrans_quant[,2],type='l',ylim=range(c(WUE_ctrans_quant)), xlab = 'Stand Age',ylab = 'WUE (Transpiration)')
 polygon(c(modeled_age,rev(modeled_age)),c(WUE_ctrans_quant[,1],rev(WUE_ctrans_quant[,3])),col="lightblue",border=NA)
 points(modeled_age,WUE_ctrans_quant[,2],type='l',col="blue",lwd=1)
 
-plot(modeled_age,WUE_ET_quant[,2],type='l',ylim=range(c(WUE_ET_quant)), xlab = 'Stand Age',ylab = 'WUE (Transpiration')
+plot(modeled_age,WUE_ET_quant[,2],type='l',ylim=range(c(WUE_ET_quant)), xlab = 'Stand Age',ylab = 'WUE (ET)')
 polygon(c(modeled_age,rev(modeled_age)),c(WUE_ET_quant[,1],rev(WUE_ET_quant[,3])),col="lightblue",border=NA)
 points(modeled_age,WUE_ET_quant[,2],type='l',col="blue",lwd=1)
 

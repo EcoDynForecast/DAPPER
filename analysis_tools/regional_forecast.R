@@ -44,32 +44,29 @@ variation_type <- 'parameter_and_process' #parameter_and_process' # Choose from 
 Mort_uncert = FALSE
 FR_uncert = FALSE
 HOLD_CO2 = FALSE
+PAR_UNCERT = TRUE
+PROCESS_UNCERT = TRUE
 precipModifier <- 1.0 # No toggle to precip
 MaxFR <- FALSE # No fertilization
 #variation_type <- 'parameter_only'
 # Number of samples from parameter chain (will be ignored in the process_only case)
-par_sample_size <- 500
-
-# Number of samples from process error distribution (will be ignored in the parameter_only case)
-proc_sample_size <- 10
-
+sample_size <- 1
 
 # Number of processors to be used
-nprocessors <- 24 # Make sure to change this to the max processors!
+nprocessors <- 1 # Make sure to change this to the max processors!
 
 ## Tuning Parameters
 rotationAge <- 25
 
-load("/home/rqthomas/hokieone/DAPER/chains/revision_base_chain1.1.2017-04-28.15.56.15.final.Rdata")
-load('/home/rqthomas/DAPER_regional_analysis/FR_par_chain.Rdata')
-code_library = "/home/rqthomas/DAPER_regional_analysis/r3pg_interface.so"
-CO2 <- read.csv('CO2_Concentrations_from_CMIP5_1950-2099.csv')
-Soils <- read.csv('Soil_Inputs_LPNR_Clipped_and_Imputed_v4.csv')
+load("/Users/quinn/Dropbox (VTFRS)/Research/DAPPER/chains/test4.1.2017-08-01.11.54.11.Rdata")
+code_library = "/Users/quinn/Dropbox (VTFRS)/Research/DAPPER/source_code/r3pg_interface.so"
+CO2 <- read.csv('/Users/quinn/Dropbox (VTFRS)/Research/DAPPER_inputdata/CO2/CO2_Concentrations_from_CMIP5_1950-2095.csv')
+Soils <- read.csv('/Users/quinn/Documents/PINEMAP_big_files/parameter_run/Soil_Inputs_LPNR_Clipped_and_Imputed_v4.csv')
 
 
 ## 3-PG Wrapper ####-----------------------------------------------------------
-run.3PG.quick <- function(myHUC, yearStart, yearEnd, startAge = 2, precipModifier = 1, MaxFR = FALSE, curr_pars,base_year = 1950, curr_FR_pars, FR_pars,HOLD_CO2 = FALSE, ...){ 
-
+run.3PG.quick <- function(myHUC, yearStart, yearEnd, startAge = 2, precipModifier = 1, MaxFR = FALSE, curr_pars,base_year = 1950, curr_FR_pars, FR_pars,HOLD_CO2 = FALSE,PROCESS_UNCERT = TRUE, ...){ 
+  
   pars <- curr_pars[1:npars_used_by_fortran]
   # Reference Parameters
   nomonths <- (yearEnd - yearStart + 1) * 12
@@ -77,20 +74,20 @@ run.3PG.quick <- function(myHUC, yearStart, yearEnd, startAge = 2, precipModifie
   HUCIndexSoils <- which(Soils[, 1] == myHUC)[1] # For the Soils variables
   
   ## Extracting Climate
-  yearStartPosition <- (yearStart - base_year) * 12 + 1 # Selecting the first column to draw from
+  yearStartPosition <- (yearStart+startAge - base_year) * 12 + 1 # Selecting the first column to draw from
   
   # CO2
-   if(HOLD_CO2 == TRUE){
+  if(HOLD_CO2 == TRUE){
     yearStart = yearStart_list[r]
-    yearEnd <- yearStart + rotationAge - 1
+    yearEnd <- yearStart+startAge + rotationAge - 1
     tmpCO2 <- CO2$CO2_Concentration_RCP85[is.element(CO2$Year, 1985:(1985 + rotationAge - 1))] # RCP8.5 should match historical readings in your timeframe
     monthlyCO2 <- c(matrix(rep(tmpCO2, 12), nrow = 12, byrow = T))
   }else{
-  tmpCO2 <- CO2$CO2_Concentration_RCP85[is.element(CO2$Year, yearStart:yearEnd)] # RCP8.5 should match historical readings in your timeframe
-  monthlyCO2 <- c(matrix(rep(tmpCO2, 12), nrow = 12, byrow = T))
+    tmpCO2 <- CO2$CO2_Concentration_RCP85[is.element(CO2$Year, (yearStart+startAge):yearEnd)] # RCP8.5 should match historical readings in your timeframe
+    monthlyCO2 <- c(matrix(rep(tmpCO2, 12), nrow = 12, byrow = T))
   } 
   # All Climate
-  col_index <- c(1 + yearStartPosition:(yearStartPosition + 12 * rotationAge - 1))
+  col_index <- c(1 + yearStartPosition:(yearStartPosition +nomonths-1))
   met <- cbind(
     unlist(tMin[HUCIndex,col_index]),
     unlist(tMax[HUCIndex,col_index]),
@@ -112,23 +109,15 @@ run.3PG.quick <- function(myHUC, yearStart, yearEnd, startAge = 2, precipModifie
   if(MaxFR){
     tmpFR <- 1.0
   } else {
-      tmpFR = 1/(1+exp((FR_pars[1]*tmpSoils$MAT-FR_pars[2] * tmpSoils$SIm)))
-      #tmpFR <- 1/(1 + exp((FR_pars[1] - FR_pars[2] * tmpSoils$SIm)))
-      #tmpFR <- FR_pars[1] + FR_pars[2] * tmpSoils$SIm
-      #if(FR_uncert == TRUE){
-      #  tmpFR = rnorm(1,tmpFR,FR_pars[3])
-      #}
+    #tmpFR = 1/(1+exp((FR_pars[1]*tmpSoils$MAT-FR_pars[2] * tmpSoils$SIm)))
+    tmpFR = 0.8
   }
   
   if(Mort_uncert == TRUE){
-  pars[20] = rnorm(1,curr_pars[20],curr_pars[79])
-  pars[40] = rnorm(1,curr_pars[40],curr_pars[80])
+    pars[20] = rnorm(1,curr_pars[20],curr_pars[79])
+    pars[40] = rnorm(1,curr_pars[40],curr_pars[80])
   }
-   
-  #if(is.nan(tmpFR)){print(c(tmpFR,FR_pars[1],FR_pars[2],tmpSoils$SIm))}
-  #if(is.na(tmpFR)){print(c(tmpFR,FR_pars[1],FR_pars[2],tmpSoils$SIm))}
-  #if(is.infinite(tmpFR)){print(c(tmpFR,FR_pars[1],FR_pars[2],tmpSoils$SIm))}
-
+  
   # Initialization Inputs (+ Soil) -----------------------------------------------------
   site_in <- c(yearStart, # PlantedYear
                1, # PlantedMonth
@@ -152,104 +141,160 @@ run.3PG.quick <- function(myHUC, yearStart, yearEnd, startAge = 2, precipModifie
                2*0.2,
                IrrigRate = 0.0,
                Throughfall = 1.0,
-               tmp_site_index = 0.0) # WCRi
+               tmp_site_index = 0.0,
+               WCRi_H = 0.0,
+               Wbud_H = 0.0,
+               LAI = 0.5,
+               LAI_h = 0.01) # WCRi
   site <- array(site_in)
   site[is.na(site)] <- 0
+  nosite = length(site)
   
-  thin <- array(NA, dim = c(nomonths,2))
-  thin[is.na(thin)] <- 0
+  nmonths = nomonths-startAge*12
   
-  #--------------------------------------------------------------------------------
-  tmp <- .Fortran( "r3pg_interface",
-                   output_dim = as.integer(output_dim),
-                   met = as.double(t(met)), 
-                   pars = as.double(pars),
-                   site = as.double(site),
-                   thin = as.double(thin),
-                   out_var = as.double(array(0,dim=c(nomonths,output_dim))),
-                   nopars = as.integer(nopars),
-                   nomet = as.integer(dim(met)[2]),
-                   nosite = as.integer(length(site)),
-                   nooutputs = as.integer(output_dim),
-                   nomonths=as.integer(nomonths),
-                   nometmonths = as.integer(dim(met)[1]),
-                   nothin = as.integer(dim(thin)[1]),
-                   exclude_hardwoods = as.integer(exclude_hardwoods))
-  #-------------------------------------------------------------------------------
+  thin_event = array(0,dim=c(nmonths))
   
-  # READ IN FORTRAN OUTPUT FILE PROCESS FORTRAN OUTPUT SO THAT IT CAN BE COMPARED TO THE DATA
-  output0 <- data.frame(array(tmp$out_var, dim = c(nomonths, output_dim)))
   
-  names(output0) <- c('Year','Month','StandAge','WF','WR','WS','StemNo','LAI','delLitter','avStemMass','Vob','BasArea','avDBH','ASW','GPPdm','NPP','ANPP','pF','pR','pS','conductance','Transpiration','InterceptedRain','EvapTransp','MinASW','MaxASW','runoff','Rain','monthlyIrrig','fNutr','fT','fFrost','genetics','fCalpha','fVPD','fSW','fAge','fComp','fCg','VPD','wSmax','WF_h','WR_h','WS_h','LAI_h', 'GPPdm_h','NPP_h','ANPP_h','pF_h','pR_h','pS_h','delLitter_h','Transpiration_h','CoarseRoots','TotalBiomass','SLA','NPPplusRABG')
-  
-  # Selecting the outputs to write  
-  output <- output0[,c('StandAge','WS', 'WF', 'WR', 'CoarseRoots','LAI','SLA')]
-  
-  age_25 <- which(output$StandAge >= 24.9 & output$StandAge < 26.0)
-  output <- colMeans(output[age_25,])
+  output0 = array(NA,dim=c(nmonths,3))
+  dyn.load(code_library)
+  for(mo in 1:nmonths){
+
+    tmp=.Fortran( "r3pg_interface",
+                  output_dim=as.integer(output_dim),
+                  met=as.double(t(met[mo,])),
+                  pars=as.double(pars),
+                  site = as.double(site),
+                  thin_event = as.double(thin_event[mo]),
+                  out_var=as.double(array(0,dim=c(1,output_dim))),
+                  nopars=as.integer(nopars),
+                  nomet=as.integer(dim(met)[2]),
+                  nosite = as.integer(nosite),
+                  nooutputs=as.integer(output_dim),
+                  nomonths_plot=as.integer(1),
+                  nothin = 1,
+                  exclude_hardwoods = as.integer(1),
+                  mo_start_end = as.integer(c(1,1)),
+                  nmonths = 1
+    )
+    #--------------------------------------------------------------------------------
+    
+    output=array(tmp$out_var, dim=c(1,output_dim))
+    
+    if(length(which(is.nan(output))) == 0){
+      
+      if(output[2] == 12){
+        site[3] = output[1]+1 #InitialYear
+        site[4] = 1  #InitialMonth
+      }else{
+        site[3] = output[1] #InitialYear
+        site[4] = output[2]+1  #InitialMonth	
+      }
+      site[5] = output[3] + (1.0/12.) #StartAge
+      
+      if(is.nan(output[26]) | is.na(output[26]) | output[26] < 0 ) {
+        site[26] = 0.5 * SLA * 0.1
+        site[8] = 1
+        site[7] = 0.5
+        site[9] = 1500
+        site[20] = 0.30
+        site[6] = 0.5
+        site[27] = max(rnorm(1,output[9],curr_pars[52]),0.0)  #Hardwood LAI
+        site[25] = output[26] #Hardwood Bud
+        site[18] = rnorm(1,output[10],curr_pars[57]) #WS_H 
+        site[24] = output[11]  #WCR_h
+        site[19] = rnorm(1,output[12],curr_pars[55]) #WR_H
+        site[10] = output[14] # ASW
+        site[17] = output[23] #WF_H	
+      }else{ 
+        if(PROCESS_UNCERT){
+          site[26] = max(rnorm(1,output[4],curr_pars[52]),0.1) #LAI
+          site[8] = rnorm(1,output[5],curr_pars[53]) #WS
+          site[20] = rnorm(1,output[6],curr_pars[54])   #WCR
+          site[7] = rnorm(1,output[7],curr_pars[55])  #WRi
+          site[9] = rnorm(1,output[8],curr_pars[56]) #StemNo
+          site[6] = output[22] #WFi
+          site[27] = max(rnorm(1,output[9],curr_pars[52]),0.0)  #Hardwood LAI
+          site[25] = output[26] #Hardwood Bud
+          site[18] = rnorm(1,output[10],curr_pars[57]) #WS_H 
+          site[24] = output[11]  #WCR_h
+          site[19] = rnorm(1,output[12],curr_pars[55]) #WR_H
+          site[10] = output[14] # ASW
+          site[17] = output[23] #WF_H	
+        }else{
+          site[26] = output[4]
+          site[8] = output[5]
+          site[20] = output[6]
+          site[7] = output[7]
+          site[9] = output[8]
+          site[6] = output[22] #WFi    
+          site[27] = max(rnorm(1,output[9],curr_pars[52]),0.0)  #Hardwood LAI
+          site[25] = output[26] #Hardwood Bud
+          site[18] = rnorm(1,output[10],curr_pars[57]) #WS_H 
+          site[24] = output[11]  #WCR_h
+          site[19] = rnorm(1,output[12],curr_pars[55]) #WR_H
+          site[10] = output[14] # ASW
+          site[17] = output[23] #WF_H	
+        }
+      }
+      
+      total =  site[6] + site[8] + site[20] + site[7]
+      output0[mo,1] =output[3]
+      output0[mo,2] = site[8]
+      output0[mo,3] =  total
+      print(c(output[3],site[8],total))
+    }else{
+      site_in <- c(yearStart, # PlantedYear
+                   1, # PlantedMonth
+                   yearStart, # InitialYear
+                   1, # InitialMonth
+                   startAge, # 'EndAge', ACTUALLY THE STARTING AGE!!!
+                   .95, # WFi
+                   0.028, # WRi
+                   2, # WSi
+                   1235, # StemNoi
+                   tmpSoils$aws0150, # ASWi
+                   tmpSoils$LAT, # Lat
+                   tmpFR, # FR
+                   1, # SoilClass
+                   as.numeric(tmpSoils$aws0150), # MaxASW
+                   0, # MinASW
+                   nomonths-startAge*12, # TotalMonths
+                   0.001, # WFi_H
+                   0.001, # WSi_H
+                   0.001, # WRi_H
+                   2*0.2,
+                   IrrigRate = 0.0,
+                   Throughfall = 1.0,
+                   tmp_site_index = 0.0,
+                   WCRi_H = 0.0,
+                   Wbud_H = 0.0,
+                   LAI = 0.5,
+                   LAI_h = 0.01) # WCRi
+      
+      site = array(site_in)
+      
+      mo = 1
+    }
+    #-------------------------------------------------------------------------------
+}
+  age_25 <- which(output0[,1] >= 24.9 & output0[,1] < 26.0)
+  output <- colMeans(output0[age_25,])
   
   # Final Asembly and Output
-  finalOutput <- c(myHUC, output)
+  finalOutput <- c(myHUC, colMeans(output0[age_25,]))
   
   finalOutput
 }
 
 ## Model Runs ####-------------------------------------------------------------
 
+nsamples <- sample_size
+niter <- dim(accepted_pars_thinned_burned)[1]
+npars <- 80
+npars_used_by_fortran <- 48
+set.seed(2016)
+pars_sample_index <- sample(seq(1,niter,1),nsamples,replace = TRUE)
 
-
-if(variation_type == 'none'){
-  nsamples <- 1
-  njitters <- 1
-  # Setting up the pass to Fortran
-  niter <- dim(accepted_pars_thinned_burned)[1]
-  npars <- 80
-  npars_used_by_fortran <- 48
-  set.seed(2016)
-  pars_sample_index <- sample(seq(1,niter,1),nsamples,replace = TRUE)
-  simulations_parm_proc <- array(NA,dim = c(nsamples,7))
-  simulations_proc <- array(NA,dim = c(nsamples,5))
-}
-
-# Parameters
-if(variation_type == 'parameter_only'){
-  nsamples <- par_sample_size
-  njitters <- 1
-  # Setting up the pass to Fortran
-  niter <- dim(accepted_pars_thinned_burned)[1]
-  npars <- 80
-  npars_used_by_fortran <- 48
-  set.seed(2016)
-  pars_sample_index <- sample(seq(1,niter,1),nsamples,replace = TRUE)
-  simulations_parm_proc <- array(NA,dim = c(nsamples,7))
-  simulations_proc <- array(NA,dim = c(nsamples,5))
-}
-
-if(variation_type == 'process_only'){
-  nsamples <- 1
-  njitters <- proc_sample_size
-  # Setting up the pass to Fortran
-  niter <- dim(accepted_pars_thinned_burned)[1]
-  npars <- 80
-  npars_used_by_fortran <- 48
-  set.seed(2016)
-  pars_sample_index <- sample(seq(1,niter,1),nsamples,replace = TRUE)
-  simulations_parm_proc <- array(NA,dim = c(nsamples,7))
-  simulations_proc <- array(NA,dim = c(nsamples,5))
-}
-
-if(variation_type == 'parameter_and_process'){
-  nsamples <- par_sample_size
-  njitters <- proc_sample_size
-  # Setting up the pass to Fortran
-  niter <- dim(accepted_pars_thinned_burned)[1]
-  npars <- 80
-  npars_used_by_fortran <- 48
-  set.seed(2016)
-  pars_sample_index <- sample(seq(1,niter,1),nsamples,replace = TRUE)
-  simulations_parm_proc <- array(NA,dim = c(nsamples,7))
-  simulations_proc <- array(NA,dim = c(nsamples,5))
-}
 
 for(r in 1:length(myRCP_list)){
   
@@ -257,7 +302,6 @@ for(r in 1:length(myRCP_list)){
   myGCM = myGCM_list[r]
   yearStart = yearStart_list[r]
   yearEnd <- yearStart + rotationAge - 1
-  
   
   print(paste('Run ',r,': starting RCP ',myRCP,' for model ',myGCM,' for start year ',yearStart,sep="")) 
   
@@ -270,7 +314,7 @@ for(r in 1:length(myRCP_list)){
   npars_used_by_fortran <- 48
   pars <- curr_pars[1:npars_used_by_fortran]
   
-  noutput_variables <- 63
+  noutput_variables <- 67
   output_dim <- noutput_variables  # NUMBER OF OUTPUT VARIABLES
   nomet <- 6  # NUMBER OF VARIABLES IN METEROLOGY (met)
   nopars <- length(pars)
@@ -278,124 +322,56 @@ for(r in 1:length(myRCP_list)){
   exclude_hardwoods <- 1
   npars <- 80
   
-  
   RCP_index <- which(rcpCases == myRCP)
   base_year <- 1950
   if(RCP_index == 1){base_year <- 1979}
-
-# Climate Data Loading
-  frostDays <- read.csv(paste('/home/rqthomas/DAPER_regional_analysis/met_files/frostDays_', RCP_index,'_', myGCM,'_imput.csv', sep = ''))
-  rain <- read.csv(paste('/home/rqthomas/DAPER_regional_analysis/met_files/rain_', RCP_index,'_', myGCM,'_imput.csv', sep = ''))
-  solarRad <- read.csv(paste('/home/rqthomas/DAPER_regional_analysis/met_files/solarRad_', RCP_index,'_', myGCM,'_imput.csv', sep = ''))
-  tMax <- read.csv(paste('/home/rqthomas/DAPER_regional_analysis/met_files/tMax_', RCP_index,'_', myGCM,'_imput.csv', sep = ''))
-  tMin <- read.csv(paste('/home/rqthomas/DAPER_regional_analysis/met_files/tMin_', RCP_index,'_', myGCM,'_imput.csv', sep = ''))
   
-myHUCsFinal <- intersect(Soils$HUC12, frostDays$HUC12)
-
-#myHUCsFinal <- myHUCsFinal[which(myHUCsFinal == 31101030505 | myHUCsFinal == 30601050202 | myHUCsFinal == 111401070404 | myHUCsFinal == 20802031301)]
-
-cl <- makeCluster(nprocessors)  
-registerDoParallel(cl)
-print('starting sample loop')
-print(nsamples)
-
-# for(ns in 1:nsamples){
- final_output_GCM_RCP <- foreach(ns = 1:nsamples, .export = ls()) %dopar% { # Will need to add objects,
-  #final_output_GCM_RCP <- foreach(ns = 1:nsamples) %do% { # Will need to add objects,packages as needed
-  # Load Fortran code
-  dyn.load(code_library)
-
-  par_ns_index <- pars_sample_index[ns]
-  curr_pars <- accepted_pars_thinned_burned[par_ns_index,]
-  #curr_FR_pars <- FR_par_chain[par_ns_index,]
-  if(variation_type == 'process_only' | ns == 1){
-    curr_pars <- rep(NA,npars)
-    for(i in 1:npars){
-      curr_pars[i] <- median(accepted_pars_thinned_burned[,i]) # Taking median here, modify for bootstrapping
+  # Climate Data Loading
+  frostDays <- read.csv(paste('/Users/quinn/Documents/PINEMAP_big_files/parameter_run/Consolidated_Files_Imput/frostDays_', RCP_index,'_', myGCM,'_imput.csv', sep = ''))
+  rain <- read.csv(paste('/Users/quinn/Documents/PINEMAP_big_files/parameter_run/Consolidated_Files_Imput/rain_', RCP_index,'_', myGCM,'_imput.csv', sep = ''))
+  solarRad <- read.csv(paste('/Users/quinn/Documents/PINEMAP_big_files/parameter_run/Consolidated_Files_Imput/solarRad_', RCP_index,'_', myGCM,'_imput.csv', sep = ''))
+  tMax <- read.csv(paste('/Users/quinn/Documents/PINEMAP_big_files/parameter_run/Consolidated_Files_Imput/tMax_', RCP_index,'_', myGCM,'_imput.csv', sep = ''))
+  tMin <- read.csv(paste('/Users/quinn/Documents/PINEMAP_big_files/parameter_run/Consolidated_Files_Imput/tMin_', RCP_index,'_', myGCM,'_imput.csv', sep = ''))
+  
+  myHUCsFinal <- intersect(Soils$HUC12, frostDays$HUC12)
+  
+  #myHUCsFinal <- myHUCsFinal[which(myHUCsFinal == 31101030505 | myHUCsFinal == 30601050202 | myHUCsFinal == 111401070404 | myHUCsFinal == 20802031301)]
+  
+  cl <- makeCluster(nprocessors)  
+  registerDoParallel(cl)
+  print('starting sample loop')
+  print(nsamples)
+  
+  # for(ns in 1:nsamples){
+  final_output_GCM_RCP <- foreach(ns = 1:nsamples, .export = ls()) %dopar% { # Will need to add objects,
+    #final_output_GCM_RCP <- foreach(ns = 1:nsamples) %do% { # Will need to add objects,packages as needed
+    # Load Fortran code
+    dyn.load(code_library)
+    
+    par_ns_index <- pars_sample_index[ns]
+    curr_pars <- accepted_pars_thinned_burned[par_ns_index,]
+    if(PAR_UNCERT == FALSE){
+      curr_pars <- rep(NA,npars)
+      for(i in 1:npars){
+        curr_pars[i] <- median(accepted_pars_thinned_burned[,i]) # Taking median here, modify for bootstrapping
+      }
     }
+    
+    FR_pars = c(curr_pars[50],curr_pars[51])
+    
+    bucket <- array(NA, dim = c(length(myHUCsFinal), 3, 1)) # columns for HUC12, WF, WS, WR, CoarseRoots, and TotalBiomass
+    tmp_bucket <- array(NA, dim = c(length(myHUCsFinal), 3, 1)) # columns for HUC12, WF, WS, WR, CoarseRoots, and TotalBiomass
+    tmp <- matrix(NA, nrow = length(myHUCsFinal), ncol = 5)
+    
+    for(HUCindex in 1:length(myHUCsFinal)){
+      tmp[HUCindex,] <- run.3PG.quick(myHUC = myHUCsFinal[HUCindex], yearStart = yearStart, yearEnd = yearEnd, startAge = 2, precipModifier = 1, MaxFR = MaxFR, base_year = base_year, curr_pars = curr_pars,FR_pars = FR_pars, HOLD_CO2 = HOLD_CO2, PROCESS_UNCERT = PROCESS_UNCERT, Mort_uncert = Mort_uncert, FR_uncert = FR_uncert) 
+    }
+    
+    tmp_bucket[,1,] <- tmp[,2] 
+    tmp_bucket[,2,] <- tmp[,3]
+
+    bucket = tmp_bucket
   }
-  #FR_pars = c(FR_par_chain[par_ns_index,1],FR_par_chain[par_ns_index,2],FR_par_chain[par_ns_index,3]) 
-  #if(variation_type == 'process_only' | ns == 1){ 
-  #   FR_pars = c(median(FR_par_chain[,1]),median(FR_par_chain[,2]),median(FR_par_chain[,3])) 
-  #}
-
-  FR_pars = c(curr_pars[50],curr_pars[51])
-
-  if(njitters == 1){
-  bucket <- array(NA, dim = c(length(myHUCsFinal), 3, 1)) # columns for HUC12, WF, WS, WR, CoarseRoots, and TotalBiomass
-  tmp_bucket <- array(NA, dim = c(length(myHUCsFinal), 6, 1)) # columns for HUC12, WF, WS, WR, CoarseRoots, and TotalBiomass
-  }else{
-  bucket <- array(NA, dim = c(length(myHUCsFinal), 3, (njitters+1))) # columns for HUC12, WF, WS, WR, CoarseRoots, and TotalBiomass
-  tmp_bucket <- array(NA, dim = c(length(myHUCsFinal), 6, (njitters+1))) # columns for HUC12, WF, WS, WR, CoarseRoots, and TotalBiomass
-  }
-  tmp <- matrix(NA, nrow = length(myHUCsFinal), ncol = 8)
-  for(HUCindex in 1:length(myHUCsFinal)){
-    # bucket[HUCindex,,ns] 
-    tmp[HUCindex,] <- run.3PG.quick(myHUC = myHUCsFinal[HUCindex], yearStart = yearStart, yearEnd = yearEnd, startAge = 2, precipModifier = 1, MaxFR = MaxFR, base_year = base_year, curr_pars = curr_pars,FR_pars = FR_pars, HOLD_CO2 = HOLD_CO2, Mort_uncert = Mort_uncert, FR_uncert = FR_uncert) 
-  }
-  tmp <- tmp[, -2]
-  # c('HUC12','StandAge','WS', 'WF', 'WR', 'CoarseRoots')
-  # c('HUC12', 'WS', 'WF', 'WR', 'CoarseRoots')
-  
-  # if(variation_type == 'parameter_only') # Possibly add a special case here?
-  # HUC 12
-if(njitters == 1){
-
-
-  tmp_bucket[,1,] <- tmp[,1] 
-
-  # WS
-  tmp_bucket[,2,] <- tmp[,2]
-
-  #WF
-  #BECAUSE THE PROCESS ERROR WAS CALCULATED ON LAI RATHER THAN WF, THE PROCESS ERROR NEEDS TO BE APPLIED TO LAI AND THEN CONVERTED TO WF USING SLA
-  #tmp_bucket[,3,] <- tmp[,6]
-  #SLA = 0.1*tmp[,7]
-  
-  SLA = curr_pars[7] + (curr_pars[7] - curr_pars[8]) * exp(-0.693147181 * (25 / curr_pars[9])**2)
-  tmp_bucket[,3,] <- tmp[,6]/(0.1*SLA)
-
-  # WR
-  tmp_bucket[,4,] <- tmp[,4]
-
-  # CoarseRoots
-  tmp_bucket[,5,]  <- tmp[,5]
-  #Total Sums 
-  tmp_bucket[,6,] <- rowSums(tmp_bucket[, -c(1,6),], c(3))
-}else{
- 
- tmp_bucket[,1,] <- tmp[,1]
- #tmp_bucket[,1,2:(njitters+1)] <- matrix(tmp[,1], nrow = length(myHUCsFinal), ncol = njitters)
-
-  # WS
-  tmp_bucket[,2,1] <- tmp[,2]
-  tmp_bucket[,2,2:(njitters+1)] <- matrix(rnorm(njitters * length(myHUCsFinal), mean = tmp[,2], sd = curr_pars[53] + curr_pars[66] * tmp[,2]), ncol = njitters)
-
-  #WF
-  #BECAUSE THE PROCESS ERROR WAS CALCULATED ON LAI RATHER THAN WF, THE PROCESS ERROR NEEDS TO BE APPLIED TO LAI AND THEN CONVERTED TO WF USING SLA
-  SLA = curr_pars[7] + (curr_pars[7] - curr_pars[8]) * exp(-0.693147181 * (25 / curr_pars[9])**2)
-
-  #THIS WORKS BECAUSE SLA DEPENDES ON AGE AND ALL HUCS HAVE THE SAME AGE
-  tmp_bucket[,3,1] = tmp[,6]/(0.1*SLA)
-  tmp_bucket[,3,2:(njitters+1)] <- matrix(rnorm(njitters * length(myHUCsFinal), mean = tmp[,6], sd = curr_pars[57]), ncol = njitters)/(0.1*SLA)
-
-  # WR
-  tmp_bucket[,4,1] <- tmp[,4]
-  tmp_bucket[,4,2:(njitters+1)] <- matrix(rnorm(njitters * length(myHUCsFinal), mean = tmp[,4], sd = curr_pars[58]), ncol = njitters)
-
-  # CoarseRoots
-  tmp_bucket[,5,1] <- tmp[,5]
-  tmp_bucket[,5,2:(njitters+1)] <- matrix(rnorm(njitters * length(myHUCsFinal), mean = tmp[,5], sd = curr_pars[61]), ncol = njitters)
-
-
-  # TotalBiomass
-      tmp_bucket[,6,] <- apply(tmp_bucket[, -c(1,6),], c(3), rowSums, na.rm = T)
-}
-  bucket[,1,] = tmp_bucket[,1,]
-  bucket[,2,] = tmp_bucket[,2,]
-  bucket[,3,] = tmp_bucket[,6,]
-  
-  bucket
 }
 stopCluster(cl)
 
@@ -404,74 +380,6 @@ big_bucket <- array(unlist(final_output_GCM_RCP), dim = c(dim(final_output_GCM_R
 rm(frostDays, rain, solarRad, tMax, tMin)
 
 save.image(file = paste('/work/newriver/rqthomas/DAPER_regional_analysis/3PG_runs_for_', variation_type, '_using_', nsamples, '_paramter_draws_and_', njitters, '_process_error_draws_based_on_', myGCM, '_and_', myRCP,'_and_startyear_of_',yearStart,'_FRset_',maxFR,'_HOLDCO2_',HOLD_CO2,'.Rdata', sep = ''))      
-
-#library(tidyr)
-#library(dplyr)
-#library(readr)
-#library(foreach)
-
-#load(paste('3PG_runs_for_', variation_type, '_using_', nsamples, '_paramter_draws_and_', njitters, '_process_error_draws_based_on_', myGCM, '_and_', myRCP, '.Rdata'))
-#load('3PG_runs_for_parameter_and_process_using_10_paramter_draws_and_10_process_error_draws_based_on_metdata_and_baseline.Rdata')
-
-#summarise.by.HUC <- function(HUC_index, var_index = 2, method = 'all', summary_function = function(x){mean(x, na.rm = T)}, my_data = big_bucket, ...){
-#  # my_HUC <- my_data[HUC_index,2,1,1]
-#
-#   tmp <- my_data[HUC_index, var_index, , ]
-#
-#  output <- NA
-#
-#  if(method == 'all'){
-#    parameter_stats <- apply(tmp, 1, FUN = summary_function)
-#    proc_stats <- apply(tmp, 2, FUN = summary_function)
-#    par_and_proc_stats <- summary_function(c(tmp))
-#
-#    output <- c(parameter_stats, proc_stats, par_and_proc_stats)
-#  }
-#
-#  if(method == 'par'){
-#    parameter_stats <- apply(tmp, 1, FUN = summary_function)
-#    output <- c(parameter_stats)
-#  }
-#
-#  if(method == 'process'){
-#    proc_stats <- apply(tmp, 2, FUN = summary_function)
-#    output <- c(proc_stats)
-#  }
-#
-#  if(method == 'par_and_proc'){
-#    par_and_proc_stats <- summary_function(c(tmp))
-#
-#    output <- c(par_and_proc_stats)
-#  }
-#
-#  output
-#}
-
-
-
-#summarise.by.HUC(sample(1:nrow(big_bucket), 1), method = 'par_and_proc')
-
-#summarise.by.HUC(sample(1:nrow(big_bucket), 1), method = 'par_and_proc', summary_function = sd)
-
-#test_output <- foreach(HUC_index = 1:nrow(big_bucket), .combine = 'rbind') %do% {i
-#  summarise.by.HUC(HUC_index, var_index = 3,method = 'par_and_proc', summary_function = mean)
-#}
-
-#test_output_df <- tbl_df(cbind(big_bucket[,1,1,1], test_output))
-#names(test_output_df) <- c('HUC12', 'par_mean')
-
-#write.csv(test_output_df, paste('MEAN_3PG_runs_for_', variation_type, '_using_', nsamples, '_paramter_draws_and_', njitters, '_process_error_draws_based_on_', myGCM, '_and_', myRCP,'_and_startyear_of_',yearStart,'.csv',sep=''))
-
-#test_output <- foreach(HUC_index = 1:nrow(big_bucket), .combine = 'rbind') %do% {
-#  summarise.by.HUC(HUC_index, var_index = 3, method = 'par_and_proc', summary_function = sd)
-#}
-
-#test_output_df <- tbl_df(cbind(big_bucket[,1,1,1], test_output))
-#names(test_output_df) <- c('HUC12', 'par_sd')
-
-#write.csv(test_output_df, paste('SD_3PG_runs_for_', variation_type, '_using_', nsamples, '_paramter_draws_and_', njitters, '_process_error_draws_based_on_', myGCM, '_and_', myRCP,'_and_startyear_of_',yearStart,'.csv',sep=''))
-}
-
 
 
 
