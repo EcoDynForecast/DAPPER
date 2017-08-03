@@ -2,7 +2,7 @@
 #---CONTROL INFORMATION----------------------------
 working_directory = '/Users/quinn/Dropbox (VTFRS)/Research/DAPPER'
 input_directory = '/Users/quinn/Dropbox (VTFRS)/Research/DAPPER_inputdata/'
-run_name = 'with_trans'
+run_name = 'with_trans_process'
 #restart_chain = 'duke_state_space_without_trans_2.1.2017-07-21.13.19.13.Rdata'
 restart_chain = 'test4.1.2017-08-01.11.54.11.Rdata'
 priors_file = 'default_priors.csv'
@@ -184,7 +184,7 @@ for(p in 1:npars){
   median_pars[p] = median(accepted_pars_thinned_burned[,p])
 }
 
-use_median_pars = FALSE
+use_median_pars = TRUE
 
 for(s in 1:nsamples){
   
@@ -474,11 +474,11 @@ plot(modeled_age,runoff_quant[,2],type='l',ylim=range(runoff_quant), xlab = 'Sta
 polygon(c(modeled_age,rev(modeled_age)),c(runoff_quant[,1],rev(runoff_quant[,3])),col="lightblue",border=NA)
 points(modeled_age,runoff_quant[,2],type='l',col="blue",lwd=1)
 
-plot(modeled_age,WUE_ctrans_quant[,2],type='l',ylim=range(c(WUE_ctrans_quant)), xlab = 'Stand Age',ylab = 'WUE (Transpiration)')
+plot(modeled_age,WUE_ctrans_quant[,2],type='l',ylim=range(c(WUE_ctrans_quant)), xlab = 'Stand Age',ylab = 'WUE (ET)')
 polygon(c(modeled_age,rev(modeled_age)),c(WUE_ctrans_quant[,1],rev(WUE_ctrans_quant[,3])),col="lightblue",border=NA)
 points(modeled_age,WUE_ctrans_quant[,2],type='l',col="blue",lwd=1)
 
-plot(modeled_age,WUE_ET_quant[,2],type='l',ylim=range(c(WUE_ET_quant)), xlab = 'Stand Age',ylab = 'WUE (ET)')
+plot(modeled_age,WUE_ET_quant[,2],type='l',ylim=range(c(WUE_ET_quant)), xlab = 'Stand Age',ylab = 'WUE (Transpiration')
 polygon(c(modeled_age,rev(modeled_age)),c(WUE_ET_quant[,1],rev(WUE_ET_quant[,3])),col="lightblue",border=NA)
 points(modeled_age,WUE_ET_quant[,2],type='l',col="blue",lwd=1)
 

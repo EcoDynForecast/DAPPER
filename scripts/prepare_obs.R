@@ -30,7 +30,7 @@ prepare_obs <- function(obs_set,FR_fert_assumption,use_fol){
                               initdata$PlotID != 11311  &
                               initdata$PlotID != 11392), ]
   
-  initdata = initdata[which(initdata$MeasureLength > 1), ]
+  initdata = initdata[which(initdata$MeasureLength > 1 | initdata$MeasureLength == -99), ]
   
   initdata = initdata[which(initdata$ThinTreatment == 1 | initdata$ThinTreatment == 0), ]
 
