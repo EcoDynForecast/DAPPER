@@ -32,7 +32,7 @@ prepare_obs <- function(obs_set,FR_fert_assumption,use_fol){
   
   initdata = initdata[which(initdata$MeasureLength > 1 | initdata$MeasureLength == -99), ]
   
-  initdata = initdata[which(initdata$ThinTreatment == 1 | initdata$ThinTreatment == 0), ]
+  #initdata = initdata[which(initdata$ThinTreatment == 1 | initdata$ThinTreatment == 0), ]
 
   initdata = data.frame(PlotID = initdata$PlotID,SiteID = initdata$SiteID,LAT_WGS84=initdata$LAT_WGS84,
                         Planting_year = initdata$Planting_year,PlantMonth = initdata$PlantMonth,
@@ -45,7 +45,7 @@ prepare_obs <- function(obs_set,FR_fert_assumption,use_fol){
                         Mean_temp = initdata$mean_annual_temp,mean_precip = initdata$mean_annual_precip, MatchedFRPlotID = initdata$matched_FR_plotid, 
                         InitYear = initdata$Initial_year,InitMonth = initdata$Initial_month, StartAge = initdata$Initial_age,Initial_WCR = initdata$Initial_WCR,
                         IrrFlag = initdata$IrrFlag,IrrLevel = initdata$IrrLevel,Initial_LAI = initdata$Initial_LAI,Initial_LAI_code = initdata$Initial_LAI_code,
-                        Initial_WR_code = initdata$Initial_WR_code, StudyName = initdata$StudyName, Treatment = initdata$Treatment)
+                        Initial_WR_code = initdata$Initial_WR_code, StudyName = initdata$StudyName, Treatment = initdata$Treatment, ThinTreatment = initdata$ThinTreatment)
   
 
   initdata$SoilClass = 1.0 
@@ -134,6 +134,7 @@ prepare_obs <- function(obs_set,FR_fert_assumption,use_fol){
   
   observations = observations[observations$PlotID %in% initdata$PlotID, ]
   
+
   #-----------------------------------------------------------------
   #  Remove foliage data for treatment plots because based on model
   for(i in 1:length(observations$FOL)){

@@ -76,8 +76,8 @@ if(windows_machine){
   code_library_iter = paste(working_directory,'/source_code/DAPPER_MCMC.dll',sep='')
   code_library_plot = paste(working_directory,'/source_code/r3pg_interface.dll',sep='')
 }else{
-code_library_iter = paste(working_directory,'/source_code/DAPPER_MCMC.so',sep='')
-code_library_plot = paste(working_directory,'/source_code/r3pg_interface.so',sep='')
+  code_library_iter = paste(working_directory,'/source_code/DAPPER_MCMC.so',sep='')
+  code_library_plot = paste(working_directory,'/source_code/r3pg_interface.so',sep='')
 }
 
 final_pdf = paste(working_directory,'/figures/',run_name,'_chain_',chain_number,'.pdf',sep='')
@@ -109,20 +109,34 @@ init_uncert = state_space_obs$init_uncert
 
 thin_event = array(0,dim=c(nplots,nmonths))
 for(plotnum in 1:nplots){
-  prev_nha = obs[5,plotnum,which(obs[5,plotnum,]!=-99)][1] 
+  tmp_initdata = initdata[which(initdata$PlotID == plotlist[plotnum]),]
+  prev_nha = init_obs[5,plotnum]
+  thin_occured = 0
   for(mo in (mo_start_end[plotnum,1]+1):mo_start_end[plotnum,2])
     if(obs[5,plotnum,mo] != -99){
       thin_event[plotnum,mo-1] =  prev_nha - obs[5,plotnum,mo] 
-      if(thin_event[plotnum,mo-1] < 200){
+      if(plotlist[plotnum] > 20000 & plotlist[plotnum] < 41000){
+        thin_event[plotnum,mo-1] = 0.0
+      }
+      if(plotlist[plotnum] > 42000 & plotlist[plotnum] < 50000){
+        thin_event[plotnum,mo-1] = 0.0
+      }
+      if(plotlist[plotnum] > 10000 & plotlist[plotnum] < 20000 & tmp_initdata$ThinTreatment == 1){
+        thin_event[plotnum,mo-1] = 0.0
+      }
+      if(plotlist[plotnum] > 10000 & plotlist[plotnum] < 20000 & tmp_initdata$ThinTreatment > 1 & thin_occured == 1){
         thin_event[plotnum,mo-1] = 0.0
       }
       prev_nha = obs[5,plotnum,mo]
+      if(thin_event[plotnum,mo-1]  > 0){
+        thin_occured = 1
+      }
     }
 }
 
-if(length(which(plotlist != 41001))>0){
-  thin_event[which(plotlist != 41001),] =0.0
-}
+#if(length(which(plotlist != 41001))>0){
+#  thin_event[which(plotlist != 41001),] =0.0
+#}
 
 
 #----SET CONTROL PLOT INDEX---------------------------------------
@@ -197,16 +211,16 @@ if(restart_from_chain){ #start from a previously run chain
   #if the chain number is > 1 then start from a random location along previous chain
   #if the chain number is 1 then start from the end of the previous chain
   if(chain_number == 1){
-  	rm(jump_pars)
-  	load(paste(working_directory,'/chains/',restart_chain,sep=''))
-  	max_iter = dim(accepted_pars_thinned_burned)[1]
-  	init_pars=accepted_pars_thinned_burned[max_iter,]
+    rm(jump_pars)
+    load(paste(working_directory,'/chains/',restart_chain,sep=''))
+    max_iter = dim(accepted_pars_thinned_burned)[1]
+    init_pars=accepted_pars_thinned_burned[max_iter,]
   }else{
-  	rm(jump_pars)
-  	load(paste(working_directory,'/chains/',restart_chain,sep=''))
-  	max_iter = dim(accepted_pars_thinned_burned)[1]
-  	s = sample(1,seq(1,max_iter,1))
-  	init_pars=accepted_pars_thinned_burned[s,]
+    rm(jump_pars)
+    load(paste(working_directory,'/chains/',restart_chain,sep=''))
+    max_iter = dim(accepted_pars_thinned_burned)[1]
+    s = sample(1,seq(1,max_iter,1))
+    init_pars=accepted_pars_thinned_burned[s,]
   }
 }
 
@@ -223,78 +237,78 @@ tracked_plot = array(-99, dim=c(length(sample_index),nstreams,nmonths))
 #------RUN FORTRAN CODE---------------------------------
 if(only_create_plot == FALSE){
   #----LOAD FORTRAN CODE------------------------------------
-    dyn.load(code_library_iter)
-    ptm <- proc.time()
-    print('--- RUNNING MCMC---')
-    fortran_output=.Fortran("DAPPER_MCMC"
-                              ,nopars = as.integer(length(init_pars))
-                              ,nplots	= as.integer(nplots)
-                              ,initdata_dim =  as.integer(dim(initdata[,1:34])[2])
-                              ,control_plot_index = as.integer(control_plot_index)
-                              ,index_guide = as.integer(index_guide)
-                              ,nosamples = as.integer(length(sample_index))
-                              ,sample_index = as.integer(sample_index)
-                              ,exclude_hardwoods = as.integer(exclude_hardwoods)
-                              ,fit_plot = as.integer(fit_plot)
-                              ,matched_FR_plot_index = as.integer(matched_FR_plot_index)
-                              ,par_group =  as.integer(par_group)
-                              ,control_pars = c(as.integer(niter),
-                                                              as.integer(start_adapt),
-                                                              as.integer(cost_type),
-                                                              as.integer(fr_model),
-                                                              as.integer(high_freq_obs),
-                                                              as.integer(obs_uncertainity),
-                                                              as.integer(use_dk_pars),
-                                                              as.integer(use_age_edc),
-                                                              as.integer(use_fr_edc),
-                                                              as.integer(use_sm_edc),
-                                                              as.integer(state_space))
-                              ,npar_groups = as.integer(npar_groups)
-                              ,data_uncertainity_npar_group  = as.integer(data_uncertainity_npar_group)
-                              ,nstreams = as.integer(nstreams)
-                              ,nmonths = as.integer(nmonths)
-                              ,years = as.integer(years)
-                              ,months =as.integer(months)
-                              ,mo_start_end = as.integer(mo_start_end)
-                              ,met = as.double(met)
-                              ,initdata =data.matrix(initdata[,1:34])
-                              ,obs = as.double(obs)
-                              ,thin_event =as.double(thin_event)
-                              ,init_pars = as.double(init_pars)
-                              ,prior_parameter1 = as.double(prior_parameter1)
-                              ,prior_parameter2 = as.double(prior_parameter2)
-                              ,prior_dist = as.double(prior_dist)
-                              ,fix_par = as.double(fix_par)
-                              ,obs_uncert = as.double(obs_uncert)
-                              ,latent = as.double(latent)
-                              ,jump_pars = as.double(jump_pars)
-                              ,pnow = as.double(pnow)
-                              ,accepted_pars_thinned_burned = as.double(accepted_pars_thinned_burned)
-                              ,like_chain = as.double(like_chain)
-                              ,current_like = as.double(current_like)
-                              ,init_obs = as.double(init_obs)
-                              ,init_uncert = as.double(init_uncert)
-                              ,tracked_plot = as.double(tracked_plot)
-                              ,tracked_plotnum = as.integer(tracked_plotnum)
-                              ,obs_gap = as.integer(obs_gap)
-                              ,obs_gap_next = as.integer(obs_gap_next)
-                              ,use_fol_state = as.integer(use_fol_state))
-    
-    print(proc.time() - ptm)
-    
-    
-    #-----------------------------------------------------------------
-    
-    #-----PROCESS FORTRAN OUTPUT--------------------------------------
-    
-    accepted_pars_thinned_burned=array(fortran_output$accepted_pars_thinned_burned, dim=c(length(sample_index),length(init_pars)))
-    jump_pars = array(fortran_output$jump_pars,dim=c(as.integer(length(init_pars))))
-    pnow = fortran_output$pnow
-    like_chain = array(fortran_output$like_chain,dim=c(length(sample_index)))
-    current_like = fortran_output$current_like  
-    latent = array(fortran_output$latent,dim=c(nstreams,nplots,nmonths))
-    tracked_plot = array(fortran_output$tracked_plot, dim=c(length(sample_index),nstreams,nmonths))
-    
+  dyn.load(code_library_iter)
+  ptm <- proc.time()
+  print('--- RUNNING MCMC---')
+  fortran_output=.Fortran("DAPPER_MCMC"
+                          ,nopars = as.integer(length(init_pars))
+                          ,nplots	= as.integer(nplots)
+                          ,initdata_dim =  as.integer(dim(initdata[,1:34])[2])
+                          ,control_plot_index = as.integer(control_plot_index)
+                          ,index_guide = as.integer(index_guide)
+                          ,nosamples = as.integer(length(sample_index))
+                          ,sample_index = as.integer(sample_index)
+                          ,exclude_hardwoods = as.integer(exclude_hardwoods)
+                          ,fit_plot = as.integer(fit_plot)
+                          ,matched_FR_plot_index = as.integer(matched_FR_plot_index)
+                          ,par_group =  as.integer(par_group)
+                          ,control_pars = c(as.integer(niter),
+                                            as.integer(start_adapt),
+                                            as.integer(cost_type),
+                                            as.integer(fr_model),
+                                            as.integer(high_freq_obs),
+                                            as.integer(obs_uncertainity),
+                                            as.integer(use_dk_pars),
+                                            as.integer(use_age_edc),
+                                            as.integer(use_fr_edc),
+                                            as.integer(use_sm_edc),
+                                            as.integer(state_space))
+                          ,npar_groups = as.integer(npar_groups)
+                          ,data_uncertainity_npar_group  = as.integer(data_uncertainity_npar_group)
+                          ,nstreams = as.integer(nstreams)
+                          ,nmonths = as.integer(nmonths)
+                          ,years = as.integer(years)
+                          ,months =as.integer(months)
+                          ,mo_start_end = as.integer(mo_start_end)
+                          ,met = as.double(met)
+                          ,initdata =data.matrix(initdata[,1:34])
+                          ,obs = as.double(obs)
+                          ,thin_event =as.double(thin_event)
+                          ,init_pars = as.double(init_pars)
+                          ,prior_parameter1 = as.double(prior_parameter1)
+                          ,prior_parameter2 = as.double(prior_parameter2)
+                          ,prior_dist = as.double(prior_dist)
+                          ,fix_par = as.double(fix_par)
+                          ,obs_uncert = as.double(obs_uncert)
+                          ,latent = as.double(latent)
+                          ,jump_pars = as.double(jump_pars)
+                          ,pnow = as.double(pnow)
+                          ,accepted_pars_thinned_burned = as.double(accepted_pars_thinned_burned)
+                          ,like_chain = as.double(like_chain)
+                          ,current_like = as.double(current_like)
+                          ,init_obs = as.double(init_obs)
+                          ,init_uncert = as.double(init_uncert)
+                          ,tracked_plot = as.double(tracked_plot)
+                          ,tracked_plotnum = as.integer(tracked_plotnum)
+                          ,obs_gap = as.integer(obs_gap)
+                          ,obs_gap_next = as.integer(obs_gap_next)
+                          ,use_fol_state = as.integer(use_fol_state))
+  
+  print(proc.time() - ptm)
+  
+  
+  #-----------------------------------------------------------------
+  
+  #-----PROCESS FORTRAN OUTPUT--------------------------------------
+  
+  accepted_pars_thinned_burned=array(fortran_output$accepted_pars_thinned_burned, dim=c(length(sample_index),length(init_pars)))
+  jump_pars = array(fortran_output$jump_pars,dim=c(as.integer(length(init_pars))))
+  pnow = fortran_output$pnow
+  like_chain = array(fortran_output$like_chain,dim=c(length(sample_index)))
+  current_like = fortran_output$current_like  
+  latent = array(fortran_output$latent,dim=c(nstreams,nplots,nmonths))
+  tracked_plot = array(fortran_output$tracked_plot, dim=c(length(sample_index),nstreams,nmonths))
+  
   #-----------------------------------------------------------------
   
   #---SAVE CHAIN AS AN R BINARY-------------------------------------
