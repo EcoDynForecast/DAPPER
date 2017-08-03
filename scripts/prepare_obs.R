@@ -32,7 +32,7 @@ prepare_obs <- function(obs_set,FR_fert_assumption,use_fol){
   
   initdata = initdata[which(initdata$MeasureLength > 1), ]
   
-  initdata = initdata[which(initdata$ThinTreatment == 1), ]
+  initdata = initdata[which(initdata$ThinTreatment == 1 | initdata$ThinTreatment == 0), ]
 
   initdata = data.frame(PlotID = initdata$PlotID,SiteID = initdata$SiteID,LAT_WGS84=initdata$LAT_WGS84,
                         Planting_year = initdata$Planting_year,PlantMonth = initdata$PlantMonth,
