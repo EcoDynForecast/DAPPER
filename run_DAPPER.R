@@ -12,7 +12,7 @@ restart_chain = 'state_space.1.2017-06-25.16.52.16.Rdata'
 priors_file = 'default_priors.csv'
 create_plot = TRUE
 only_create_plot = FALSE
-obs_set = 21 #Select which plots are used in analysis.  See prepare_obs.R for number guide 
+obs_set = 23 #Select which plots are used in analysis.  See prepare_obs.R for number guide 
 focal_plotID = NA #30001 #Setting a value here causes only a single plot to be simulated and fit
 val_set = 0  #Select which plots are withheld from fitting.  0 includes all plot
 fr_model = 1  # 1 = estimate FR for each plot, 2 = empirical FR model
@@ -49,7 +49,7 @@ all_studies = c(
   #'/FPC_RS6/TIER1_RS6',
   #'/FPC_RS7/TIER1_RS7',
   #'/FPC_RS8/TIER1_RS8',
-  '/FPC_RW18/TIER2_RW18'
+  '/FPC_RW18/TIER2_RW18',
   #'/FPC_RW19/TIER2_RW19',
   #'/FPC_RW20/TIER2_RW20',
   #'/PMRC_CPCD96_TIER1/TIER1_CPCD96',
@@ -62,7 +62,7 @@ all_studies = c(
   #'/PMRC_WGCD01_TIER1/TIER1_WGCD01',
   #'/PMRC_WGCD01_TIER2/TIER2_WGCD01',
   #'/TAMU_GSSS/TIER1_GSSS'
-  #'/FIA/VA_FIA'
+  '/FIA/VA_FIA'
 )
 
 #---SELECT COMPONENTS THAT ARE ALLOWED TO HAVE UNCERTAINITY--
