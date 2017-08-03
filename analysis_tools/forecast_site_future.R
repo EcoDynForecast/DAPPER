@@ -2,12 +2,10 @@
 #---CONTROL INFORMATION----------------------------
 working_directory = '/Users/quinn/Dropbox (VTFRS)/Research/DAPPER'
 input_directory = '/Users/quinn/Dropbox (VTFRS)/Research/DAPPER_inputdata/'
-run_name = 'with_trans_future_par_process'
+run_name = 'test'
 #restart_chain = 'duke_state_space_without_trans_2.1.2017-07-21.13.19.13.Rdata'
 restart_chain = 'test4.1.2017-08-01.11.54.11.Rdata'
 priors_file = 'default_priors.csv'
-obs_set = 14 #14 #Select which plots are used in analysis.  See prepare_obs.R for number guide 
-focal_plotID = 30001 #14 #Select which plots are used in analysis.  See prepare_obs.R for number guide 
 fr_model = 1  # 1 = estimate FR for each plot, 2 = empirical FR model
 FR_fert_assumption = 0 #0 = assume fertilization plots have FR = 1, 1 = do not assume fertilization plots have FR = 1
 use_fol = TRUE  #TRUE= use allometric estimates of foliage biomass in fitting
@@ -21,21 +19,24 @@ load(paste(working_directory,'/chains/',restart_chain,sep=''))
 
 outfile = paste(working_directory,'/figures/',run_name,'.Rdata',sep='')
 
+plotlist = c(30001,30018,30049,30041)
+sitelist = c(30001,30002,30003,30004)
+statelist = c('FL','GA','VA','OK')
+
 rcp = 85
-plotlist = c(30041) #c(30018)
+plotlist = c(30018) #c(30018)
+plotnum = 3
 focal_plotID = plotlist
-sitelist = c(30004) #c(30002)
-statelist = c('OK') #c('GA')
 plotSI = c(15.49341)
 plotMaxASW = c(141)
-hucnum = c(2075) #c(420) #set to: 1075 for FL, 420 for GA, 980 for VA, 2075 for OK
 climate_data_index = c(1,1)
-clim_model = seq(1,20,1)
+clim_model = 1 #seq(1,20,1)
 startyear = c(1980,2030)
 adjust_rain = c(1,1)
 adjust_fert =c(0,0)
 adjust_CO2 = c(0,0) 
 PROCESS_UNCERT = TRUE
+PARAMETER_UNCERT = TRUE
 HOLD_CO2 = FALSE
 
 
@@ -105,18 +106,6 @@ co2_in = obs_list$co2_in
 use_fol_state = obs_list$use_fol_state
 #-------------------------------------------------
 
-
-#----SET CONTROL PLOT INDEX---------------------------------------
-# this assigns the control plot to match with the treatment plot
-
-control_list = assign_control_plots(nplots,initdata,plotlist)
-control_plot_index =  control_list$control_plot_index
-matched_FR_plot_index = control_list$matched_FR_plot_index
-
-
-
-
-
 #-----INDEXING FOR THE PARAMETER VECTOR--------------------------
 # this helps speed up the analysis -----------------------------
 co2_in = read.csv('/Users/quinn/Dropbox/Research/PINEMAP/DAPER_development/DAPER_master/DAPER_simple/climate_data/CO2_Concentrations_from_CMIP5_1950-2095.csv')
@@ -159,37 +148,39 @@ for(p in 1:npars){
 
 use_median_pars = FALSE
 
+start_age = 2
+WFi = 1 #"WFi"
+WSi = 2 #"WSi"
+WCRi = 0.6
+WRi = 0.5 #"WRi"
+StemNum = 1500 #"StemNoi"
+
 for(s in 1:nsamples){
-  if(use_median_pars){
+  if(PARAMETER_UNCERT == FALSE){
     new_pars = median_pars
   }else{
     curr_sample = sample(seq(1,length(accepted_pars_thinned_burned[,1])),1)   
     new_pars = accepted_pars_thinned_burned[curr_sample,]
   }
   pars = new_pars[1:npars_used_by_fortran]
-  
-  new_FR = plotFR
-  
+
   for(m in 1:nmodels){
     
-    curr_model = clim_model[curr_model]
+    curr_model = clim_model[m]
     
     for(yearnum in 1:nperiods){
-      
-
-      
+    
       #--- CREATE CLIMATE INPUT ARRAYS --------------------------------
       if(climate_data_index[yearnum] == 1){
         
-        
-        
+      
         curr_met_in_frost = met_in_frost[which(met_in_model == curr_model & met_in_plotnum == plotnum),]
         curr_met_in_pr =  met_in_pr[which(met_in_model == curr_model & met_in_plotnum == plotnum),]
         curr_met_in_tasmax =  met_in_tasmax[which(met_in_model == curr_model & met_in_plotnum == plotnum),]
         curr_met_in_tasmin = met_in_tasmin[which(met_in_model == curr_model & met_in_plotnum == plotnum),]
         curr_met_in_rsds =  met_in_rsds[which(met_in_model == curr_model & met_in_plotnum == plotnum),]
         
-        nyears = 25
+        nyears = 25 - start_age
         nmonths = nyears*12
         met = array(NA,c(nmonths,6))
         yrnum = startyear[yearnum] - 1950
@@ -248,33 +239,11 @@ for(s in 1:nsamples){
       tmp_initdata = initdata[plotnum,]
       
       PlotID = initdata[plotnum,1]
-      SiteID = initdata[plotnum,2]
       LAT_WGS84=initdata[plotnum,3]
-      Planting_year = initdata[plotnum,4]
-      PlantMonth = initdata[plotnum,5]
-      PlantDensityHa = initdata[plotnum,6]
-      Initial_ASW = initdata[plotnum,7]
       ASW_min = initdata[plotnum,8]
       ASW_max=initdata[plotnum,9]
       SoilClass = initdata[plotnum,10]
       SI = initdata[plotnum,11]
-      FR = initdata[plotnum,12]
-      Initial_WF = initdata[plotnum,13]
-      Initial_WS = initdata[plotnum,14]
-      Initial_WR = initdata[plotnum,15]
-      DroughtLevel = initdata[plotnum,16]
-      DroughtStart = initdata[plotnum,17]
-      FertFlag=initdata[plotnum,18]
-      CO2flag = initdata[plotnum,19]
-      CO2elev = initdata[plotnum,20]
-      ControlPlotID = initdata[plotnum,21]
-      Initial_WF_H = initdata[plotnum,22]
-      Initial_WS_H =initdata[plotnum,23]
-      Initial_WR_H =initdata[plotnum,24]
-      InitialYear = initdata[plotnum,29]
-      InitialMonth = initdata[plotnum,30]
-      StartAge = initdata[plotnum,31] 
-      IrrFlag = initdata[plotnum,33] 
       Mean_temp = initdata[plotnum,26]
       
       
@@ -293,45 +262,41 @@ for(s in 1:nsamples){
       WSi_H = initdata[plotnum,23]
       WRi_H = initdata[plotnum,24]
       
-      StemNum = PlantDensityHa
-      nomonths_plot = mo_start_end[plotnum,2] - mo_start_end[plotnum,1]+1
-      
       #READ IN SITE DATA FROM FILE BASED ON PLOTNUM
       Lat = LAT_WGS84
       ASWi = ASW_max
       MaxASW = ASW_max
       MinASW = ASW_min
       SoilClass=SoilClass
-      if(FertFlag == 1 | fr_model == 1){
-        FR = new_FR
-      }else{
-        FR = 1/(1+exp((new_pars[49] + new_pars[50]*Mean_temp-new_pars[51]*SI)))
-      }
+      
+      #if(FertFlag == 1 | fr_model == 1){
+      #  FR = new_FR
+      #}else{
+      #  FR = 1/(1+exp((new_pars[49] + new_pars[50]*Mean_temp-new_pars[51]*SI)))
+      #}
+      
+      FR = plotFR
       
       if(initdata[plotnum,12] == 1) { FR = 1}
       
-      IrrigRate = 0.0
-      if(IrrFlag == 1){
-        IrrigRate = (658/9)
-      }
       
       tmp_site_index = 0
       if(PlotID > 40000 & PlotID < 41000 & use_dk_pars == 1){
         tmp_site_index = 1
       }
       
-      SLA = 3.5754 + (5.4287 - 3.5754) * exp(-log(2) * (StartAge / 5.9705)^2)
+      SLA = 3.5754 + (5.4287 - 3.5754) * exp(-log(2) * (start_age / 5.9705)^2)
       SLA_h = 16.2
       
       site_in = c(PlantedYear, #PlantedYear
                   PlantedMonth, #"PlantedMonth"
                   InitialYear, #"InitialYear"
                   InitialMonth, #"InitialMonth"
-                  1, #"EndAge"
-                  WFi = 0.5, #"WFi"
-                  WRi = 0.5, #"WRi"
-                  WSi = 1, #"WSi"
-                  StemNum = 1500, #"StemNoi"
+                  start_age,
+                  WFi , #"WFi"
+                  WRi, #"WRi"
+                  WSi, #"WSi"
+                  StemNum, #"StemNoi"
                   ASWi = MaxASW, #"ASWi"
                   Lat, #"Lat"
                   FR, #"FR"
@@ -342,13 +307,13 @@ for(s in 1:nsamples){
                   WFi_H = 0.001,
                   WSi_H = 0.001,
                   WRi_H = 0.001,
-                  WCRi = 0.3,
+                  WCRi,
                   IrrigRate = IrrigRate,
-                  Throughfall = DroughtLevel,
+                  Throughfall = 1.0,
                   tmp_site_index,  
                   WCRi_H = 0.0,
                   Wbud_H = 0.0,
-                  LAI = 0.5 * SLA * 0.1,
+                  LAI = -99,
                   LAI_h = 0.01
       )
       
@@ -356,7 +321,6 @@ for(s in 1:nsamples){
       
       #THIS DEALS WITH THINNING BASED ON PROPORTION OF STEMS REMOVED
       thin_event = array(0,dim=c(nplots,nmonths))
-      
       
       output_dim = noutput_variables  # NUMBER OF OUTPUT VARIABLES
       nosite = length(site_in)  # LENGTH OF SITE ARRAY
@@ -373,12 +337,8 @@ for(s in 1:nsamples){
         pars[19] = new_pars[48]
       }
       
-      
-      mo_index = 0
       for(mo in 1:nmonths){
-        mo_index = mo_index + 1
-        
-        
+ 
         tmp=.Fortran( "r3pg_interface",
                       output_dim=as.integer(output_dim),
                       met=as.double(met[plotnum,,mo]),
@@ -484,11 +444,11 @@ for(s in 1:nsamples){
                       PlantedMonth, #"PlantedMonth"
                       InitialYear, #"InitialYear"
                       InitialMonth, #"InitialMonth"
-                      1, #"EndAge"
-                      WFi = 0.5, #"WFi"
-                      WRi = 0.5, #"WRi"
-                      WSi = 1, #"WSi"
-                      StemNum = 1500, #"StemNoi"
+                      start_age, 
+                      WFi, #"WFi"
+                      WRi, #"WRi"
+                      WSi, #"WSi"
+                      StemNum, #"StemNoi"
                       ASWi = MaxASW, #"ASWi"
                       Lat, #"Lat"
                       FR, #"FR"
@@ -499,13 +459,13 @@ for(s in 1:nsamples){
                       WFi_H = 0.001,
                       WSi_H = 0.001,
                       WRi_H = 0.001,
-                      WCRi = 0.3,
+                      WCRi,
                       IrrigRate = IrrigRate,
-                      Throughfall = DroughtLevel,
+                      Throughfall = 1.0,
                       tmp_site_index,  
                       WCRi_H = 0.0,
                       Wbud_H = 0.0,
-                      LAI = 0.5 * SLA * 0.1,
+                      LAI = -99,
                       LAI_h = 0.01
           )
           
@@ -535,7 +495,7 @@ runoff_quant = array(NA,dim=c(nperiods,nmonths,3))
 WUE_ctrans_quant = array(NA,dim=c(nperiods,nmonths,3))
 WUE_ET_quant = array(NA,dim=c(nperiods,nmonths,3))
 
-modeled_age = age[1,1,2,1,]
+modeled_age = age[1,1,1,1,]
 for(yearnum in 1:nperiods){
 for(i in 1:length(modeled_age)){
   LAI_quant[yearnum,i,] = quantile(lai[,yearnum,,1,i],c(0.025,0.5,0.975),na.rm=TRUE)
