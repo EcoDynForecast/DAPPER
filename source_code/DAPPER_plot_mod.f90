@@ -570,8 +570,7 @@ subroutine likelihood(plotnum &
 
 	prob_new(plotnum)= LL(1) + LL(2) + LL(3) + LL(4) + LL(5) + LL(6) + LL(7) + &
 					   LL(12) + LL(14) + LL(15) + LL(16) + &
-					   LL(17)+ LL(18) + prob_FR + prob_plot_params
-					   
+					   LL(17)+ LL(18) + prob_FR + prob_plot_params 
 	
 end subroutine likelihood
 

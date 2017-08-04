@@ -53,7 +53,7 @@ prepare_obs <- function(obs_set,FR_fert_assumption,use_fol){
                         Mean_temp = initdata$mean_annual_temp,mean_precip = initdata$mean_annual_precip, MatchedFRPlotID = initdata$matched_FR_plotid, 
                         InitYear = initdata$Initial_year,InitMonth = initdata$Initial_month, StartAge = initdata$Initial_age,Initial_WCR = initdata$Initial_WCR,
                         IrrFlag = initdata$IrrFlag,IrrLevel = initdata$IrrLevel,Initial_LAI = initdata$Initial_LAI,Initial_LAI_code = initdata$Initial_LAI_code,
-                        Initial_WR_code = initdata$Initial_WR_code, StudyName = initdata$StudyName, Treatment = initdata$Treatment, ThinTreatment = initdata$ThinTreatment)
+                        Initial_WR_code = initdata$Initial_WR_code, StudyName = initdata$StudyName, Treatment = initdata$Treatment, ThinTreatment = initdata$ThinTreatment,Plot = initdata$Plot)
   
 
   initdata$SoilClass = 1.0 

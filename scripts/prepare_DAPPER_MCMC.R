@@ -107,11 +107,18 @@ init_obs = state_space_obs$init_obs
 init_uncert = state_space_obs$init_uncert
 
 
+thinning_study_second_thin = read.csv(paste(input_directory,'/FMC_Thinning/TIER1_FMC_list_of_second_thin_plots.csv',sep=''))
+
+
 thin_event = array(0,dim=c(nplots,nmonths))
 for(plotnum in 1:nplots){
   tmp_initdata = initdata[which(initdata$PlotID == plotlist[plotnum]),]
   prev_nha = init_obs[5,plotnum]
   thin_occured = 0
+  double_thin = 0
+  if(length(which(thinning_study_second_thin$PlotID ==  tmp_initdata$Plot)) == 1 & plotlist[plotnum] > 10000 & plotlist[plotnum] < 20000){
+    double_thin = 1
+  }
   for(mo in (mo_start_end[plotnum,1]+1):mo_start_end[plotnum,2])
     if(obs[5,plotnum,mo] != -99){
       thin_event[plotnum,mo-1] =  prev_nha - obs[5,plotnum,mo] 
@@ -130,19 +137,19 @@ for(plotnum in 1:nplots){
       if(plotlist[plotnum] >= 72001 & plotlist[plotnum] <= 72076 & tmp_initdata$ThinTreatment == 1){
         thin_event[plotnum,mo-1] = 0.0
       }
-      if(plotlist[plotnum] > 10000 & plotlist[plotnum] < 20000 & tmp_initdata$ThinTreatment > 1 & thin_event[plotnum,mo-1] < 200){
+      if(plotlist[plotnum] > 10000 & plotlist[plotnum] < 20000 & tmp_initdata$ThinTreatment > 1 & thin_occured == 1 & double_thin == 0){
         thin_event[plotnum,mo-1] = 0.0
       }
-      if(plotlist[plotnum] >= 52001 & plotlist[plotnum] <= 52467 & tmp_initdata$ThinTreatment > 1 & thin_occured == 1){
+      if(plotlist[plotnum] >= 52001 & plotlist[plotnum] <= 52467 & tmp_initdata$ThinTreatment > 1 & (thin_event[plotnum,mo-1] < 400 | thin_occured == 1)){
         thin_event[plotnum,mo-1] = 0.0
       }
-      if(plotlist[plotnum] >= 72001 & plotlist[plotnum] <= 72076 & tmp_initdata$ThinTreatment > 1 & thin_occured == 1){
+      if(plotlist[plotnum] >= 72001 & plotlist[plotnum] <= 72076 & tmp_initdata$ThinTreatment > 1 & (thin_event[plotnum,mo-1] < 400 | thin_occured == 1)){
         thin_event[plotnum,mo-1] = 0.0
       }
       
-      if(thin_event[plotnum,mo-1] < 200 & thin_occured == 0){
+      if(thin_event[plotnum,mo-1] < 200){
         thin_event[plotnum,mo-1]  = 0
-      }else if(thin_event[plotnum,mo-1]  > 0 & thin_event[plotnum,mo-1] >= 200){
+      }else if(thin_occured == 0 & thin_event[plotnum,mo-1] >= 200){
         thin_occured = 1
       }
       
