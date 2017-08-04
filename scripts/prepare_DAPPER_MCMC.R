@@ -124,13 +124,29 @@ for(plotnum in 1:nplots){
       if(plotlist[plotnum] > 10000 & plotlist[plotnum] < 20000 & tmp_initdata$ThinTreatment == 1){
         thin_event[plotnum,mo-1] = 0.0
       }
-      if(plotlist[plotnum] > 10000 & plotlist[plotnum] < 20000 & tmp_initdata$ThinTreatment > 1 & thin_occured == 1){
+      if(plotlist[plotnum] >= 52001 & plotlist[plotnum] <= 52467 & tmp_initdata$ThinTreatment == 1){
         thin_event[plotnum,mo-1] = 0.0
       }
-      prev_nha = obs[5,plotnum,mo]
-      if(thin_event[plotnum,mo-1]  > 0){
+      if(plotlist[plotnum] >= 72001 & plotlist[plotnum] <= 72076 & tmp_initdata$ThinTreatment == 1){
+        thin_event[plotnum,mo-1] = 0.0
+      }
+      if(plotlist[plotnum] > 10000 & plotlist[plotnum] < 20000 & tmp_initdata$ThinTreatment > 1 & thin_event[plotnum,mo-1] < 200){
+        thin_event[plotnum,mo-1] = 0.0
+      }
+      if(plotlist[plotnum] >= 52001 & plotlist[plotnum] <= 52467 & tmp_initdata$ThinTreatment > 1 & thin_occured == 1){
+        thin_event[plotnum,mo-1] = 0.0
+      }
+      if(plotlist[plotnum] >= 72001 & plotlist[plotnum] <= 72076 & tmp_initdata$ThinTreatment > 1 & thin_occured == 1){
+        thin_event[plotnum,mo-1] = 0.0
+      }
+      
+      if(thin_event[plotnum,mo-1] < 200 & thin_occured == 0){
+        thin_event[plotnum,mo-1]  = 0
+      }else if(thin_event[plotnum,mo-1]  > 0 & thin_event[plotnum,mo-1] >= 200){
         thin_occured = 1
       }
+      
+      prev_nha = obs[5,plotnum,mo]
     }
 }
 

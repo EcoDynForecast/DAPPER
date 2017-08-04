@@ -6,7 +6,7 @@ niter = 1 #150000 #10000 #500000#15000000 #5000000 # 5000000
 chain_number = 1
 burn =  1 #75000 #25000 #15000000 # 100000 #2500000 #10000000 #500000 #2500000
 thin_interval = 1 # 10 #10 #10 #10 # 50 #500 #100 #100 #100
-run_name = 'test8'
+run_name = 'test9'
 restart_from_chain = FALSE
 restart_chain = 'state_space.1.2017-06-25.16.52.16.Rdata'
 priors_file = 'default_priors.csv'
@@ -41,7 +41,8 @@ all_studies = c(
   #'/FBRC_PPINES/TIER2_PPINES',
   #'/FBRC_VAR1/TIER2_VAR1',
   #'/FBRC_WPPINES/TIER2_WPPINES',
-  #'/FMC_IMP/TIER2_IMP',
+  '/FMC_IMP_TIER1/TIER1_IMP',
+  '/FMC_IMP_TIER2/TIER2_IMP',
   #'/FPC_RS1/TIER1_RS1',
   #'/FPC_RS2/TIER1_RS2',
   #'/FPC_RS3/TIER1_RS3',

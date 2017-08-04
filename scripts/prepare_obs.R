@@ -4,8 +4,8 @@ prepare_obs <- function(obs_set,FR_fert_assumption,use_fol){
   initdata = NULL
   for(s in 1:length(all_studies)){
     d = read.csv(paste(input_directory,all_studies[s],'_plotlist.csv',sep=''))
-    d$Treatment = as.factor(d$Treatment)
-    d$StudyName = as.factor(d$StudyName)
+    d$Treatment = as.character(d$Treatment)
+    d$StudyName = as.character(d$StudyName)
     if(all_studies[s] != '/Duke/TIER4_Duke' & all_studies[s] != '/NC2/TIER4_NC2'  & all_studies[s] != '/Waycross/TIER4_Waycross' & all_studies[s] != '/SETRES/TIER4_SETRES'){
       d$Initial_LAI = -99
       d$Initial_LAI_code = -99  
@@ -32,8 +32,16 @@ prepare_obs <- function(obs_set,FR_fert_assumption,use_fol){
   
   initdata = initdata[which(initdata$MeasureLength > 1 | initdata$MeasureLength == -99), ]
   
-  #initdata = initdata[which(initdata$ThinTreatment == 1 | initdata$ThinTreatment == 0), ]
+  
+  initdata$ThinTreatment[which(initdata$PlotID >= 52001 & initdata$PlotID <= 52467)]  = initdata$Plot[which(initdata$PlotID >= 52001 & initdata$PlotID <= 52467)] 
+  initdata$ThinTreatment[which(initdata$PlotID >= 72001 & initdata$PlotID <= 72076)]  = initdata$Plot[which(initdata$PlotID >= 72001 & initdata$PlotID <= 72076)] 
 
+  initdata$Treatment[which(initdata$PlotID >= 52001 & initdata$PlotID <= 52467)]  = as.character(initdata$Plot[which(initdata$PlotID >= 52001 & initdata$PlotID <= 52467)]) 
+  initdata$Treatment[which(initdata$PlotID >= 72001 & initdata$PlotID <= 72076)]  = as.character(initdata$Plot[which(initdata$PlotID >= 72001 & initdata$PlotID <= 72076)]) 
+  initdata$Treatment[which(initdata$PlotID >= 10001 & initdata$PlotID < 20000)]  = as.character(initdata$ThinTreatment[which(initdata$PlotID >= 10001 & initdata$PlotID < 20000)]) 
+  #initdata = initdata[which(initdata$ThinTreatment == 1 | initdata$ThinTreatment == 0), ]
+  initdata$Treatment = as.factor(initdata$Treatment)
+    
   initdata = data.frame(PlotID = initdata$PlotID,SiteID = initdata$SiteID,LAT_WGS84=initdata$LAT_WGS84,
                         Planting_year = initdata$Planting_year,PlantMonth = initdata$PlantMonth,
                         PlantDensityHa = initdata$PlantDensityHa,Initial_ASW = initdata$Initial_ASW, ASW_min = initdata$ASW_min,
@@ -172,7 +180,7 @@ prepare_obs <- function(obs_set,FR_fert_assumption,use_fol){
   not_new = which(initdata$PlotID < 50000)
   nc2 = which(initdata$PlotID == 41001)
   IMP = which(initdata$PlotID > 50000 | initdata$PlotID < 20000)
-  test = which(initdata$PlotID >= 100000)
+  test = which(initdata$PlotID < 50000 | (initdata$PlotID >= 52001 & initdata$PlotID <=52467) | (initdata$PlotID >= 72001 & initdata$PlotID <= 72076))
   
   all_plots =  seq(1,length(initdata$PlotID),1)
   
