@@ -607,18 +607,19 @@ subroutine R3PG_MODEL(output_dim,met,pars,site,thin_event,nopars,nomet, &
         		wSmax = wSx1000 * (1000.0D0 / StemNo) ** thinPower       	
         		AvStemMass = WS * 1000.0D0 / StemNo
         	
-     		end if
-     	    !--- Non-density dependent mortality
-     	    delStems = StemNo*mort_rate
-  			WF1 = WF1 - delStems*(WF1/StemNo)
-            WF2 = WF2 - delStems*(WF2/StemNo) 
-            delLitter = delLitter + delStems*(WF1/StemNo) + delStems*(WF2/StemNo) 
-        	WR = WR - delStems * (WR / StemNo)
-            WS = WS - delStems * (WS / StemNo)
-            WCR = WCR - delStems * (WCR / StemNo)
-        	StemNo = StemNo - delStems
-        	wSmax = wSx1000 * (1000.0D0 / StemNo) ** thinPower       	
-        	AvStemMass = WS * 1000.0D0 / StemNo
+     		else
+     	    	!--- Non-density dependent mortality
+     	    	delStems = StemNo*mort_rate
+  				WF1 = WF1 - delStems*(WF1/StemNo)
+            	WF2 = WF2 - delStems*(WF2/StemNo) 
+            	delLitter = delLitter + delStems*(WF1/StemNo) + delStems*(WF2/StemNo) 
+        		WR = WR - delStems * (WR / StemNo)
+            	WS = WS - delStems * (WS / StemNo)
+            	WCR = WCR - delStems * (WCR / StemNo)
+        		StemNo = StemNo - delStems
+        		wSmax = wSx1000 * (1000.0D0 / StemNo) ** thinPower       	
+        		AvStemMass = WS * 1000.0D0 / StemNo
+        	endif
      	endif
      	
      	  
