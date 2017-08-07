@@ -580,8 +580,8 @@ subroutine R3PG_MODEL(output_dim,met,pars,site,thin_event,nopars,nomet, &
 		!-----------------------------------
 		!-- Self-thinning mortality
   		wSmax = wSx1000 * (1000.0D0 / StemNo) ** thinPower
-
     	AvStemMass = WS * 1000.0D0 / StemNo
+    	
     	delStems = 0
         if(clm) then
             WS = WS - mS*(WS*mort_rate)
@@ -597,9 +597,9 @@ subroutine R3PG_MODEL(output_dim,met,pars,site,thin_event,nopars,nomet, &
         		delStems = GetMortality(StemNo, WS,mS,wSx1000,thinPower)
                 ! ASSUMES TREES THAT DIED THROUGH SELF-THNNING DIDN"T HAVE FOLIAGE
                 ! ASSUMES TREES THAT DIED ARE SMALLER THAN THE AVERAGE SIZE TREE
-                WF1 = WF1 - mS * delStems*(WF1/StemNo)
-            	WF2 = WF2 - mS * delStems*(WF2/StemNo) 
-            	delLitter = delLitter + mS * delStems*(WF1/StemNo) + mS * delStems*(WF2/StemNo) 
+                !WF1 = WF1 - mS * delStems*(WF1/StemNo)
+            	!WF2 = WF2 - mS * delStems*(WF2/StemNo) 
+            	!delLitter = delLitter + mS * delStems*(WF1/StemNo) + mS * delStems*(WF2/StemNo) 
         		WR = WR - mS * delStems * (WR / StemNo)
                 WS = WS - mS * delStems * (WS / StemNo)
                 WCR = WCR - mS * delStems * (WCR / StemNo)
