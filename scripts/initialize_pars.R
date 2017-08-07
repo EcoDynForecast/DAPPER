@@ -83,7 +83,7 @@ initialize_pars <- function(index_guide,priormatrix,jump_size_init,observations,
         par_group[index] = FR_npar_group + 6
       }else if(plot_init$PlotID > 72001 & plot_init$PlotID < 72076 ){ 
         par_group[index] = FR_npar_group + 7
-      }else if(plot_init$PlotID > 52001 & plot_init$PlotID < 52467){ 
+      }else if(plot_init$PlotID >= 52001 & plot_init$PlotID < 52467){ 
         par_group[index] = FR_npar_group + 8
       }
     }else{
@@ -111,17 +111,36 @@ initialize_pars <- function(index_guide,priormatrix,jump_size_init,observations,
   #WSx1000 INIT
   index = index_guide[5]
   for(plotnum in 1:nplots){
+    plot_init <- initdata[plotnum,]
     plot_index[index] = plotnum
     init_pars[index] = init_pars[19]
     prior_parameter1[index]= 0.1 #prior_parameter1[19]
     prior_parameter2[index]= 400 #prior_parameter2[19]
     prior_dist[index] = 1 #prior_dist[19]
     fix_par[index] = 0
-    par_group[index] = plot_WSx1000_pargroup
+    if(plot_init$PlotID > 10000 &  plot_init$PlotID < 20000){  #Thinning
+      par_group[index] = plot_WSx1000_pargroup
+    }else if(plot_init$PlotID > 20000 &  plot_init$PlotID < 30000){ #RW18
+      par_group[index] = plot_WSx1000_pargroup +1
+    }else if(plot_init$PlotID > 30000 &  plot_init$PlotID < 40000){ #TEIR3
+      par_group[index] = plot_WSx1000_pargroup + 2
+    }else if(plot_init$PlotID > 40000 &  plot_init$PlotID < 41000){  #DUKE
+      par_group[index] = plot_WSx1000_pargroup + 3
+    }else if(plot_init$PlotID > 41000 &  plot_init$PlotID < 42000){ #NC2
+      par_group[index] = plot_WSx1000_pargroup + 4
+    }else if(plot_init$PlotID > 42000 &  plot_init$PlotID < 43000){ #SETRES
+      par_group[index] = plot_WSx1000_pargroup + 5
+    }else if(plot_init$PlotID > 43000 &  plot_init$PlotID < 44000){ #WAYCROSS
+      par_group[index] = plot_WSx1000_pargroup + 6
+    }else if(plot_init$PlotID > 7200 & plot_init$PlotID <= 72076 ){ 
+      par_group[index] = plot_WSx1000_pargroup + 7
+    }else if(plot_init$PlotID > 5200 & plot_init$PlotID <= 52467){ 
+      par_group[index] = plot_WSx1000_pargroup + 8
+    }
     if(!plot_WSx1000){
       fix_par[index] = 1
     }
-    jump_pars[index] = jump_size_init*10
+    jump_pars[index] = init_pars[19]*jump_size_init
     index = index + 1
   }
   

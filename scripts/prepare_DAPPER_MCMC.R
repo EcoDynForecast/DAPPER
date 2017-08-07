@@ -60,10 +60,8 @@ data_uncertainity_npar_group = index
 index = index + 1
 if(plot_WSx1000){
 plot_WSx1000_pargroup = index
-index = index + 1
+index = plot_WSx1000_pargroup + 8
 }
-plot_thinpower_pargroup = 100 
-plot_mort_rate_pargroup = 100 
 
 FR_npar_group = index
 if(fr_model == 1 & FR_separate_npar_groups == TRUE){ #when fitting FR there are more par groups
@@ -73,6 +71,12 @@ if(fr_model == 1 & FR_separate_npar_groups == TRUE){ #when fitting FR there are 
 }else{
   npar_groups = FR_npar_group
 }
+
+
+
+
+plot_thinpower_pargroup = 100 
+plot_mort_rate_pargroup = 100 
 
 #---- ENTER THE FORTRAN LIBRARY NAMES HERE ----------
 if(windows_machine){
