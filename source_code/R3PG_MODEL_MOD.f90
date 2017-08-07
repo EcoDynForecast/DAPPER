@@ -563,11 +563,11 @@ subroutine R3PG_MODEL(output_dim,met,pars,site,thin_event,nopars,nomet, &
 	
 		if(thin_event(month) > 0.0) then
         	delStemN = thin_event(month)
-        	WF1 = WF1  - delStemN * (WF1 / StemNo)
-        	WF2 = WF2  - delStemN * (WF2 / StemNo)
-        	WR = WR  - delStemN * (WR / StemNo)
-        	WS = WS - delStemN * (WS / StemNo)
-        	WCR = WCR - delStemN * (WCR / StemNo)
+        	WF1 = WF1  - mS*delStemN * (WF1 / StemNo)
+        	WF2 = WF2  - mS*delStemN * (WF2 / StemNo)
+        	WR = WR  - mS*delStemN * (WR / StemNo)
+        	WS = WS - mS*delStemN * (WS / StemNo)
+        	WCR = WCR - mS*delStemN * (WCR / StemNo)
        		WS_h = WS_h - WS_h*(delStemN/StemNo)
      		WF_h = WF_h - WF_h*(delStemN/StemNo)
      		WR_h = WR_h - WR_h*(delStemN/StemNo)
