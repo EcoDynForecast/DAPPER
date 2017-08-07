@@ -195,6 +195,7 @@ subroutine DAPPER_MCMC( &
                               endif
 
                          	new_pars(p)=normal_sample(current_pars(p),jump_pars(p)) 
+                         	
                          	if(prior_dist(p)==1) then
                                  if(new_pars(p) >= prior_parameter1(p) .AND. new_pars(p) <= prior_parameter2(p)) then
                                  pass = 1
@@ -230,7 +231,8 @@ subroutine DAPPER_MCMC( &
                                 endif
                         endif
                 enddo
-        endif	
+        endif
+	
         
         !1 = LAI Pine
 		!2 = Stem Pine

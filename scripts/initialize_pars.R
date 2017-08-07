@@ -113,7 +113,7 @@ initialize_pars <- function(index_guide,priormatrix,jump_size_init,observations,
   for(plotnum in 1:nplots){
     plot_init <- initdata[plotnum,]
     plot_index[index] = plotnum
-    init_pars[index] = init_pars[19]
+    init_pars[index] = rnorm(1,init_pars[19],25)
     prior_parameter1[index]= 0.1 #prior_parameter1[19]
     prior_parameter2[index]= 400 #prior_parameter2[19]
     prior_dist[index] = 1 #prior_dist[19]
