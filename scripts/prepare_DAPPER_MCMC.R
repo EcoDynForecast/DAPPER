@@ -58,13 +58,16 @@ for(p in 1:npars){
 
 data_uncertainity_npar_group = index
 index = index + 1
-plot_WSx1000_pargroup = 100 
+if(plot_WSx1000){
+plot_WSx1000_pargroup = index
+index = index + 1
+}
 plot_thinpower_pargroup = 100 
 plot_mort_rate_pargroup = 100 
 
 FR_npar_group = index
 if(fr_model == 1 & FR_separate_npar_groups == TRUE){ #when fitting FR there are more par groups
-  npar_groups = FR_npar_group + 6
+  npar_groups = FR_npar_group + 8
 }else if(fr_model == 2 & FR_separate_npar_groups == TRUE){
   npar_groups = FR_npar_group + 4
 }else{

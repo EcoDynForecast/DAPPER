@@ -81,8 +81,10 @@ initialize_pars <- function(index_guide,priormatrix,jump_size_init,observations,
         par_group[index] = FR_npar_group + 5
       }else if(plot_init$PlotID > 43000 &  plot_init$PlotID < 44000){ #WAYCROSS
         par_group[index] = FR_npar_group + 6
-      }else if(plot_init$PlotID > 50000){ 
-        par_group[index] = FR_npar_group
+      }else if(plot_init$PlotID > 72001 & plot_init$PlotID < 72076 ){ 
+        par_group[index] = FR_npar_group + 7
+      }else if(plot_init$PlotID > 52001 & plot_init$PlotID < 52467){ 
+        par_group[index] = FR_npar_group + 8
       }
     }else{
       if(plot_init$PlotID > 10000 &  plot_init$PlotID < 20000){  #Thinning
