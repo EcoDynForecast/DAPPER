@@ -2,9 +2,9 @@
 #---CONTROL INFORMATION----------------------------
 working_directory = '/Users/quinn/Dropbox (VTFRS)/Research/DAPPER'
 input_directory = '/Users/quinn/Dropbox (VTFRS)/Research/DAPPER_inputdata/'
-run_name = 'test'
+run_name = 'Duke_without_Ctrans.1.2017-08-09.07.32.07'
 #restart_chain = 'duke_state_space_without_trans_2.1.2017-07-21.13.19.13.Rdata'
-restart_chain = 'test4.1.2017-08-01.11.54.11.Rdata'
+restart_chain = 'Duke_without_Ctrans.1.2017-08-09.07.32.07.Rdata'
 priors_file = 'default_priors.csv'
 fr_model = 1  # 1 = estimate FR for each plot, 2 = empirical FR model
 FR_fert_assumption = 0 #0 = assume fertilization plots have FR = 1, 1 = do not assume fertilization plots have FR = 1

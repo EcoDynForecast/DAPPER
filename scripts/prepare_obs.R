@@ -127,7 +127,10 @@ prepare_obs <- function(obs_set,FR_fert_assumption,use_fol){
   
   observations$ind_removed = -99
   
-  #observations$LAI_TOTAL = -99
+  observations$Ctrans = -99
+  observations$Ctrans_H = -99
+  observations$ET = -99
+  
 
   
   met_in = NULL

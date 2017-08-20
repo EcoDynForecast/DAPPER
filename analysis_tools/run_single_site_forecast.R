@@ -2,9 +2,9 @@
 #---CONTROL INFORMATION----------------------------
 working_directory = '/Users/quinn/Dropbox (VTFRS)/Research/DAPPER'
 input_directory = '/Users/quinn/Dropbox (VTFRS)/Research/DAPPER_inputdata/'
-run_name = 'with_trans_process'
+run_name = 'Duke_without_Ctrans.1.2017-08-09.07.32.07.Rdata'
 #restart_chain = 'duke_state_space_without_trans_2.1.2017-07-21.13.19.13.Rdata'
-restart_chain = 'test4.1.2017-08-01.11.54.11.Rdata'
+restart_chain = 'Duke_without_Ctrans.1.2017-08-09.07.32.07.Rdata'
 priors_file = 'default_priors.csv'
 obs_set = 14 #14 #Select which plots are used in analysis.  See prepare_obs.R for number guide 
 focal_plotID = 40001 #14 #Select which plots are used in analysis.  See prepare_obs.R for number guide 
@@ -23,35 +23,35 @@ all_studies = c(
   #'/SETRES/TIER4_SETRES',
   #'/PINEMAP/TIER3_PINEMAP',
   #'/NC2/TIER4_NC2',
-  '/Duke/TIER4_Duke',
+  '/Duke/TIER4_Duke'
   #'/FMC_Thinning/TIER1_FMC_Thinning',
-  '/FBRC_AMERIFLU/TIER2_AMERIFLU',
-  '/FBRC_IMPAC/TIER1_IMPAC',
+  #'/FBRC_AMERIFLU/TIER2_AMERIFLU',
+  #'/FBRC_IMPAC/TIER1_IMPAC',
   #'/FBRC_IMPAC2/TIER2_IMPAC2',
-  '/FBRC_PPINES/TIER2_PPINES',
-  '/FBRC_VAR1/TIER2_VAR1',
-  '/FBRC_WPPINES/TIER2_WPPINES',
-  '/FMC_IMP/TIER2_IMP',
-  '/FPC_RS1/TIER1_RS1',
-  '/FPC_RS2/TIER1_RS2',
-  '/FPC_RS3/TIER1_RS3',
-  '/FPC_RS5/TIER1_RS5',
-  '/FPC_RS6/TIER1_RS6',
-  '/FPC_RS7/TIER1_RS7',
-  '/FPC_RS8/TIER1_RS8',
-  '/FPC_RW18/TIER2_RW18',
-  '/FPC_RW19/TIER2_RW19',
+  #'/FBRC_PPINES/TIER2_PPINES',
+  #'/FBRC_VAR1/TIER2_VAR1',
+  #'/FBRC_WPPINES/TIER2_WPPINES',
+  #'/FMC_IMP/TIER2_IMP',
+  #'/FPC_RS1/TIER1_RS1',
+  #'/FPC_RS2/TIER1_RS2',
+  #'/FPC_RS3/TIER1_RS3',
+  #'/FPC_RS5/TIER1_RS5',
+  #'/FPC_RS6/TIER1_RS6',
+  #'/FPC_RS7/TIER1_RS7',
+  #'/FPC_RS8/TIER1_RS8',
+  #'/FPC_RW18/TIER2_RW18',
+  #'/FPC_RW19/TIER2_RW19',
   #'/FPC_RW20/TIER2_RW20'
-  '/PMRC_CPCD96_TIER1/TIER1_CPCD96',
-  '/PMRC_CPCD96_TIER2/TIER2_CPCD96',
-  '/PMRC_HGLOB87/TIER1_HGLOB87',
-  '/PMRC_SAGCD96_TIER1/TIER1_SAGCD96',
-  '/PMRC_SAGCD96_TIER2/TIER2_SAGCD96',
-  '/PMRC_SAGSP85_TIER1/TIER1_SAGSP85',
-  '/PMRC_SAGSP85_TIER2/TIER2_SAGSP85',
-  '/PMRC_WGCD01_TIER1/TIER1_WGCD01',
-  '/PMRC_WGCD01_TIER2/TIER2_WGCD01',
-  '/TAMU_GSSS/TIER1_GSSS'
+  #'/PMRC_CPCD96_TIER1/TIER1_CPCD96',
+  #'/PMRC_CPCD96_TIER2/TIER2_CPCD96',
+  #'/PMRC_HGLOB87/TIER1_HGLOB87',
+  #'/PMRC_SAGCD96_TIER1/TIER1_SAGCD96',
+  #'/PMRC_SAGCD96_TIER2/TIER2_SAGCD96',
+  #'/PMRC_SAGSP85_TIER1/TIER1_SAGSP85',
+  #'/PMRC_SAGSP85_TIER2/TIER2_SAGSP85',
+  #'/PMRC_WGCD01_TIER1/TIER1_WGCD01',
+  #'/PMRC_WGCD01_TIER2/TIER2_WGCD01',
+  #'/TAMU_GSSS/TIER1_GSSS'
 )
 #----------------------------------------------------
 
@@ -184,7 +184,7 @@ for(p in 1:npars){
   median_pars[p] = median(accepted_pars_thinned_burned[,p])
 }
 
-use_median_pars = TRUE
+use_median_pars = FALSE
 
 for(s in 1:nsamples){
   
@@ -391,12 +391,12 @@ for(s in 1:nsamples){
     ET[s,plotnum,mo]= output[17]
     Total_Ctrans[s,plotnum,mo]= output[18] + output[19]
     GPP[s,plotnum,mo]= output[22]*0.5
-    runoff[s,plotnum,mo]= output[40] 
-    #if(m > mo_start_end[plotnum,1]){
-    #runoff[s,plotnum,mo]= runoff[s,plotnum,mo-1] + output[40] 
-    #}else{
-    #  runoff[s,plotnum,mo]= output[40]    
-    #}
+    #runoff[s,plotnum,mo]= output[40] 
+    if(mo > mo_start_end[plotnum,1]){
+    runoff[s,plotnum,mo]= runoff[s,plotnum,mo-1] + output[40] 
+    }else{
+      runoff[s,plotnum,mo]= output[40]    
+    }
     WUE_ctrans[s,plotnum,mo]= GPP[s,plotnum,mo]/ET[s,plotnum,mo]
     WUE_ET[s,plotnum,mo]= GPP[s,plotnum,mo]/Total_Ctrans[s,plotnum,mo]
   }

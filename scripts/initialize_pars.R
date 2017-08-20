@@ -118,7 +118,7 @@ initialize_pars <- function(index_guide,priormatrix,jump_size_init,observations,
     prior_parameter2[index]= 400 #prior_parameter2[19]
     prior_dist[index] = 1 #prior_dist[19]
     fix_par[index] = 0
-    if(plot_init$PlotID > 10000 &  plot_init$PlotID < 20000){  #Thinning
+    if((plot_init$PlotID > 10000 &  plot_init$PlotID < 20000) | (plot_WSx1000 == FALSE)){  #Thinning
       par_group[index] = plot_WSx1000_pargroup
     }else if(plot_init$PlotID > 20000 &  plot_init$PlotID < 30000){ #RW18
       par_group[index] = plot_WSx1000_pargroup +1

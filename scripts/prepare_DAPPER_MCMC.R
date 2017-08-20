@@ -61,6 +61,8 @@ index = index + 1
 if(plot_WSx1000){
 plot_WSx1000_pargroup = index
 index = plot_WSx1000_pargroup + 8
+}else{
+  plot_WSx1000_pargroup = 100
 }
 
 FR_npar_group = index
