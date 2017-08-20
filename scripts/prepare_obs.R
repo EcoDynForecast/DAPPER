@@ -39,7 +39,7 @@ prepare_obs <- function(obs_set,FR_fert_assumption,use_fol){
   initdata$Treatment[which(initdata$PlotID >= 52001 & initdata$PlotID <= 52467)]  = as.character(initdata$Plot[which(initdata$PlotID >= 52001 & initdata$PlotID <= 52467)]) 
   initdata$Treatment[which(initdata$PlotID >= 72001 & initdata$PlotID <= 72076)]  = as.character(initdata$Plot[which(initdata$PlotID >= 72001 & initdata$PlotID <= 72076)]) 
   initdata$Treatment[which(initdata$PlotID >= 10001 & initdata$PlotID < 20000)]  = as.character(initdata$ThinTreatment[which(initdata$PlotID >= 10001 & initdata$PlotID < 20000)]) 
-  #initdata = initdata[which(initdata$ThinTreatment == 1 | initdata$ThinTreatment == 0), ]
+  initdata = initdata[which(initdata$ThinTreatment == 1 | initdata$ThinTreatment == 0), ]
   initdata$Treatment = as.factor(initdata$Treatment)
     
   initdata = data.frame(PlotID = initdata$PlotID,SiteID = initdata$SiteID,LAT_WGS84=initdata$LAT_WGS84,
@@ -129,7 +129,7 @@ prepare_obs <- function(obs_set,FR_fert_assumption,use_fol){
   
   observations$Ctrans = -99
   observations$Ctrans_H = -99
-  observations$ET = -99
+  #observations$ET = -99
   
 
   
