@@ -1,6 +1,6 @@
 prepare_state_space_obs <- function(){
   
-  obs_uncertainity_proportion = 0.01 
+  obs_uncertainity_proportion = 0.1 
   
   
   earliestYear = min(observations$YearMeas)
@@ -161,7 +161,7 @@ prepare_state_space_obs <- function(){
         meas_month = tmp$MonthMeas[which(tmp$Nha != -99)][i]
         index = (meas_year - earliestYear)*12+1 + (meas_month-earliestMonth)
         obs[5,plotnum,index] = tmp$Nha[which(tmp$Nha != -99)][i]
-        obs_uncert[5,plotnum,index] = tmp$Nha[which(tmp$Nha != -99)][i]*obs_uncertainity_proportion
+        obs_uncert[5,plotnum,index] = tmp$Nha[which(tmp$Nha != -99)][i]*0.01
       }
     }
     #Hardwood LAI
