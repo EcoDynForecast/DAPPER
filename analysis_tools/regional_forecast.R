@@ -8,39 +8,14 @@ if (!"doParallel" %in% installed.packages()) install.packages("doParallel")
 #if(!"tidyr" %in% installed.packages()) install.packages("tidyr")
 
 #library(spatial.tools)
-#library(readr)
-#library(dplyr)
+library(readr)
+library(dplyr)
 library(compiler)
 library(doParallel)
 
 enableJIT(1)
 
-GCMs <- c("bcc-csm1-1-m","bcc-csm1-1","BNU-ESM","CanESM2","CCSM4","CNRM-CM5","CSIRO-Mk3-6-0","GFDL-ESM2G","GFDL-ESM2M","HadGEM2-CC365","HadGEM2-ES365","inmcm4","IPSL-CM5A-LR","IPSL-CM5A-MR","IPSL-CM5B-LR","MIROC-ESM-CHEM","MIROC-ESM","MIROC5","MRI-CGCM3","NorESM1-M", "metdata") # metdata is the Idaho reference dataset, indexed by rcpCase [1]
-
-rcpCases <- c('baseline', 'rcp45','rcp85')
-
-## Critical Parameters -- USER INPUT REQUIRED ####-----------------------------
-# Working Directory 
-setwd('/home/rqthomas/DAPER_regional_analysis')
-
-# GCM
-myGCM_list <- c(GCMs[3],GCMs[1:5]) # CCSM4, for example
-myGCM_list <- c(GCMs[1],GCMs[1],GCMs[2],GCMs[2],GCMs[4],GCMs[4])
-#myGCM_list <- c(GCMs[21],GCMs[1:20],GCMs[1:20],GCMs[1:20],GCMs[1:20])
-# RCP
-myRCP_list <- c(rcpCases[1],rep(rcpCases[3],5),rep(rcpCases[3],5)) # RCP8.5, for example
-myRCP_list <- c(rcpCases[3],rcpCases[3],rcpCases[3],rcpCases[3],rcpCases[3],rcpCases[3])
-#myRCP_list <- c(rcpCases[1],rep(rcpCases[3],80))
-
-## Tuning Parameters
-# Note that the metdata available years run from 1971-2011
-yearStart_list <- c(1985,rep(1985,5),rep(2030,5)) # Change this as needed!
-yearStart_list <- c(1985,2030,1985,2030,1985,2030)
-#yearStart_list <- c(1985,rep(1985,20),rep(2020,20),rep(2045,20),rep(2070,20))
-
-# Variability type
-variation_type <- 'parameter_and_process' #parameter_and_process' # Choose from c('parameter_only', 'process_only', 'parameter_and_process')
-
+useParallel = FALSE
 Mort_uncert = FALSE
 FR_uncert = FALSE
 HOLD_CO2 = FALSE
@@ -48,34 +23,63 @@ PAR_UNCERT = TRUE
 PROCESS_UNCERT = TRUE
 precipModifier <- 1.0 # No toggle to precip
 MaxFR <- FALSE # No fertilization
-#variation_type <- 'parameter_only'
 # Number of samples from parameter chain (will be ignored in the process_only case)
-sample_size <- 1
-
+sample_size <- 100
 # Number of processors to be used
 nprocessors <- 1 # Make sure to change this to the max processors!
-
-## Tuning Parameters
 rotationAge <- 25
+variation_type <- 'parameter_and_process'
+
+PAR_UNCERT = FALSE
+PROCESS_UNCERT = FALSE
+variation_type <- 'median'
+
+
+output_location = "/Users/quinn/Downloads/"
 
 load("/Users/quinn/Dropbox (VTFRS)/Research/DAPPER/chains/test4.1.2017-08-01.11.54.11.Rdata")
 code_library = "/Users/quinn/Dropbox (VTFRS)/Research/DAPPER/source_code/r3pg_interface.so"
 CO2 <- read.csv('/Users/quinn/Dropbox (VTFRS)/Research/DAPPER_inputdata/CO2/CO2_Concentrations_from_CMIP5_1950-2095.csv')
 Soils <- read.csv('/Users/quinn/Documents/PINEMAP_big_files/parameter_run/Soil_Inputs_LPNR_Clipped_and_Imputed_v4.csv')
 
+GCMs <- c("bcc-csm1-1-m","bcc-csm1-1","BNU-ESM","CanESM2","CCSM4","CNRM-CM5","CSIRO-Mk3-6-0","GFDL-ESM2G","GFDL-ESM2M","HadGEM2-CC365","HadGEM2-ES365","inmcm4","IPSL-CM5A-LR","IPSL-CM5A-MR","IPSL-CM5B-LR","MIROC-ESM-CHEM","MIROC-ESM","MIROC5","MRI-CGCM3","NorESM1-M", "metdata") # metdata is the Idaho reference dataset, indexed by rcpCase [1]
+
+rcpCases <- c('baseline', 'rcp45','rcp85')
+
+## Critical Parameters -- USER INPUT REQUIRED ####-----------------------------
+# Working Directory 
+#setwd('/home/rqthomas/DAPER_regional_analysis')
+
+# GCM
+myGCM_list <- c(GCMs[3],GCMs[1:5]) # CCSM4, for example
+myGCM_list <- c(GCMs[1],GCMs[1],GCMs[2],GCMs[2],GCMs[4],GCMs[4])
+myGCM_list <- c(GCMs[1])
+#myGCM_list <- c(GCMs[21],GCMs[1:20],GCMs[1:20],GCMs[1:20],GCMs[1:20])
+# RCP
+myRCP_list <- c(rcpCases[1],rep(rcpCases[3],5),rep(rcpCases[3],5)) # RCP8.5, for example
+myRCP_list <- c(rcpCases[3],rcpCases[3],rcpCases[3],rcpCases[3],rcpCases[3],rcpCases[3])
+myRCP_list <- c(rcpCases[3])
+#myRCP_list <- c(rcpCases[1],rep(rcpCases[3],80))
+
+## Tuning Parameters
+# Note that the metdata available years run from 1971-2011
+yearStart_list <- c(1985,rep(1985,5),rep(2030,5)) # Change this as needed!
+yearStart_list <- c(1985,2030,1985,2030,1985,2030)
+yearStart_list <- c(2030)
+yearStart_list <- c(1985)
+#yearStart_list <- c(1985,rep(1985,20),rep(2020,20),rep(2045,20),rep(2070,20))
 
 ## 3-PG Wrapper ####-----------------------------------------------------------
 run.3PG.quick <- function(myHUC, yearStart, yearEnd, startAge = 2, precipModifier = 1, MaxFR = FALSE, curr_pars,base_year = 1950, curr_FR_pars, FR_pars,HOLD_CO2 = FALSE,PROCESS_UNCERT = TRUE, ...){ 
   
   pars <- curr_pars[1:npars_used_by_fortran]
   # Reference Parameters
-  nomonths <- (yearEnd - yearStart + 1) * 12
   HUCIndex <- which(frostDays[, 1] == myHUC)[1] # For the Climate Variables
   HUCIndexSoils <- which(Soils[, 1] == myHUC)[1] # For the Soils variables
   
   ## Extracting Climate
   yearStartPosition <- (yearStart+startAge - base_year) * 12 + 1 # Selecting the first column to draw from
-  
+  nomonths <- (yearEnd - (yearStart+startAge) + 1) * 12
   # CO2
   if(HOLD_CO2 == TRUE){
     yearStart = yearStart_list[r]
@@ -109,8 +113,8 @@ run.3PG.quick <- function(myHUC, yearStart, yearEnd, startAge = 2, precipModifie
   if(MaxFR){
     tmpFR <- 1.0
   } else {
-    #tmpFR = 1/(1+exp((FR_pars[1]*tmpSoils$MAT-FR_pars[2] * tmpSoils$SIm)))
-    tmpFR = 0.8
+    tmpFR = 1/(1+exp((FR_pars[1]*tmpSoils$MAT-FR_pars[2] * tmpSoils$SIm)))
+    #tmpFR = 0.8
   }
   
   if(Mort_uncert == TRUE){
@@ -122,7 +126,7 @@ run.3PG.quick <- function(myHUC, yearStart, yearEnd, startAge = 2, precipModifie
   site_in <- c(yearStart, # PlantedYear
                1, # PlantedMonth
                yearStart, # InitialYear
-               0, # InitialMonth
+               1, # InitialMonth
                startAge, # 'EndAge', ACTUALLY THE STARTING AGE!!!
                .95, # WFi
                0.028, # WRi
@@ -150,13 +154,15 @@ run.3PG.quick <- function(myHUC, yearStart, yearEnd, startAge = 2, precipModifie
   site[is.na(site)] <- 0
   nosite = length(site)
   
-  nmonths = nomonths-startAge*12
+  nmonths = nomonths
   
   thin_event = array(0,dim=c(nmonths))
   
   
   output0 = array(NA,dim=c(nmonths,3))
+  if(useParallel){
   dyn.load(code_library)
+  }
   for(mo in 1:nmonths){
 
     tmp=.Fortran( "r3pg_interface",
@@ -241,7 +247,7 @@ run.3PG.quick <- function(myHUC, yearStart, yearEnd, startAge = 2, precipModifie
       output0[mo,1] =output[3]
       output0[mo,2] = site[8]
       output0[mo,3] =  total
-      print(c(output[3],site[8],total))
+      #print(c(mo,output[3],site[8],total))
     }else{
       site_in <- c(yearStart, # PlantedYear
                    1, # PlantedMonth
@@ -301,7 +307,7 @@ for(r in 1:length(myRCP_list)){
   myRCP = myRCP_list[r]
   myGCM = myGCM_list[r]
   yearStart = yearStart_list[r]
-  yearEnd <- yearStart + rotationAge - 1
+  yearEnd <- yearStart + rotationAge
   
   print(paste('Run ',r,': starting RCP ',myRCP,' for model ',myGCM,' for start year ',yearStart,sep="")) 
   
@@ -327,15 +333,15 @@ for(r in 1:length(myRCP_list)){
   if(RCP_index == 1){base_year <- 1979}
   
   # Climate Data Loading
-  frostDays <- read.csv(paste('/Users/quinn/Documents/PINEMAP_big_files/parameter_run/Consolidated_Files_Imput/frostDays_', RCP_index,'_', myGCM,'_imput.csv', sep = ''))
-  rain <- read.csv(paste('/Users/quinn/Documents/PINEMAP_big_files/parameter_run/Consolidated_Files_Imput/rain_', RCP_index,'_', myGCM,'_imput.csv', sep = ''))
-  solarRad <- read.csv(paste('/Users/quinn/Documents/PINEMAP_big_files/parameter_run/Consolidated_Files_Imput/solarRad_', RCP_index,'_', myGCM,'_imput.csv', sep = ''))
-  tMax <- read.csv(paste('/Users/quinn/Documents/PINEMAP_big_files/parameter_run/Consolidated_Files_Imput/tMax_', RCP_index,'_', myGCM,'_imput.csv', sep = ''))
-  tMin <- read.csv(paste('/Users/quinn/Documents/PINEMAP_big_files/parameter_run/Consolidated_Files_Imput/tMin_', RCP_index,'_', myGCM,'_imput.csv', sep = ''))
+  frostDays <- read_csv(paste('/Users/quinn/Documents/PINEMAP_big_files/parameter_run/Consolidated_Files_Imput/frostDays_', RCP_index,'_', myGCM,'_imput.csv', sep = ''))
+  rain <- read_csv(paste('/Users/quinn/Documents/PINEMAP_big_files/parameter_run/Consolidated_Files_Imput/rain_', RCP_index,'_', myGCM,'_imput.csv', sep = ''))
+  solarRad <- read_csv(paste('/Users/quinn/Documents/PINEMAP_big_files/parameter_run/Consolidated_Files_Imput/solarRad_', RCP_index,'_', myGCM,'_imput.csv', sep = ''))
+  tMax <- read_csv(paste('/Users/quinn/Documents/PINEMAP_big_files/parameter_run/Consolidated_Files_Imput/tMax_', RCP_index,'_', myGCM,'_imput.csv', sep = ''))
+  tMin <- read_csv(paste('/Users/quinn/Documents/PINEMAP_big_files/parameter_run/Consolidated_Files_Imput/tMin_', RCP_index,'_', myGCM,'_imput.csv', sep = ''))
   
   myHUCsFinal <- intersect(Soils$HUC12, frostDays$HUC12)
   
-  #myHUCsFinal <- myHUCsFinal[which(myHUCsFinal == 31101030505 | myHUCsFinal == 30601050202 | myHUCsFinal == 111401070404 | myHUCsFinal == 20802031301)]
+  myHUCsFinal <- myHUCsFinal[which(myHUCsFinal == 31101030505 | myHUCsFinal == 30601050202 | myHUCsFinal == 111401070404 | myHUCsFinal == 20802031301)]
   
   cl <- makeCluster(nprocessors)  
   registerDoParallel(cl)
@@ -346,8 +352,6 @@ for(r in 1:length(myRCP_list)){
   final_output_GCM_RCP <- foreach(ns = 1:nsamples, .export = ls()) %dopar% { # Will need to add objects,
     #final_output_GCM_RCP <- foreach(ns = 1:nsamples) %do% { # Will need to add objects,packages as needed
     # Load Fortran code
-    dyn.load(code_library)
-    
     par_ns_index <- pars_sample_index[ns]
     curr_pars <- accepted_pars_thinned_burned[par_ns_index,]
     if(PAR_UNCERT == FALSE){
@@ -359,27 +363,31 @@ for(r in 1:length(myRCP_list)){
     
     FR_pars = c(curr_pars[50],curr_pars[51])
     
-    bucket <- array(NA, dim = c(length(myHUCsFinal), 3, 1)) # columns for HUC12, WF, WS, WR, CoarseRoots, and TotalBiomass
-    tmp_bucket <- array(NA, dim = c(length(myHUCsFinal), 3, 1)) # columns for HUC12, WF, WS, WR, CoarseRoots, and TotalBiomass
-    tmp <- matrix(NA, nrow = length(myHUCsFinal), ncol = 5)
+    bucket <- array(NA, dim = c(length(myHUCsFinal), 3)) # columns for HUC12, WF, WS, WR, CoarseRoots, and TotalBiomass
+    tmp_bucket <- array(NA, dim = c(length(myHUCsFinal), 3)) # columns for HUC12, WF, WS, WR, CoarseRoots, and TotalBiomass
+    tmp <- matrix(NA, nrow = length(myHUCsFinal), ncol = 4)
     
+    if(!useParallel){
+      dyn.load(code_library)
+    }
     for(HUCindex in 1:length(myHUCsFinal)){
       tmp[HUCindex,] <- run.3PG.quick(myHUC = myHUCsFinal[HUCindex], yearStart = yearStart, yearEnd = yearEnd, startAge = 2, precipModifier = 1, MaxFR = MaxFR, base_year = base_year, curr_pars = curr_pars,FR_pars = FR_pars, HOLD_CO2 = HOLD_CO2, PROCESS_UNCERT = PROCESS_UNCERT, Mort_uncert = Mort_uncert, FR_uncert = FR_uncert) 
     }
     
-    tmp_bucket[,1,] <- tmp[,2] 
-    tmp_bucket[,2,] <- tmp[,3]
-
+    tmp_bucket[,1] <- tmp[,2] 
+    tmp_bucket[,2] <- tmp[,3]
+    tmp_bucket[,3] <- tmp[,4]
+    
     bucket = tmp_bucket
   }
+  stopCluster(cl)
+  
+  big_bucket <- array(unlist(final_output_GCM_RCP), dim = c(dim(final_output_GCM_RCP[[1]]),length(final_output_GCM_RCP)))
+  
+  rm(frostDays, rain, solarRad, tMax, tMin)
+  
+  save.image(file = paste(output_location,'/3PG_runs_for_', variation_type, '_using_', nsamples, '_based_on_', myGCM, '_and_', myRCP,'_and_startyear_of_',yearStart,'_FRset_',MaxFR,'_HOLDCO2_',HOLD_CO2,'.Rdata', sep = ''))      
 }
-stopCluster(cl)
-
-big_bucket <- array(unlist(final_output_GCM_RCP), dim = c(dim(final_output_GCM_RCP[[1]]),length(final_output_GCM_RCP)))
-
-rm(frostDays, rain, solarRad, tMax, tMin)
-
-save.image(file = paste('/work/newriver/rqthomas/DAPER_regional_analysis/3PG_runs_for_', variation_type, '_using_', nsamples, '_paramter_draws_and_', njitters, '_process_error_draws_based_on_', myGCM, '_and_', myRCP,'_and_startyear_of_',yearStart,'_FRset_',maxFR,'_HOLDCO2_',HOLD_CO2,'.Rdata', sep = ''))      
 
 
 

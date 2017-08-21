@@ -70,18 +70,18 @@ prepare_state_space_obs <- function(){
     init_obs[5,plotnum] = tmp2$PlantDensityHa
     if(length(which(tmp$LAI_H != -99)) >0 |(length(which(tmp$FOL_H != -99)))){
       init_obs[6,plotnum] = tmp$LAI_H[which(tmp$LAI_H != -99 & tmp$MonthMeas == 8)][1]  # tmp2$Initial_WF_H * SLA_H * 0.1
-    if(is.na(init_obs[6,plotnum])){
-      init_obs[6,plotnum] = tmp2$Initial_WF_H * SLA_H * 0.1
-    }
+      if(is.na(init_obs[6,plotnum])){
+        init_obs[6,plotnum] = tmp2$Initial_WF_H * SLA_H * 0.1
+      }
     }else{
       init_obs[6,plotnum] = 0.0
     }
-      
+    
     init_obs[7,plotnum] = tmp2$Initial_WS_H
     
-    init_uncert[2,plotnum] = init_obs[2,plotnum]*obs_uncertainity_proportion
+    init_uncert[2,plotnum] = init_obs[2,plotnum]*0.025
     init_uncert[3,plotnum] = init_obs[3,plotnum]*obs_uncertainity_proportion
-    init_uncert[5,plotnum] = init_obs[5,plotnum]*obs_uncertainity_proportion
+    init_uncert[5,plotnum] = init_obs[5,plotnum]*0.01
     init_uncert[6,plotnum] = init_obs[6,plotnum]*obs_uncertainity_proportion
     init_uncert[7,plotnum] = init_obs[7,plotnum]*obs_uncertainity_proportion
   }
@@ -117,7 +117,10 @@ prepare_state_space_obs <- function(){
           meas_month = tmp$MonthMeas[which(tmp$FOL != -99)][i]
           index = (meas_year - earliestYear)*12+1 + (meas_month-earliestMonth)
           obs[1,plotnum,index] = tmp$FOL[which(tmp$FOL != -99)][i]
-          obs_uncert[1,plotnum,index] = tmp$FOL[which(tmp$FOL != -99)][i]*obs_uncertainity_proportion
+          obs_uncert[1,plotnum,index] = tmp$WFest_sd[i]
+          if(tmp$WFest_sd[i] == -99){
+            obs_uncert[1,plotnum,index] = tmp$FOL[which(tmp$FOL != -99)][i]*obs_uncertainity_proportion
+          }
         }
       }
     }
@@ -129,7 +132,10 @@ prepare_state_space_obs <- function(){
         meas_month = tmp$MonthMeas[which(tmp$WOODY != -99)][i]
         index = (meas_year - earliestYear)*12+1 + (meas_month-earliestMonth)
         obs[2,plotnum,index] = tmp$WOODY[which(tmp$WOODY != -99)][i]
-        obs_uncert[2,plotnum,index] = tmp$WOODY[which(tmp$WOODY != -99)][i]*obs_uncertainity_proportion
+        obs_uncert[2,plotnum,index] = tmp$WSest_sd[i]
+        if(tmp$WSest_sd[i] == -99){
+          obs_uncert[2,plotnum,index] = tmp$WOODY[which(tmp$WOODY != -99)][i]*0.025
+        }
       }
     }
     #Coarse Roots
@@ -174,7 +180,9 @@ prepare_state_space_obs <- function(){
         #if(obs[6,plotnum,index]  == 0.0){
         #  obs[6,plotnum,index] = -99
         #}
-        if(meas_month != 8 & tmp$PlotID[1] > 40000 & tmp$PlotID[1] < 42000){obs[6,plotnum,index]=-99}
+        if(meas_month != 8 & tmp$PlotID[1] > 40000 & tmp$PlotID[1] < 42000){
+          obs[6,plotnum,index]=-99
+        }
         
         obs_uncert[6,plotnum,index] = tmp$LAI_H[which(tmp$LAI_H != -99)][i]*obs_uncertainity_proportion
         if(obs_uncert[6,plotnum,index] == 0.0){obs_uncert[6,plotnum,index]= 0.001}
@@ -273,17 +281,17 @@ prepare_state_space_obs <- function(){
       }
     }
     
-        #Total LAI
-        if(length(tmp$LAI_TOTAL[which(tmp$LAI_TOTAL != -99)]) >0){
-          for(i in 1:(length(tmp$LAI_TOTAL[which(tmp$LAI_TOTAL != -99)]))){
-            meas_year = tmp$YearMeas[which(tmp$LAI_TOTAL != -99)][i]
-            meas_month = tmp$MonthMeas[which(tmp$LAI_TOTAL != -99)][i]
-            index = (meas_year - earliestYear)*12+1 + (meas_month-earliestMonth)
-            obs[19,plotnum,index] = tmp$LAI_TOTAL[which(tmp$LAI_TOTAL != -99)][i]
-            if((meas_month != 8) & tmp$PlotID[1] > 40000 & tmp$PlotID[1] < 42000){obs[19,plotnum,index]=-99}
-            obs_uncert[19,plotnum,index] = tmp$LAI_TOTAL[which(tmp$LAI_TOTAL != -99)][i]*obs_uncertainity_proportion
-          }
-        }
+    #Total LAI
+    if(length(tmp$LAI_TOTAL[which(tmp$LAI_TOTAL != -99)]) >0){
+      for(i in 1:(length(tmp$LAI_TOTAL[which(tmp$LAI_TOTAL != -99)]))){
+        meas_year = tmp$YearMeas[which(tmp$LAI_TOTAL != -99)][i]
+        meas_month = tmp$MonthMeas[which(tmp$LAI_TOTAL != -99)][i]
+        index = (meas_year - earliestYear)*12+1 + (meas_month-earliestMonth)
+        obs[19,plotnum,index] = tmp$LAI_TOTAL[which(tmp$LAI_TOTAL != -99)][i]
+        if((meas_month != 8) & tmp$PlotID[1] > 40000 & tmp$PlotID[1] < 42000){obs[19,plotnum,index]=-99}
+        obs_uncert[19,plotnum,index] = tmp$LAI_TOTAL[which(tmp$LAI_TOTAL != -99)][i]*obs_uncertainity_proportion
+      }
+    }
     
     #### EXTRA STOCKS #######
     
@@ -310,8 +318,8 @@ prepare_state_space_obs <- function(){
     #        obs_uncert[20,plotnum,index] = tmp$FOL[which(tmp$FOL != -99)][i]*obs_uncertainity_proportion
     #      }
     #    }
-
-
+    
+    
     
   }
   
