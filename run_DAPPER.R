@@ -2,7 +2,7 @@ rm(list = ls())
 #---CONTROL INFORMATION----------------------------
 working_directory =  '/Users/quinn/Dropbox (VTFRS)/Research/DAPPER/'
 input_directory = '/Users/quinn/Dropbox (VTFRS)/Research/DAPPER_inputdata/'
-niter = 1000 #150000 #10000 #500000#15000000 #5000000 # 5000000
+niter = 1 #150000 #10000 #500000#15000000 #5000000 # 5000000
 chain_number = 1
 burn =  1 #75000 #25000 #15000000 # 100000 #2500000 #10000000 #500000 #2500000
 thin_interval = 1 # 10 #10 #10 #10 # 50 #500 #100 #100 #100
