@@ -168,8 +168,8 @@ subroutine R3PG_MODEL(output_dim,met,pars,site,thin_event,nopars,nomet, &
 	!Unique parameters for the Duke Forest
     if(site(23) == 1) then
     	!mort_rate = pars(22)
-        !thinPower = pars(18)
-        !wSx1000 = pars(48)
+        thinPower = pars(26)
+        wSx1000 = pars(48)
         !mS = pars(26)
         pCRS = pars(25)
     endif
