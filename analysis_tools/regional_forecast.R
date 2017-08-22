@@ -15,6 +15,15 @@ library(doParallel)
 
 enableJIT(1)
 
+output_location = "/Users/quinn/Downloads/"
+load("/Users/quinn/Dropbox (VTFRS)/Research/DAPPER/chains/test4.1.2017-08-01.11.54.11.Rdata")
+code_library = "/Users/quinn/Dropbox (VTFRS)/Research/DAPPER/source_code/r3pg_interface.so"
+CO2 <- read.csv('/Users/quinn/Dropbox (VTFRS)/Research/DAPPER_inputdata/CO2/CO2_Concentrations_from_CMIP5_1950-2095.csv')
+Soils <- read.csv('/Users/quinn/Documents/PINEMAP_big_files/parameter_run/Soil_Inputs_LPNR_Clipped_and_Imputed_v4.csv')
+GCMs <- c("bcc-csm1-1-m","bcc-csm1-1","BNU-ESM","CanESM2","CCSM4","CNRM-CM5","CSIRO-Mk3-6-0","GFDL-ESM2G","GFDL-ESM2M","HadGEM2-CC365","HadGEM2-ES365","inmcm4","IPSL-CM5A-LR","IPSL-CM5A-MR","IPSL-CM5B-LR","MIROC-ESM-CHEM","MIROC-ESM","MIROC5","MRI-CGCM3","NorESM1-M", "metdata") # metdata is the Idaho reference dataset, indexed by rcpCase [1]
+rcpCases <- c('baseline', 'rcp45','rcp85')
+
+## Critical Parameters -- USER INPUT REQUIRED ####-----------------------------
 useParallel = FALSE
 Mort_uncert = FALSE
 FR_uncert = FALSE
@@ -24,50 +33,66 @@ PROCESS_UNCERT = TRUE
 precipModifier <- 1.0 # No toggle to precip
 MaxFR <- FALSE # No fertilization
 # Number of samples from parameter chain (will be ignored in the process_only case)
-sample_size <- 100
+sample_size <- 400
 # Number of processors to be used
 nprocessors <- 1 # Make sure to change this to the max processors!
 rotationAge <- 25
 variation_type <- 'parameter_and_process'
 
-PAR_UNCERT = FALSE
-PROCESS_UNCERT = FALSE
-variation_type <- 'median'
+climate = FALSE
+climate_parameter = FALSE
+climate_parameter_proc = TRUE
+historical = FALSE
 
 
-output_location = "/Users/quinn/Downloads/"
+if(climate){
+  PAR_UNCERT = FALSE
+  PROCESS_UNCERT = FALSE
+  variation_type <- 'median'
+  myGCM_list <- c(GCMs[1:20],GCMs[1:20])
+  yearStart_list <- c(1985,2030)
+  sample_size <- 1
+}
 
-load("/Users/quinn/Dropbox (VTFRS)/Research/DAPPER/chains/test4.1.2017-08-01.11.54.11.Rdata")
-code_library = "/Users/quinn/Dropbox (VTFRS)/Research/DAPPER/source_code/r3pg_interface.so"
-CO2 <- read.csv('/Users/quinn/Dropbox (VTFRS)/Research/DAPPER_inputdata/CO2/CO2_Concentrations_from_CMIP5_1950-2095.csv')
-Soils <- read.csv('/Users/quinn/Documents/PINEMAP_big_files/parameter_run/Soil_Inputs_LPNR_Clipped_and_Imputed_v4.csv')
+if(climate_parameter & historical){
+  PAR_UNCERT = TRUE
+  PROCESS_UNCERT = FALSE
+  variation_type <- 'parameter'
+  myGCM_list <- c(GCMs[1:20])
+  myGCM_list <- c(GCMs[1])
+  yearStart_list <- c(1985)
+  sample_size <- 1
+}
 
-GCMs <- c("bcc-csm1-1-m","bcc-csm1-1","BNU-ESM","CanESM2","CCSM4","CNRM-CM5","CSIRO-Mk3-6-0","GFDL-ESM2G","GFDL-ESM2M","HadGEM2-CC365","HadGEM2-ES365","inmcm4","IPSL-CM5A-LR","IPSL-CM5A-MR","IPSL-CM5B-LR","MIROC-ESM-CHEM","MIROC-ESM","MIROC5","MRI-CGCM3","NorESM1-M", "metdata") # metdata is the Idaho reference dataset, indexed by rcpCase [1]
+if(climate_parameter & !historical){
+  PAR_UNCERT = TRUE
+  PROCESS_UNCERT = FALSE
+  variation_type <- 'parameter'
+  myGCM_list <- c(GCMs[1:20])
+  myGCM_list <- c(GCMs[1])
+  yearStart_list <- c(2030)
+  sample_size <- sample_size
+}
 
-rcpCases <- c('baseline', 'rcp45','rcp85')
+if(climate_parameter_proc & historical){
+  PAR_UNCERT = TRUE
+  PROCESS_UNCERT = TRUE
+  variation_type <- 'parameter_proc'
+  myGCM_list <- c(GCMs[1:20])
+  myGCM_list <- c(GCMs[1])
+  yearStart_list <- c(1985)
+  sample_size <- 1
+}
 
-## Critical Parameters -- USER INPUT REQUIRED ####-----------------------------
-# Working Directory 
-#setwd('/home/rqthomas/DAPER_regional_analysis')
-
-# GCM
-myGCM_list <- c(GCMs[3],GCMs[1:5]) # CCSM4, for example
-myGCM_list <- c(GCMs[1],GCMs[1],GCMs[2],GCMs[2],GCMs[4],GCMs[4])
-myGCM_list <- c(GCMs[1])
-#myGCM_list <- c(GCMs[21],GCMs[1:20],GCMs[1:20],GCMs[1:20],GCMs[1:20])
-# RCP
-myRCP_list <- c(rcpCases[1],rep(rcpCases[3],5),rep(rcpCases[3],5)) # RCP8.5, for example
-myRCP_list <- c(rcpCases[3],rcpCases[3],rcpCases[3],rcpCases[3],rcpCases[3],rcpCases[3])
-myRCP_list <- c(rcpCases[3])
-#myRCP_list <- c(rcpCases[1],rep(rcpCases[3],80))
-
-## Tuning Parameters
-# Note that the metdata available years run from 1971-2011
-yearStart_list <- c(1985,rep(1985,5),rep(2030,5)) # Change this as needed!
-yearStart_list <- c(1985,2030,1985,2030,1985,2030)
-yearStart_list <- c(2030)
-yearStart_list <- c(1985)
-#yearStart_list <- c(1985,rep(1985,20),rep(2020,20),rep(2045,20),rep(2070,20))
+if(climate_parameter_proc & !historical){
+  PAR_UNCERT = TRUE
+  PROCESS_UNCERT = TRUE
+  variation_type <- 'parameter_proc'
+  myGCM_list <- c(GCMs[1:20])
+  myGCM_list <- c(GCMs[1])
+  yearStart_list <- c(2030)
+  sample_size <- sample_size
+}
 
 ## 3-PG Wrapper ####-----------------------------------------------------------
 run.3PG.quick <- function(myHUC, yearStart, yearEnd, startAge = 2, precipModifier = 1, MaxFR = FALSE, curr_pars,base_year = 1950, curr_FR_pars, FR_pars,HOLD_CO2 = FALSE,PROCESS_UNCERT = TRUE, ...){ 
