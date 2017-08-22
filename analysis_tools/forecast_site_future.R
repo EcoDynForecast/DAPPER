@@ -2,7 +2,7 @@
 #---CONTROL INFORMATION----------------------------
 working_directory = '/Users/quinn/Dropbox (VTFRS)/Research/DAPPER'
 input_directory = '/Users/quinn/Dropbox (VTFRS)/Research/DAPPER_inputdata/'
-run_name = 'Duke_without_Ctrans.1.2017-08-09.07.32.07'
+run_name = 'process'
 #restart_chain = 'duke_state_space_without_trans_2.1.2017-07-21.13.19.13.Rdata'
 restart_chain = 'Duke_without_Ctrans.1.2017-08-09.07.32.07.Rdata'
 priors_file = 'default_priors.csv'
@@ -31,13 +31,14 @@ plotSI = c(15.49341)
 plotMaxASW = c(141)
 climate_data_index = c(1,1)
 clim_model = 1 #seq(1,20,1)
-startyear = c(1980,2030)
+startyear = c(1985,2030)
 adjust_rain = c(1,1)
 adjust_fert =c(0,0)
 adjust_CO2 = c(0,0) 
 PROCESS_UNCERT = TRUE
 PARAMETER_UNCERT = TRUE
 HOLD_CO2 = FALSE
+nsamples = 100
 
 
 all_studies = c(
@@ -119,7 +120,7 @@ exclude_hardwoods[which(initdata$PlotID >= 40000 & initdata$PlotID < 42000)]=0
 dyn.load(code_library_plot)
 
 
-nsamples = 100
+
 nmodels = length(clim_model)
 nperiods = length(startyear)
 plotnum = 1
@@ -145,8 +146,6 @@ median_pars = rep(NA,npars)
 for(p in 1:npars){
   median_pars[p] = median(accepted_pars_thinned_burned[,p])
 }
-
-use_median_pars = FALSE
 
 start_age = 2
 WFi = 1 #"WFi"
@@ -180,10 +179,10 @@ for(s in 1:nsamples){
         curr_met_in_tasmin = met_in_tasmin[which(met_in_model == curr_model & met_in_plotnum == plotnum),]
         curr_met_in_rsds =  met_in_rsds[which(met_in_model == curr_model & met_in_plotnum == plotnum),]
         
-        nyears = 25 - start_age
+        nyears = 26 - start_age
         nmonths = nyears*12
         met = array(NA,c(nmonths,6))
-        yrnum = startyear[yearnum] - 1950
+        yrnum = (startyear[yearnum]+start_age) - 1950
         endno = (((yrnum*12)+1)+nmonths)
         tmax = curr_met_in_tasmax[((yrnum*12)+2):endno]
         tmin = curr_met_in_tasmin[((yrnum*12)+2):endno]
@@ -191,7 +190,7 @@ for(s in 1:nsamples){
         solar = (curr_met_in_rsds[((yrnum*12)+2):endno])/1000000*86400
         frost = curr_met_in_frost[((yrnum*12)+2):endno]
         
-        c02start = startyear[yearnum]
+        c02start = startyear[yearnum]+start_age
         endyear = c02start + nyears-1
         co2plot = co2_in[which(co2_in >= c02start & co2_in <= endyear),]
         if (rcp == 45){
@@ -206,7 +205,7 @@ for(s in 1:nsamples){
         }
         
         if(HOLD_CO2 == TRUE){
-          c02start = 1985
+          c02start = 1985+start_age
           endyear = c02start + nyears-1
           co2plot = co2_in[which(co2_in >= c02start & co2_in <= endyear),]
           co2 = rep(co2plot[,2],each=12)
@@ -308,7 +307,7 @@ for(s in 1:nsamples){
                   WSi_H = 0.001,
                   WRi_H = 0.001,
                   WCRi,
-                  IrrigRate = IrrigRate,
+                  IrrigRate = 0.0,
                   Throughfall = 1.0,
                   tmp_site_index,  
                   WCRi_H = 0.0,
@@ -377,11 +376,11 @@ for(s in 1:nsamples){
             site[9] = 1500
             site[20] = 0.30
             site[6] = 0.5
-            site[27] = max(rnorm(1,output[9],new_pars[52]),0.0)  #Hardwood LAI
+            site[27] = output[9]  #Hardwood LAI
             site[25] = output[26] #Hardwood Bud
-            site[18] = rnorm(1,output[10],new_pars[57]) #WS_H 
+            site[18] = output[10] #WS_H 
             site[24] = output[11]  #WCR_h
-            site[19] = rnorm(1,output[12],new_pars[55]) #WR_H
+            site[19] = output[12] #WR_H
             site[10] = output[14] # ASW
             site[17] = output[23] #WF_H	
           }else{ 
@@ -406,11 +405,11 @@ for(s in 1:nsamples){
               site[7] = output[7]
               site[9] = output[8]
               site[6] = output[22] #WFi    
-              site[27] = max(rnorm(1,output[9],new_pars[52]),0.0)  #Hardwood LAI
+              site[27] = output[9]  #Hardwood LAI
               site[25] = output[26] #Hardwood Bud
-              site[18] = rnorm(1,output[10],new_pars[57]) #WS_H 
+              site[18] = output[10] #WS_H 
               site[24] = output[11]  #WCR_h
-              site[19] = rnorm(1,output[12],new_pars[55]) #WR_H
+              site[19] = output[12] #WR_H
               site[10] = output[14] # ASW
               site[17] = output[23] #WF_H	
             }
