@@ -304,6 +304,7 @@ subroutine DAPPER_MCMC( &
    			!$OMP PARALLEL	
 			!$OMP DO PRIVATE(plotnum,V,Vv,tmp_sd,data_stream,mo)
     		do plotnum = 1,nplots
+    			if(fit_plot(plotnum) == 1) then
     		
     			!Deals with the fact that some plots using LAI as the state and other use Foliage biomass
     		    if(use_fol_state(plotnum) == 1) then
@@ -514,7 +515,6 @@ subroutine DAPPER_MCMC( &
     	  		endif
     		    		   	
    				!---LOOP THROUGH PLOTS TO CALCULATE LIKELIHOOD OF EACH PLOT 	
- 				if(fit_plot(plotnum) == 1) then
   					call likelihood(plotnum &
    						,nopars         & 
                         ,nplots			&
@@ -555,6 +555,7 @@ subroutine DAPPER_MCMC( &
 	 			
 			!---SUM UP LIKELIHOOD ACROSS PLOTS	
 			like_new = sum(prob_new)
+			
 					
 			!--CALCULATE PROBABILITY OF ALL PRIORS (MULTIPLY INDIVIDUAL PROABILITIES)
    			prior = 0

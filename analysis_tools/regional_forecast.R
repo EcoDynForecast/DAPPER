@@ -16,7 +16,7 @@ library(doParallel)
 enableJIT(1)
 
 output_location = "/Users/quinn/Downloads/"
-load("/Users/quinn/Dropbox (VTFRS)/Research/DAPPER/chains/test4.1.2017-08-01.11.54.11.Rdata")
+load("/Users/quinn/Dropbox (VTFRS)/Research/DAPPER/chains/BG_SS.1.2017-08-21.13.40.13.Rdata")
 code_library = "/Users/quinn/Dropbox (VTFRS)/Research/DAPPER/source_code/r3pg_interface.so"
 CO2 <- read.csv('/Users/quinn/Dropbox (VTFRS)/Research/DAPPER_inputdata/CO2/CO2_Concentrations_from_CMIP5_1950-2095.csv')
 Soils <- read.csv('/Users/quinn/Documents/PINEMAP_big_files/parameter_run/Soil_Inputs_LPNR_Clipped_and_Imputed_v4.csv')
@@ -28,7 +28,7 @@ useParallel = FALSE
 Mort_uncert = FALSE
 FR_uncert = FALSE
 HOLD_CO2 = FALSE
-PAR_UNCERT = TRUE
+PAR_UNCERT = FALSE
 PROCESS_UNCERT = TRUE
 precipModifier <- 1.0 # No toggle to precip
 MaxFR <- FALSE # No fertilization
@@ -37,11 +37,13 @@ sample_size <- 400
 # Number of processors to be used
 nprocessors <- 1 # Make sure to change this to the max processors!
 rotationAge <- 25
-variation_type <- 'parameter_and_process'
+variation_type <- 'process'
 
 climate = FALSE
 climate_parameter = FALSE
 climate_parameter_proc = TRUE
+
+
 historical = FALSE
 
 

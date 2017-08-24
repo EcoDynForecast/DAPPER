@@ -240,7 +240,7 @@ subroutine R3PG_MODEL(output_dim,met,pars,site,thin_event,nopars,nomet, &
     if(LAI_i .NE. -99) then  !OVERWRITE INITIAL FOLIAGE IF INITIAL LAI IS SUPPLIED
     	LAI = LAI_i
     	SLA = SLA1 + (SLA0 - SLA1) * Exp(-ln2 * (StandAge / tSLA)**2)
-    	WFi = LAI_i / (SLA * 0.1D0)
+    	WF1 = LAI_i / (SLA * 0.1D0)
     else
     	if(clm) then
     		LAI  = ((SLA0*0.1D0)*(exp(tSLA*0.1D0*((WF1+WF2)))-1))/(tSLA*0.1D0)
@@ -293,7 +293,7 @@ subroutine R3PG_MODEL(output_dim,met,pars,site,thin_event,nopars,nomet, &
  	!---  START SIMULATION
  	!--------------------------
   	DO month = 1,nomonths
-  	  	
+  	
 		!-----------------------------------
 		! MONTHLY CLIMATE
 		!-----------------------------------
@@ -471,6 +471,7 @@ subroutine R3PG_MODEL(output_dim,met,pars,site,thin_event,nopars,nomet, &
         c_allometry = 1 + pR + (1/pFS)*(1+pCRS)
     	nlc = NPP/c_allometry
         delWF = nlc
+        
         delWR = nlc*pR
         delWS = nlc*(1/pFS)
         delWCR = nlc*(1/pFS)*pCRS
@@ -664,7 +665,7 @@ subroutine R3PG_MODEL(output_dim,met,pars,site,thin_event,nopars,nomet, &
 		OUTPUT(output_index,1) = calyear
 		OUTPUT(output_index,2) = calmonth
 		OUTPUT(output_index,3) = StandAge
-		
+
 		!STATE VARIABLES OR VARIABLES THAT HAVE OBSERVATIONS
 		OUTPUT(output_index,4) = LAI
 		OUTPUT(output_index,5) = WS

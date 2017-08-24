@@ -247,7 +247,7 @@ plot_output <- function(){
     )
     
     site = array(site_in)
-
+    
     output_dim = noutput_variables  # NUMBER OF OUTPUT VARIABLES
     nosite = length(site_in)  # LENGTH OF SITE ARRAY
     nomet = 6  # NUMBER OF VARIABLES IN METEROLOGY (met)
@@ -265,27 +265,146 @@ plot_output <- function(){
     
     dyn.load(code_library_plot)
     
+    output = NULL
+    for(mo in (mo_start_end[plotnum,1]+1):mo_start_end[plotnum,2]){
+      
+      site[3] = years[mo]
+      site[4]  = months[mo]
     
-    tmp=.Fortran( "r3pg_interface",
-                  output_dim=as.integer(output_dim),
-                  met=as.double(met[plotnum,,]),
-                  pars=as.double(pars),
-                  site = as.double(site),
-                  thin_event = as.double(thin_event[plotnum,]),
-                  out_var=as.double(array(0,dim=c(nomonths_plot,output_dim))),
-                  nopars=as.integer(nopars),
-                  nomet=as.integer(dim(met)[2]),
-                  nosite = as.integer(nosite),
-                  nooutputs=as.integer(output_dim),
-                  nomonths_plot=as.integer(nomonths_plot),
-                  nothin = 1,
-                  exclude_hardwoods = as.integer(exclude_hardwoods[plotnum]),
-                  mo_start_end = as.integer(mo_start_end[plotnum,]),
-                  nmonths = nmonths
-    )
-    
-    # READ IN FORTRAN OUTPUT FILE PROCESS FORTRAN OUTPUT SO THAT IT CAN BE COMPARED TO THE DATA
-    output=array(tmp$out_var, dim=c(nomonths_plot,output_dim))
+      tmp=.Fortran( "r3pg_interface",
+                    output_dim=as.integer(output_dim),
+                    met=as.double(met[plotnum,,mo]),
+                    pars=as.double(pars),
+                    site = as.double(site),
+                    thin_event = as.double(thin_event[plotnum,mo]),
+                    out_var=as.double(array(0,dim=c(1,output_dim))),
+                    nopars=as.integer(nopars),
+                    nomet=as.integer(dim(met)[2]),
+                    nosite = as.integer(nosite),
+                    nooutputs=as.integer(output_dim),
+                    nomonths_plot=as.integer(1),
+                    nothin = 1,
+                    exclude_hardwoods = as.integer(exclude_hardwoods[plotnum]),
+                    mo_start_end = as.integer(c(1,1)),
+                    nmonths = 1
+      )
+      
+      output_mo=array(tmp$out_var, dim=c(1,output_dim))
+      
+      modeled = rep(NA,nstreams)
+      #--- PROCESS MODEL OUTPUT      
+      if(use_fol_state[plotnum] == 1){	
+      modeled[1] = output_mo[22] #output(4) !Pine Foliage
+      }else{
+        modeled[1] = output_mo[4] #output(4) !Pine LAI
+      }
+      
+      
+      modeled[2] = output_mo[5] #WS
+      modeled[3] = output_mo[6] #+ output_mo[43] !WCR
+      modeled[4] = output_mo[7] #+ output_mo[58] !WR
+      modeled[5] = output_mo[8] #Stem Density
+      modeled[6] = output_mo[9] #LAI_H        
+      modeled[7] = output_mo[10] #Hardwood Stem   
+      modeled[8] = output_mo[11] #Hardwood Coarse roots
+      modeled[9] = output_mo[12] #Hardwood Fine roots 
+      modeled[10] = output_mo[13] #Hardwood Stem density 
+      modeled[11] = output_mo[14] # ASW        
+      modeled[12] = output_mo[15] # GEP        
+      modeled[13] = output_mo[16] # NEE
+      modeled[14] = output_mo[17] # ET  
+      modeled[15] = output_mo[18] # Ctrans Pine           
+      modeled[16] = output_mo[19] # Ctrans Hardwood   
+      modeled[19] =  output_mo[4]  + output_mo[9]
+      
+      output = rbind(output,output_mo)
+      
+      site[5] =  output_mo[3]+ (1.0/12.) #Age
+      
+      if(state_space > 0){
+        if(obs[1,plotnum,mo] != -99.0){
+          if(use_fol_state[plotnum] == 1){
+            site[6] = obs[1,plotnum,mo]
+            site[26] = -99
+          }else{
+            site[6] = output_mo[22]
+            site[26] = obs[1,plotnum,mo]
+          }
+        }else{
+          if(use_fol_state[plotnum] == 1){
+            site[6] = modeled[1]
+            site[26] = -99
+          }else{
+            site[6] = output_mo[22]
+            site[26] = modeled[1]
+          }
+        }
+        if(obs[2,plotnum,mo] != -99.0){
+          site[8] = obs[2,plotnum,mo] #WSi
+        }else{
+          site[8] = modeled[2]
+        }   
+        
+        if(obs[3,plotnum,mo] != -99.0){
+          site[20] = obs[3,plotnum,mo] #WCR
+        }else{
+          site[20] = modeled[3]
+        }  
+        
+        if(obs[4,plotnum,mo] != -99.0){
+          site[7] = obs[4,plotnum,mo]* (modeled[4]/(modeled[9]+modeled[4])) 
+          site[19] =obs[4,plotnum,mo]* (modeled[9]/(modeled[9]+modeled[4]))
+        }else{
+          site[7] = modeled[4]
+          site[19] = modeled[9]
+        }        
+        
+        if(obs[5,plotnum,mo] != -99.0){
+          site[9] = obs[5,plotnum,mo] #StemNo
+        }else{
+          site[9] = modeled[5]
+        }
+        
+        if(obs[6,plotnum,mo] != -99.0){
+          site[27] = obs[6,plotnum,mo] # Hardwood LAI
+          site[25] =  output_mo[26]
+        }else{
+          site[27] = modeled[6]
+          site[25] =  output_mo[26]
+        }
+        
+        if(obs[7,plotnum,mo] != -99.0){
+          site[18] = obs[7,plotnum,mo] # Hardwood WS
+        }else{
+          site[18] = modeled[7]
+        }
+        
+        
+      }else{
+        if(use_fol_state[plotnum] == 1){
+          site[6] = modeled[1]
+          site[26] = -99
+        }else{
+          site[6] = output_mo[22]
+          site[26] = modeled[1]
+        }
+        site[8] =  modeled[2] #WS
+        site[20] = modeled[3] #WCR
+        site[7] = modeled[4] #WRi
+        site[9] = modeled[5] #StemNo
+        site[27] = modeled[6]
+        site[18] = modeled[7]
+        site[19] = modeled[9] #WR_H
+        site[25] =  output_mo[26]
+      }
+      
+      #Other state variables
+      
+      site[10] = modeled[11] #ASW
+      site[17] = output_mo[23] #WF_H
+      site[24] =  output_mo[11]#WCR_h
+      
+    }
     
     if(fit_plot[plotnum] == 0){
       for(mo in 1:nomonths_plot){
@@ -298,8 +417,8 @@ plot_output <- function(){
     
     if(nplots > 1){
       # 1 - year, 2-month, 3-stand age, 4 - WF, 5 - WR, 6-WS, 7-StemNo
-      for(mo in 1:nomonths_plot){
-        index = mo_start_end[plotnum,1]+mo-1
+      for(mo in 2:(nomonths_plot-1)){
+        index = mo_start_end[plotnum,1]+mo
         if(obs[1,plotnum,index] != -99 & use_fol_state[plotnum] ==  0){
           lai_predicted = c(lai_predicted,output[mo,4])
           lai_observed = c(lai_observed,obs[1,plotnum,index])
@@ -310,7 +429,7 @@ plot_output <- function(){
           stem_observed = c(stem_observed,obs[2,plotnum,index])
           stem_plotid = c(stem_plotid,PlotID)
         }
-
+        
         if(obs[3,plotnum,index] != -99){
           coarse_root_predicted = c(coarse_root_predicted,output[mo,6])
           coarse_root_observed = c(coarse_root_observed,obs[3,plotnum,index])
@@ -414,7 +533,7 @@ plot_output <- function(){
     modeled[15,] = output[,18] # Ctrans Pine           
     modeled[16,] = output[,19] # Ctrans Hardwood 
     
-  
+    
     modeled_age = output[,3]
     
     for(data_stream in 1:(nstreams-1)){
@@ -514,7 +633,7 @@ plot_output <- function(){
   abline(0,1)
   plot(ctrans_hard_observed,ctrans_hard_predicted,xlab='observed',ylab='predicted',ylim=c(0,100),xlim=c(0,100),main=c('Ctrans Hard'))
   abline(0,1)
-    dev.off()
+  dev.off()
   
   fname = paste(working_directory,'/figures/',sep='')
   write.table(data.frame(PlotID = initdata[,1],fit_plot,FertFlag=initdata[,18],IrrFlag=initdata[,33],DroughtLevel=initdata[,16],

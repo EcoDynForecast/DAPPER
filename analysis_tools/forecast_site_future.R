@@ -2,9 +2,9 @@
 #---CONTROL INFORMATION----------------------------
 working_directory = '/Users/quinn/Dropbox (VTFRS)/Research/DAPPER'
 input_directory = '/Users/quinn/Dropbox (VTFRS)/Research/DAPPER_inputdata/'
-run_name = 'process'
+run_name = 'parameter_process'
 #restart_chain = 'duke_state_space_without_trans_2.1.2017-07-21.13.19.13.Rdata'
-restart_chain = 'Duke_without_Ctrans.1.2017-08-09.07.32.07.Rdata'
+restart_chain = 'BG_SS_3_less_data_uncert.1.2017-08-23.13.09.13.Rdata'
 priors_file = 'default_priors.csv'
 fr_model = 1  # 1 = estimate FR for each plot, 2 = empirical FR model
 FR_fert_assumption = 0 #0 = assume fertilization plots have FR = 1, 1 = do not assume fertilization plots have FR = 1
@@ -25,12 +25,11 @@ statelist = c('FL','GA','VA','OK')
 
 rcp = 85
 plotlist = c(30018) #c(30018)
-plotnum = 3
 focal_plotID = plotlist
 plotSI = c(15.49341)
 plotMaxASW = c(141)
 climate_data_index = c(1,1)
-clim_model = 1 #seq(1,20,1)
+clim_model = c(1,1) #seq(1,20,1)
 startyear = c(1985,2030)
 adjust_rain = c(1,1)
 adjust_fert =c(0,0)
@@ -274,7 +273,9 @@ for(s in 1:nsamples){
       #  FR = 1/(1+exp((new_pars[49] + new_pars[50]*Mean_temp-new_pars[51]*SI)))
       #}
       
-      FR = plotFR
+      FR = 1/(1+exp((new_pars[49] + new_pars[50]*Mean_temp-new_pars[51]*plotSI)))
+      
+      #FR = plotFR
       
       if(initdata[plotnum,12] == 1) { FR = 1}
       
@@ -386,7 +387,7 @@ for(s in 1:nsamples){
           }else{ 
             if(PROCESS_UNCERT){
               site[26] = max(rnorm(1,output[4],new_pars[52]),0.1) #LAI
-              site[8] = rnorm(1,output[5],new_pars[53]) #WS
+              site[8] = rnorm(1,output[5],(new_pars[53] +output[5]*new_pars[64])*2)  #WS
               site[20] = rnorm(1,output[6],new_pars[54])   #WCR
               site[7] = rnorm(1,output[7],new_pars[55])  #WRi
               site[9] = rnorm(1,output[8],new_pars[56]) #StemNo
@@ -414,8 +415,6 @@ for(s in 1:nsamples){
               site[17] = output[23] #WF_H	
             }
           }
-          
-          
           
           age[s,yearnum,m,plotnum,mo] = output[3]
           lai[s,yearnum,m,plotnum,mo]  = site[26]
