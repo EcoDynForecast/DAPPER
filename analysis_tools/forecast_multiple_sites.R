@@ -19,7 +19,7 @@ plotFR = NA
 windows_machine = FALSE
 
 PARAMETER_UNCERT = TRUE
-nsamples = 400
+nsamples = 100
 
 load(paste(working_directory,'/chains/',restart_chain,sep=''))
 
@@ -434,8 +434,8 @@ for(plotnum in 1:nplots){
     for(i in 1:length(tmp_age_obs)){
       index = which.min(abs(modeled_age-tmp_age_obs[i]))
       tmp_stem_obs_range = quantile(rnorm(1000,tmp_stem_obs[i],tmp_stem_obs_uncert[i]),c(0.025,0.975))
-      points(tmp_age_obs,tmp_stem_obs,col='black',pch=20)
-      segments(tmp_age_obs,tmp_stem_obs_range[1],tmp_age_obs,tmp_stem_obs_range[2])
+      points(tmp_age_obs[i],tmp_stem_obs[i],col='black',pch=20)
+      segments(tmp_age_obs[i],tmp_stem_obs_range[1],tmp_age_obs[i],tmp_stem_obs_range[2])
       if((tmp_stem_obs_range[1] >= stem_quant[index,1] & tmp_stem_obs_range[1] <= stem_quant[index,3]) |
          (tmp_stem_obs_range[2] >= stem_quant[index,1] & tmp_stem_obs_range[2] <= stem_quant[index,3])){
         num_in95 = num_in95 + 1
