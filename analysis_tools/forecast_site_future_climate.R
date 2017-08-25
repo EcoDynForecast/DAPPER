@@ -1,4 +1,4 @@
-
+rm(list = ls())
 #---CONTROL INFORMATION----------------------------
 working_directory = '/Users/quinn/Dropbox (VTFRS)/Research/DAPPER'
 input_directory = '/Users/quinn/Dropbox (VTFRS)/Research/DAPPER_inputdata/'

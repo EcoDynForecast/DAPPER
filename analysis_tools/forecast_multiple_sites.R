@@ -1,4 +1,4 @@
-
+rm(list = ls())
 #---CONTROL INFORMATION----------------------------
 working_directory = '/Users/quinn/Dropbox (VTFRS)/Research/DAPPER'
 input_directory = '/Users/quinn/Dropbox (VTFRS)/Research/DAPPER_inputdata/'
@@ -17,6 +17,9 @@ nstreams = 19
 state_space = 1
 plotFR = NA
 windows_machine = FALSE
+
+PARAMETER_UNCERT = TRUE
+nsamples = 400
 
 load(paste(working_directory,'/chains/',restart_chain,sep=''))
 
@@ -177,6 +180,10 @@ obs_gap_next = init_states$obs_gap_next
 
 #--- ASSIGN VECTOR FLAGGING PLOTS AS USED IN FITTING OR NOT
 fit_plot = set_fitted_plots(nplots,val_set,plotlist,initdata)
+num_in95 = 0
+num_out95 = 0
+num_tot = 0
+
 
 pdf(paste(working_directory,'/figures/',run_name,'.pdf',sep=''),width = 11,height = 11)
 par(mfrow=c(4,4),mar = c(4,4,2,2),oma = c(3,3,2,2))
@@ -187,17 +194,11 @@ dyn.load(code_library_plot)
 
 for(plotnum in 1:nplots){
   if((val_set > 0 & fit_plot[plotnum]==0) | val_set == 0){
-    nsamples = 200
-    
-    
     
     median_pars = rep(NA,npars)
     for(p in 1:npars){
       median_pars[p] = median(accepted_pars_thinned_burned[,p])
     }
-    
-    use_median_pars = TRUE
-    
     
     plot_nmonths = length(mo_start_end[plotnum,1]:mo_start_end[plotnum,2])
     age_model = array(-99,dim=c(nsamples,plot_nmonths))
@@ -207,7 +208,7 @@ for(plotnum in 1:nplots){
     
     for(s in 1:nsamples){
       
-      if(use_median_pars){
+      if(!PARAMETER_UNCERT){
         new_pars = median_pars
       }else{
         curr_sample = sample(seq(1,length(accepted_pars_thinned_burned[,1])),1)   
@@ -404,7 +405,6 @@ for(plotnum in 1:nplots){
       }
     }
     
-    
     LAI_quant = array(NA,dim=c(length(age_model[1,]),3))
     stem_quant = array(NA,dim=c(length(age_model[1,]),3))
     stem_density_quant = array(NA,dim=c(length(age_model[1,]),3))
@@ -418,14 +418,35 @@ for(plotnum in 1:nplots){
     }
     
     data_stream = 2
-    observed = obs[data_stream,plotnum,which(obs[data_stream,plotnum,]!=-99)]
-    observed_y =age[plotnum,which(obs[data_stream,plotnum,]!=-99)]
+    obs[data_stream,plotnum,which(obs[data_stream,plotnum,]!=-99)]
+    age[plotnum,which(obs[data_stream,plotnum,]!=-99)]
+    
+    #Calculate total  
+    tmp_age_obs = age[plotnum,which(obs[data_stream,plotnum,]!=-99)]
+    tmp_stem_obs = obs[data_stream,plotnum,which(obs[data_stream,plotnum,]!=-99)]
+    tmp_stem_obs_uncert = obs_uncert[data_stream,plotnum,which(obs_uncert[data_stream,plotnum,]!=-99)]
+    
     xlim_range = c(0,30) #c(min(output[,3])-1,max(output[,3])+1)
-    ylim_range = c(0,max(c(observed,stem_quant),na.rm=TRUE)) #range(c(observed,modeled[data_stream,]))
-    plot(modeled_age,stem_quant[,2],type='l',ylim=ylim_range, xlab = 'Stand Age',ylab = 'Stem Biomass (Mg/ha)')
+    ylim_range = c(0,max(c(tmp_stem_obs,stem_quant),na.rm=TRUE)) #range(c(observed,modeled[data_stream,]))
+    plot(modeled_age,stem_quant[,2],type='l',ylim=ylim_range, xlab = 'Stand Age',ylab = 'Stem Biomass (Mg/ha)',main=plotlist[plotnum])
     polygon(c(modeled_age,rev(modeled_age)),c(stem_quant[,1],rev(stem_quant[,3])),col="lightblue",border=NA)
     points(modeled_age,stem_quant[,2],type='l',col="blue",lwd=1)
-    points(observed_y,observed,col='black',pch=20)
+    for(i in 1:length(tmp_age_obs)){
+      index = which.min(abs(modeled_age-tmp_age_obs[i]))
+      tmp_stem_obs_range = quantile(rnorm(1000,tmp_stem_obs[i],tmp_stem_obs_uncert[i]),c(0.025,0.975))
+      points(tmp_age_obs,tmp_stem_obs,col='black',pch=20)
+      segments(tmp_age_obs,tmp_stem_obs_range[1],tmp_age_obs,tmp_stem_obs_range[2])
+      if((tmp_stem_obs_range[1] >= stem_quant[index,1] & tmp_stem_obs_range[1] <= stem_quant[index,3]) |
+         (tmp_stem_obs_range[2] >= stem_quant[index,1] & tmp_stem_obs_range[2] <= stem_quant[index,3])){
+        num_in95 = num_in95 + 1
+        num_tot = num_tot + 1
+      }else{
+        num_out95 = num_out95 + 1
+        num_tot = num_tot + 1      
+      }
+      
+    }
+    
   }
 }
 
