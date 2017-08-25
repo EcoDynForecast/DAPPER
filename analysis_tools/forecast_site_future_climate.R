@@ -267,16 +267,12 @@ for(s in 1:nsamples){
       MinASW = ASW_min
       SoilClass=SoilClass
       
-      #if(FertFlag == 1 | fr_model == 1){
-      #  FR = new_FR
-      #}else{
-      #  FR = 1/(1+exp((new_pars[49] + new_pars[50]*Mean_temp-new_pars[51]*SI)))
-      #}
-      
-      FR = 1/(1+exp((new_pars[49] + new_pars[50]*Mean_temp-new_pars[51]*plotSI)))
-      
-      #FR = plotFR
-      
+      if(!is.na(plotFR)){
+      FR = new_FR
+      }else{
+        FR = 1/(1+exp((new_pars[49] + new_pars[50]*Mean_temp-new_pars[51]*SI)))
+      }
+
       if(initdata[plotnum,12] == 1) { FR = 1}
       
       
@@ -338,6 +334,8 @@ for(s in 1:nsamples){
       }
       
       for(mo in 1:nmonths){
+        
+        
  
         tmp=.Fortran( "r3pg_interface",
                       output_dim=as.integer(output_dim),
@@ -387,7 +385,7 @@ for(s in 1:nsamples){
           }else{ 
             if(PROCESS_UNCERT){
               site[26] = max(rnorm(1,output[4],new_pars[52]),0.1) #LAI
-              site[8] = rnorm(1,output[5],(new_pars[53] +output[5]*new_pars[64])*2)  #WS
+              site[8] = rnorm(1,output[5],(new_pars[53] +output[5]*new_pars[64]))  #WS
               site[20] = rnorm(1,output[6],new_pars[54])   #WCR
               site[7] = rnorm(1,output[7],new_pars[55])  #WRi
               site[9] = rnorm(1,output[8],new_pars[56]) #StemNo
@@ -428,12 +426,12 @@ for(s in 1:nsamples){
           ET[s,yearnum,m,plotnum,mo]= output[17]
           Total_Ctrans[s,yearnum,m,plotnum,mo]= output[18] + output[19]
           GPP[s,yearnum,m,plotnum,mo]= output[22]*0.5
-          runoff[s,yearnum,m,plotnum,mo]= output[40] 
-          #if(m > mo_start_end[plotnum,1]){
-          #runoff[s,plotnum,mo]= runoff[s,plotnum,mo-1] + output[40] 
-          #}else{
-          #  runoff[s,plotnum,mo]= output[40]    
-          #}
+          #runoff[s,yearnum,m,plotnum,mo]= output[40] 
+          if(mo >1){
+          runoff[s,yearnum,m,plotnum,mo]= runoff[s,yearnum,m,plotnum,mo-1] + output[40] 
+          }else{
+            runoff[s,yearnum,m,plotnum,mo]= output[40]    
+          }
           WUE_ctrans[s,yearnum,m,plotnum,mo]= GPP[s,yearnum,m,plotnum,mo]/ET[s,yearnum,m,plotnum,mo]
           WUE_ET[s,yearnum,m,plotnum,mo]= GPP[s,yearnum,m,plotnum,mo]/Total_Ctrans[s,yearnum,m,plotnum,mo]
         }else{
@@ -565,13 +563,13 @@ points(modeled_age,Total_Ctrans_quant[2,,2],type='l',col="red",lwd=1)
 
 plot(modeled_age,GPP_quant[1,,2],type='l',ylim=range(GPP_quant),xlab = 'Stand Age',ylab = 'GPP')
 polygon(c(modeled_age,rev(modeled_age)),c(GPP_quant[1,,1],rev(GPP_quant[1,,3])),col="lightblue",border=NA)
-polygon(c(modeled_age,rev(modeled_age)),c(GPP_quant[2,,1],rev(GPP_quant[2,,3])),col="lightgreen",col=adjustcolor("salmon",alpha=0.4),border=NA)
+polygon(c(modeled_age,rev(modeled_age)),c(GPP_quant[2,,1],rev(GPP_quant[2,,3])),col=adjustcolor("salmon",alpha=0.4),border=NA)
 points(modeled_age,GPP_quant[1,,2],type='l',col="blue",lwd=1)
 points(modeled_age,GPP_quant[2,,2],type='l',col="red",lwd=1)
 
 plot(modeled_age,runoff_quant[1,,2],type='l',ylim=range(runoff_quant),xlab = 'Stand Age',ylab = 'Runoff')
 polygon(c(modeled_age,rev(modeled_age)),c(runoff_quant[1,,1],rev(runoff_quant[1,,3])),col="lightblue",border=NA)
-polygon(c(modeled_age,rev(modeled_age)),c(runoff_quant[2,,1],rev(runoff_quant[2,,3])),col="lightgreen",col=adjustcolor("salmon",alpha=0.4),border=NA)
+polygon(c(modeled_age,rev(modeled_age)),c(runoff_quant[2,,1],rev(runoff_quant[2,,3])),col=adjustcolor("salmon",alpha=0.4),border=NA)
 points(modeled_age,runoff_quant[1,,2],type='l',col="blue",lwd=1)
 points(modeled_age,runoff_quant[2,,2],type='l',col="red",lwd=1)
 

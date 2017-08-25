@@ -4,7 +4,7 @@ working_directory = '/Users/quinn/Dropbox (VTFRS)/Research/DAPPER'
 input_directory = '/Users/quinn/Dropbox (VTFRS)/Research/DAPPER_inputdata/'
 run_name = 'Duke_without_Ctrans.1.2017-08-09.07.32.07.Rdata'
 #restart_chain = 'duke_state_space_without_trans_2.1.2017-07-21.13.19.13.Rdata'
-restart_chain = 'Duke_without_Ctrans.1.2017-08-09.07.32.07.Rdata'
+restart_chain = 'BG_SS_3_less_data_uncert.1.2017-08-23.13.09.13.Rdata'
 priors_file = 'default_priors.csv'
 obs_set = 14 #14 #Select which plots are used in analysis.  See prepare_obs.R for number guide 
 focal_plotID = 40001 #14 #Select which plots are used in analysis.  See prepare_obs.R for number guide 
@@ -14,7 +14,7 @@ use_fol = TRUE  #TRUE= use allometric estimates of foliage biomass in fitting
 use_dk_pars = 1  #0 = do not use 3 specific parameters for the Duke site, 1 = use the 3 specific parameters
 nstreams = 19
 state_space = 1
-plotFR = 1
+plotFR = NA
 windows_machine = FALSE
 
 load(paste(working_directory,'/chains/',restart_chain,sep=''))
@@ -197,7 +197,11 @@ for(s in 1:nsamples){
   }
   pars = new_pars[1:npars_used_by_fortran]
   
-  new_FR = plotFR
+  if(!is.na(plotFR)){
+    FR = new_FR
+  }else{
+    FR = 1/(1+exp((new_pars[49] + new_pars[50]*Mean_temp-new_pars[51]*SI)))
+  }
   
   tmp_initdata = initdata[plotnum,]
   
@@ -256,7 +260,8 @@ for(s in 1:nsamples){
   MaxASW = ASW_max
   MinASW = ASW_min
   SoilClass=SoilClass
-  if(FertFlag == 1 | fr_model == 1){
+
+  if(!is.na(plotFR)){
     FR = new_FR
   }else{
     FR = 1/(1+exp((new_pars[49] + new_pars[50]*Mean_temp-new_pars[51]*SI)))
