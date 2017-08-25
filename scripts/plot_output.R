@@ -321,7 +321,7 @@ plot_output <- function(){
       
       site[5] =  output_mo[3]+ (1.0/12.) #Age
       
-      if(state_space > 0){
+      if(state_space > 0 & fit_plot[plotnum] == 1){
         if(obs[1,plotnum,mo] != -99.0){
           if(use_fol_state[plotnum] == 1){
             site[6] = obs[1,plotnum,mo]
