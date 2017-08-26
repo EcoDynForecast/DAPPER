@@ -1,6 +1,6 @@
 prepare_state_space_obs <- function(){
   
-  obs_uncertainity_proportion = 0.01 
+  obs_uncertainity_proportion = 0.1 
   
   
   earliestYear = min(observations$YearMeas)
@@ -134,7 +134,7 @@ prepare_state_space_obs <- function(){
         obs[2,plotnum,index] = tmp$WOODY[which(tmp$WOODY != -99)][i]
         obs_uncert[2,plotnum,index] = tmp$WSest_sd[i]
         if(tmp$WSest_sd[i] == -99){
-          obs_uncert[2,plotnum,index] = tmp$WOODY[which(tmp$WOODY != -99)][i]*0.01
+          obs_uncert[2,plotnum,index] = tmp$WOODY[which(tmp$WOODY != -99)][i]*0.025
         }
       }
     }
