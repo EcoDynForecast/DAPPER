@@ -79,6 +79,10 @@ plot_output <- function(){
   stem_observed  = NULL
   stem_plotid  = NULL
   
+  stem_predicted_val  = NULL
+  stem_observed_val  = NULL
+  stem_plotid_val  = NULL
+  
   root_predicted  = NULL
   root_observed  = NULL
   root_plotid  = NULL
@@ -407,10 +411,10 @@ plot_output <- function(){
     }
     
     if(fit_plot[plotnum] == 0){
-      for(mo in 1:nomonths_plot){
+      for(mo in 1:(nomonths_plot-1)){
         if(obs[2,plotnum,mo] != -99){
           index = mo_start_end[plotnum,1]+mo
-          val_RMSE[plotnum] = sqrt((obs[2,plotnum,mo] - output[mo,6])^2)
+          val_RMSE[plotnum] = sqrt((obs[2,plotnum,index] - output[mo,6])^2)
         }
       }
     }
@@ -425,9 +429,15 @@ plot_output <- function(){
           lai_plotid = c(lai_plotid,PlotID)
         }
         if(obs[2,plotnum,index] != -99){
+          if(fit_plot[plotnum] == 1){
           stem_predicted = c(stem_predicted,output[mo,5])
           stem_observed = c(stem_observed,obs[2,plotnum,index])
           stem_plotid = c(stem_plotid,PlotID)
+          }else{
+            stem_predicted_val = c(stem_predicted_val,output[mo,5])
+            stem_observed_val = c(stem_observed_val,obs[2,plotnum,index])
+            stem_plotid_val = c(stem_plotid_val,PlotID)            
+          }
         }
         
         if(obs[3,plotnum,index] != -99){
@@ -593,6 +603,9 @@ plot_output <- function(){
   #plot(stem_estimated[,4],stem_estimated_predicted,xlab='observed',ylab='predicted',ylim=c(0,400),xlim=c(0,400))
   #abline(0,1)
   plot(stem_observed,stem_predicted,xlab='observed',ylab='predicted',ylim=c(0,400),xlim=c(0,400),main=c('Stem Biomass'))
+  if(length(stem_observed_val) > 0){
+    points(stem_observed_val,stem_predicted_val,col='red',cex=0.5,pch=20)
+  }
   abline(0,1)
   
   
@@ -655,250 +668,4 @@ plot_output <- function(){
               paste(fname,run_name,'_ET_predicted_vs_observed.csv',sep=""),sep=",",col.names = TRUE,row.names = FALSE)
   write.table(data.frame(ctrans_pine_plotid,ctrans_pine_year,ctrans_pine_month,ctrans_pine_observed,ctrans_hard_predicted,ctrans_hard_plotid,ctrans_hard_year,ctrans_hard_month,ctrans_hard_observed,ctrans_hard_predicted),
               paste(fname,run_name,'_Ctrans_predicted_vs_observed.csv',sep=""),sep=",",col.names = TRUE,row.names = FALSE)
-
-  pdf(paste(working_directory,'/figures/',run_name,'.pdf',sep=''),width = 11,height = 11)
-  par(mfrow=c(4,4),mar = c(4,4,2,2),oma = c(3,3,2,2))
-  
-  dyn.load(code_library_plot)
-  
-  for(plotnum in 1:nplots){
-    nsamples = 200
-    
-    age_model = array(-99,dim=c(nsamples,nplots,nmonths))
-    lai  = array(-99,dim=c(nsamples,nplots,nmonths))
-    stem  = array(-99,dim=c(nsamples,nplots,nmonths))
-    stem_density = array(-99,dim=c(nsamples,nplots,nmonths))
-    
-    median_pars = rep(NA,npars)
-    for(p in 1:npars){
-      median_pars[p] = median(accepted_pars_thinned_burned[,p])
-    }
-    
-    use_median_pars = FALSE
-    
-    for(s in 1:nsamples){
-      
-      
-      if(use_median_pars){
-        new_pars = median_pars
-      }else{
-        curr_sample = sample(seq(1,length(accepted_pars_thinned_burned[,1])),1)   
-        new_pars = accepted_pars_thinned_burned[curr_sample,]
-      }
-      pars = new_pars[1:npars_used_by_fortran]
-      
-      new_FR = plotFR
-      
-      tmp_initdata = initdata[plotnum,]
-      
-      PlotID = initdata[plotnum,1]
-      SiteID = initdata[plotnum,2]
-      LAT_WGS84=initdata[plotnum,3]
-      Planting_year = initdata[plotnum,4]
-      PlantMonth = initdata[plotnum,5]
-      PlantDensityHa = initdata[plotnum,6]
-      Initial_ASW = initdata[plotnum,7]
-      ASW_min = initdata[plotnum,8]
-      ASW_max=initdata[plotnum,9]
-      SoilClass = initdata[plotnum,10]
-      SI = initdata[plotnum,11]
-      FR = initdata[plotnum,12]
-      Initial_WF = initdata[plotnum,13]
-      Initial_WS = initdata[plotnum,14]
-      Initial_WR = initdata[plotnum,15]
-      DroughtLevel = initdata[plotnum,16]
-      DroughtStart = initdata[plotnum,17]
-      FertFlag=initdata[plotnum,18]
-      CO2flag = initdata[plotnum,19]
-      CO2elev = initdata[plotnum,20]
-      ControlPlotID = initdata[plotnum,21]
-      Initial_WF_H = initdata[plotnum,22]
-      Initial_WS_H =initdata[plotnum,23]
-      Initial_WR_H =initdata[plotnum,24]
-      InitialYear = initdata[plotnum,29]
-      InitialMonth = initdata[plotnum,30]
-      StartAge = initdata[plotnum,31] 
-      IrrFlag = initdata[plotnum,33] 
-      Mean_temp = initdata[plotnum,26]
-      
-      
-      PlantedYear = 0
-      PlantedMonth = 0
-      
-      InitialYear = years[mo_start_end[plotnum]]
-      InitialMonth = months[mo_start_end[plotnum]]
-      
-      WFi=initdata[plotnum,13]
-      WSi=initdata[plotnum,14]
-      WRi=initdata[plotnum,15]
-      WCRi=initdata[plotnum,32]
-      
-      WFi_H = initdata[plotnum,22]
-      WSi_H = initdata[plotnum,23]
-      WRi_H = initdata[plotnum,24]
-      
-      StemNum = PlantDensityHa
-      nomonths_plot = mo_start_end[plotnum,2] - mo_start_end[plotnum,1]+1
-      
-      #READ IN SITE DATA FROM FILE BASED ON PLOTNUM
-      Lat = LAT_WGS84
-      ASWi = ASW_max
-      MaxASW = ASW_max
-      MinASW = ASW_min
-      SoilClass=SoilClass
-      if(FertFlag == 1 | fr_model == 1){
-        FR = new_FR
-      }else{
-        FR = 1/(1+exp((new_pars[49] + new_pars[50]*Mean_temp-new_pars[51]*SI)))
-      }
-      
-      if(initdata[plotnum,12] == 1) { FR = 1}
-      
-      IrrigRate = 0.0
-      if(IrrFlag == 1){
-        IrrigRate = (658/9)
-      }
-      
-      tmp_site_index = 0
-      if(PlotID > 40000 & PlotID < 41000 & use_dk_pars == 1){
-        tmp_site_index = 1
-      }
-      
-      SLA = 3.5754 + (5.4287 - 3.5754) * exp(-log(2) * (StartAge / 5.9705)^2)
-      SLA_h = 16.2
-      
-      site_in = c(PlantedYear, #PlantedYear
-                  PlantedMonth, #"PlantedMonth"
-                  InitialYear, #"InitialYear"
-                  InitialMonth, #"InitialMonth"
-                  StartAge, #"EndAge"
-                  WFi, #"WFi"
-                  WRi, #"WRi"
-                  WSi, #"WSi"
-                  StemNum, #"StemNoi"
-                  ASWi, #"ASWi"
-                  Lat, #"Lat"
-                  FR, #"FR"
-                  SoilClass, #"SoilClass"
-                  MaxASW, #"MaxASW"
-                  MinASW, #"MinASW"
-                  TotalMonths = 1,
-                  WFi_H = Initial_WF_H,
-                  WSi_H = Initial_WS_H,
-                  WRi_H = Initial_WR_H,
-                  WCRi,
-                  IrrigRate = IrrigRate,
-                  Throughfall = DroughtLevel,
-                  tmp_site_index,  
-                  WCRi_H = WSi_H*0.30,
-                  Wbud_H = 0.0,
-                  LAI = tmp_initdata$Initial_LAI,
-                  LAI_h = WFi_H * SLA_h *0.1
-      )
-      
-      site = array(site_in)
-      
-      #THIS DEALS WITH THINNING BASED ON PROPORTION OF STEMS REMOVED
-      thin_event = array(0,dim=c(nplots,nmonths))
-      
-      
-      output_dim = noutput_variables  # NUMBER OF OUTPUT VARIABLES
-      nosite = length(site_in)  # LENGTH OF SITE ARRAY
-      nomet = 6  # NUMBER OF VARIABLES IN METEROLOGY (met)
-      nopars = length(pars)
-      
-      #Wsx1000 (plot level variability in parameter)
-      # pars[19] = new_pars[index_guide[5]+plotnum - 1]
-      #thinpower (plot level variability in parameter)
-      #  pars[20] = new_pars[index_guide[7]+plotnum - 1]
-      #  pars[40] = new_pars[index_guide[9]+plotnum - 1]    
-      #Read in Fortran code
-      if(PlotID > 40000 & PlotID < 41000){
-        pars[19] = new_pars[48]
-      }
-      
-      
-      mo_index = 0
-      for(mo in mo_start_end[plotnum,1]:mo_start_end[2]){
-        mo_index = mo_index + 1
-        
-        
-        tmp=.Fortran( "r3pg_interface",
-                      output_dim=as.integer(output_dim),
-                      met=as.double(met[plotnum,,mo]),
-                      pars=as.double(pars),
-                      site = as.double(site),
-                      thin_event = as.double(thin_event[plotnum,mo]),
-                      out_var=as.double(array(0,dim=c(1,output_dim))),
-                      nopars=as.integer(nopars),
-                      nomet=as.integer(dim(met)[2]),
-                      nosite = as.integer(nosite),
-                      nooutputs=as.integer(output_dim),
-                      nomonths_plot=as.integer(1),
-                      nothin = 1,
-                      exclude_hardwoods = as.integer(exclude_hardwoods[plotnum]),
-                      mo_start_end = as.integer(c(1,1)),
-                      nmonths = 1
-        )
-        
-        output=array(tmp$out_var, dim=c(nomonths_plot,output_dim))
-        
-        if(output[2] == 12){
-          site[3] = output[1]+1 #InitialYear
-          site[4] = 1  #InitialMonth
-        }else{
-          site[3] = output[1] #InitialYear
-          site[4] = output[2]+1  #InitialMonth	
-        }
-        site[5] = output[3] + (1.0/12.) #StartAge
-        site[26] = rnorm(1,output[4],new_pars[52]) #LAI
-        if(site[26] < 0.0) {site[26]=0.1}
-        site[8] = rnorm(1,output[5],new_pars[53]) #WS
-        site[20] = rnorm(1,output[6],new_pars[54])   #WCR
-        site[7] = rnorm(1,output[7],new_pars[55])  #WRi
-        site[9] = rnorm(1,output[8],new_pars[56]) #StemNo
-        
-        site[27] = max(rnorm(1,output[9],new_pars[52]),0.0)  #Hardwood LAI
-        site[25] = output[26] #Hardwood Bud
-        site[18] = rnorm(1,output[10],new_pars[57]) #WS_H 
-        site[24] = output[11]  #WCR_h
-        site[19] = rnorm(1,output[12],new_pars[55]) #WR_H
-        
-        site[10] = output[14] # ASW
-        
-        site[6] = output[22] #WFi
-        site[17] = output[23] #WF_H	
-        
-        age_model[s,plotnum,mo] = output[3]
-        lai[s,plotnum,mo]  = site[26]
-        stem[s,plotnum,mo]  = site[8]
-        stem_density[s,plotnum,mo] = site[9]
-      }
-    }
-    
-    
-    LAI_quant = array(NA,dim=c(length(age_model[1,plotnum,]),3))
-    stem_quant = array(NA,dim=c(length(age_model[1,plotnum,]),3))
-    stem_density_quant = array(NA,dim=c(length(age_model[1,plotnum,]),3))
-    
-    
-    modeled_age = age_model[1,plotnum,]
-    for(i in 1:length(modeled_age)){
-      LAI_quant[i,] = quantile(lai[,,i],c(0.025,0.5,0.975))
-      stem_quant[i,] = quantile(stem[,,i],c(0.025,0.5,0.975))
-      stem_density_quant[i,] = quantile(stem_density[,,i],c(0.025,0.5,0.975))
-    }
-    
-    data_stream = 2
-    observed = obs[data_stream,plotnum,which(obs[data_stream,plotnum,]!=-99)]
-    observed_y =age[plotnum,which(obs[data_stream,plotnum,]!=-99)]
-    xlim_range = c(0,30) #c(min(output[,3])-1,max(output[,3])+1)
-    ylim_range = c(0,max(c(observed,stem_quant),na.rm=TRUE)) #range(c(observed,modeled[data_stream,]))
-    plot(modeled_age,stem_quant[,2],type='l',ylim=ylim_range, xlab = 'Stand Age',ylab = 'Stem Biomass (Mg/ha)')
-    polygon(c(modeled_age,rev(modeled_age)),c(stem_quant[,1],rev(stem_quant[,3])),col="lightblue",border=NA)
-    points(modeled_age,stem_quant[,2],type='l',col="blue",lwd=1)
-    points(observed_y,observed,col='black',pch=20)
-  }
-  
-  dev.off()
   }
