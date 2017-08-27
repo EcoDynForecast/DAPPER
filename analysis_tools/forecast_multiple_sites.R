@@ -4,7 +4,7 @@ working_directory = '/Users/quinn/Dropbox (VTFRS)/Research/DAPPER'
 input_directory = '/Users/quinn/Dropbox (VTFRS)/Research/DAPPER_inputdata/'
 run_name = 'test'
 #restart_chain = 'duke_state_space_without_trans_2.1.2017-07-21.13.19.13.Rdata'
-restart_chain = 'BG_SS_3_less_data_uncert.1.2017-08-23.13.09.13.Rdata'
+restart_chain =  'BG_SS2_val1.1.2017-08-26.10.11.10.Rdata'
 priors_file = 'default_priors.csv'
 obs_set = 21 #14 #Select which plots are used in analysis.  See prepare_obs.R for number guide 
 focal_plotID = NA #14 #Select which plots are used in analysis.  See prepare_obs.R for number guide 
@@ -18,7 +18,7 @@ state_space = 1
 plotFR = NA
 windows_machine = FALSE
 
-PARAMETER_UNCERT = TRUE
+PARAMETER_UNCERT = FALSE
 nsamples = 100
 
 load(paste(working_directory,'/chains/',restart_chain,sep=''))
