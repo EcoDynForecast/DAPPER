@@ -4,10 +4,10 @@ working_directory = '/Users/quinn/Dropbox (VTFRS)/Research/DAPPER'
 input_directory = '/Users/quinn/Dropbox (VTFRS)/Research/DAPPER_inputdata/'
 run_name = 'Duke_without_Ctrans.1.2017-08-09.07.32.07.Rdata'
 #restart_chain = 'duke_state_space_without_trans_2.1.2017-07-21.13.19.13.Rdata'
-restart_chain = 'BG_SS_3_less_data_uncert.1.2017-08-23.13.09.13.Rdata'
+restart_chain =  'BG_SS2_val1.1.2017-08-26.10.11.10.Rdata'
 priors_file = 'default_priors.csv'
-obs_set = 14 #14 #Select which plots are used in analysis.  See prepare_obs.R for number guide 
-focal_plotID = 40001 #14 #Select which plots are used in analysis.  See prepare_obs.R for number guide 
+obs_set = 21 #14 #Select which plots are used in analysis.  See prepare_obs.R for number guide 
+focal_plotID = 30017 #14 #Select which plots are used in analysis.  See prepare_obs.R for number guide 
 fr_model = 1  # 1 = estimate FR for each plot, 2 = empirical FR model
 FR_fert_assumption = 0 #0 = assume fertilization plots have FR = 1, 1 = do not assume fertilization plots have FR = 1
 use_fol = TRUE  #TRUE= use allometric estimates of foliage biomass in fitting
@@ -15,16 +15,17 @@ use_dk_pars = 1  #0 = do not use 3 specific parameters for the Duke site, 1 = us
 nstreams = 19
 state_space = 1
 plotFR = NA
+PARAMETER_UNCERTAINITY = FALSE
 windows_machine = FALSE
 
 load(paste(working_directory,'/chains/',restart_chain,sep=''))
 
 all_studies = c(
-  #'/SETRES/TIER4_SETRES',
-  #'/PINEMAP/TIER3_PINEMAP',
-  #'/NC2/TIER4_NC2',
-  '/Duke/TIER4_Duke'
-  #'/FMC_Thinning/TIER1_FMC_Thinning',
+  '/SETRES/TIER4_SETRES',
+  '/PINEMAP/TIER3_PINEMAP',
+  '/NC2/TIER4_NC2',
+  '/Duke/TIER4_Duke',
+  '/FMC_Thinning/TIER1_FMC_Thinning',
   #'/FBRC_AMERIFLU/TIER2_AMERIFLU',
   #'/FBRC_IMPAC/TIER1_IMPAC',
   #'/FBRC_IMPAC2/TIER2_IMPAC2',
@@ -41,7 +42,7 @@ all_studies = c(
   #'/FPC_RS8/TIER1_RS8',
   #'/FPC_RW18/TIER2_RW18',
   #'/FPC_RW19/TIER2_RW19',
-  #'/FPC_RW20/TIER2_RW20'
+  '/FPC_RW20/TIER2_RW20'
   #'/PMRC_CPCD96_TIER1/TIER1_CPCD96',
   #'/PMRC_CPCD96_TIER2/TIER2_CPCD96',
   #'/PMRC_HGLOB87/TIER1_HGLOB87',
@@ -184,12 +185,11 @@ for(p in 1:npars){
   median_pars[p] = median(accepted_pars_thinned_burned[,p])
 }
 
-use_median_pars = FALSE
 
 for(s in 1:nsamples){
   
   
-  if(use_median_pars){
+  if(!PARAMETER_UNCERTAINITY){
     new_pars = median_pars
   }else{
     curr_sample = sample(seq(1,length(accepted_pars_thinned_burned[,1])),1)   
@@ -197,12 +197,7 @@ for(s in 1:nsamples){
   }
   pars = new_pars[1:npars_used_by_fortran]
   
-  if(!is.na(plotFR)){
-    FR = new_FR
-  }else{
-    FR = 1/(1+exp((new_pars[49] + new_pars[50]*Mean_temp-new_pars[51]*SI)))
-  }
-  
+
   tmp_initdata = initdata[plotnum,]
   
   PlotID = initdata[plotnum,1]
@@ -234,6 +229,12 @@ for(s in 1:nsamples){
   StartAge = initdata[plotnum,31] 
   IrrFlag = initdata[plotnum,33] 
   Mean_temp = initdata[plotnum,26]
+  
+  if(!is.na(plotFR)){
+    FR = new_FR
+  }else{
+    FR = 1/(1+exp((new_pars[49] + new_pars[50]*Mean_temp-new_pars[51]*SI)))
+  }
   
   
   PlantedYear = 0
@@ -334,7 +335,7 @@ for(s in 1:nsamples){
   
   
   mo_index = 0
-  for(mo in mo_start_end[plotnum,1]:mo_start_end[2]){
+  for(mo in mo_start_end[plotnum,1]:mo_start_end[plotnum,2]){
     mo_index = mo_index + 1
     
     
@@ -368,7 +369,7 @@ for(s in 1:nsamples){
     site[5] = output[3] + (1.0/12.) #StartAge
     site[26] = rnorm(1,output[4],new_pars[52]) #LAI
     if(site[26] < 0.0) {site[26]=0.1}
-    site[8] = rnorm(1,output[5],new_pars[53]) #WS
+    site[8] = rnorm(1,output[5],(0.5+ new_pars[53] +output[5]*new_pars[64]))  #WS
     site[20] = rnorm(1,output[6],new_pars[54])   #WCR
     site[7] = rnorm(1,output[7],new_pars[55])  #WRi
     site[9] = rnorm(1,output[8],new_pars[56]) #StemNo
@@ -407,38 +408,54 @@ for(s in 1:nsamples){
   }
 }
 
+age = age[,,mo_start_end[plotnum,1]:mo_start_end[plotnum,2]]
+lai = lai[,,mo_start_end[plotnum,1]:mo_start_end[2]]
+stem = stem[,,mo_start_end[plotnum,1]:mo_start_end[2]]
+stem_density = stem_density[,,mo_start_end[plotnum,1]:mo_start_end[2]]
+coarse_root = coarse_root[,,mo_start_end[plotnum,1]:mo_start_end[2]]
+fine_root = fine_root[,,mo_start_end[plotnum,1]:mo_start_end[2]]
+fol = fol[,,mo_start_end[plotnum,1]:mo_start_end[2]]
+total = total[,,mo_start_end[plotnum,1]:mo_start_end[2]]
+fSW = fSW[,,mo_start_end[plotnum,1]:mo_start_end[2]]
+ET = ET[,,mo_start_end[plotnum,1]:mo_start_end[2]]
+Total_Ctrans = Total_Ctrans[,,mo_start_end[plotnum,1]:mo_start_end[2]]
+GPP = GPP[,,mo_start_end[plotnum,1]:mo_start_end[2]]
+runoff = runoff[,,mo_start_end[plotnum,1]:mo_start_end[2]]
+WUE_ctrans = WUE_ctrans[,,mo_start_end[plotnum,1]:mo_start_end[2]]
+WUE_ET = WUE_ET[,,mo_start_end[plotnum,1]:mo_start_end[2]]
 
-LAI_quant = array(NA,dim=c(length(age[1,plotnum,]),3))
-stem_quant = array(NA,dim=c(length(age[1,plotnum,]),3))
-stem_density_quant = array(NA,dim=c(length(age[1,plotnum,]),3))
-coarse_root_quant = array(NA,dim=c(length(age[1,plotnum,]),3))
-fine_root_quant = array(NA,dim=c(length(age[1,plotnum,]),3))
-fol_quant = array(NA,dim=c(length(age[1,plotnum,]),3))
-total_quant = array(NA,dim=c(length(age[1,plotnum,]),3))
-fSW_quant = array(NA,dim=c(length(age[1,plotnum,]),3))
-ET_quant = array(NA,dim=c(length(age[1,plotnum,]),3))
-Total_Ctrans_quant = array(NA,dim=c(length(age[1,plotnum,]),3))
-GPP_quant = array(NA,dim=c(length(age[1,plotnum,]),3))
-runoff_quant = array(NA,dim=c(length(age[1,plotnum,]),3))
-WUE_ctrans_quant = array(NA,dim=c(length(age[1,plotnum,]),3))
-WUE_ET_quant = array(NA,dim=c(length(age[1,plotnum,]),3))
 
-modeled_age = age[1,plotnum,]
+LAI_quant = array(NA,dim=c(length(age[1,]),3))
+stem_quant = array(NA,dim=c(length(age[1,]),3))
+stem_density_quant = array(NA,dim=c(length(age[1,]),3))
+coarse_root_quant = array(NA,dim=c(length(age[1,]),3))
+fine_root_quant = array(NA,dim=c(length(age[1,]),3))
+fol_quant = array(NA,dim=c(length(age[1,]),3))
+total_quant = array(NA,dim=c(length(age[1,]),3))
+fSW_quant = array(NA,dim=c(length(age[1,]),3))
+ET_quant = array(NA,dim=c(length(age[1,]),3))
+Total_Ctrans_quant = array(NA,dim=c(length(age[1,]),3))
+GPP_quant = array(NA,dim=c(length(age[1,]),3))
+runoff_quant = array(NA,dim=c(length(age[1,]),3))
+WUE_ctrans_quant = array(NA,dim=c(length(age[1,]),3))
+WUE_ET_quant = array(NA,dim=c(length(age[1,]),3))
+
+modeled_age = age[1,]
 for(i in 1:length(modeled_age)){
-  LAI_quant[i,] = quantile(lai[,,i],c(0.025,0.5,0.975))
-  stem_quant[i,] = quantile(stem[,,i],c(0.025,0.5,0.975))
-  stem_density_quant[i,] = quantile(stem_density[,,i],c(0.025,0.5,0.975))
-  coarse_root_quant[i,] = quantile(coarse_root[,,i],c(0.025,0.5,0.975))
-  fine_root_quant[i,] = quantile(fine_root[,,i],c(0.025,0.5,0.975))
-  fol_quant[i,] = quantile(fol[,,i],c(0.025,0.5,0.975))
-  total_quant[i,] = quantile(total[,,i],c(0.025,0.5,0.975))
-  fSW_quant[i,] = quantile(fSW[,,i],c(0.025,0.5,0.975))
-  ET_quant[i,] = quantile(ET[,,i],c(0.025,0.5,0.975)) 
-  Total_Ctrans_quant[i,] = quantile(Total_Ctrans[,,i],c(0.025,0.5,0.975))
-  GPP_quant[i,] = quantile(GPP[,,i],c(0.025,0.5,0.975))
-  runoff_quant[i,] = quantile(runoff[,,i],c(0.025,0.5,0.975))
-  WUE_ctrans_quant[i,] = quantile(WUE_ctrans[,,i],c(0.025,0.5,0.975))
-  WUE_ET_quant[i,] = quantile(WUE_ET[,,i],c(0.025,0.5,0.975))
+  LAI_quant[i,] = quantile(lai[,i],c(0.025,0.5,0.975))
+  stem_quant[i,] = quantile(stem[,i],c(0.025,0.5,0.975))
+  stem_density_quant[i,] = quantile(stem_density[,i],c(0.025,0.5,0.975))
+  coarse_root_quant[i,] = quantile(coarse_root[,i],c(0.025,0.5,0.975))
+  fine_root_quant[i,] = quantile(fine_root[,i],c(0.025,0.5,0.975))
+  fol_quant[i,] = quantile(fol[,i],c(0.025,0.5,0.975))
+  total_quant[i,] = quantile(total[,i],c(0.025,0.5,0.975))
+  fSW_quant[i,] = quantile(fSW[,i],c(0.025,0.5,0.975))
+  ET_quant[i,] = quantile(ET[,i],c(0.025,0.5,0.975)) 
+  Total_Ctrans_quant[i,] = quantile(Total_Ctrans[,i],c(0.025,0.5,0.975))
+  GPP_quant[i,] = quantile(GPP[,i],c(0.025,0.5,0.975))
+  runoff_quant[i,] = quantile(runoff[,i],c(0.025,0.5,0.975))
+  WUE_ctrans_quant[i,] = quantile(WUE_ctrans[,i],c(0.025,0.5,0.975))
+  WUE_ET_quant[i,] = quantile(WUE_ET[,i],c(0.025,0.5,0.975))
 }
 
 pdf(paste(working_directory,'/figures/',run_name,'.pdf',sep=''),width = 11,height = 11)
@@ -487,10 +504,10 @@ plot(modeled_age,WUE_ET_quant[,2],type='l',ylim=range(c(WUE_ET_quant)), xlab = '
 polygon(c(modeled_age,rev(modeled_age)),c(WUE_ET_quant[,1],rev(WUE_ET_quant[,3])),col="lightblue",border=NA)
 points(modeled_age,WUE_ET_quant[,2],type='l',col="blue",lwd=1)
 
-par(mfrow=c(1,1),mar = c(4,4,2,2),oma = c(3,3,2,2))
-plot(density(stem[,1,length(modeled_age)]),xlim=c(0,300),ylim=c(0,1),col='red')
-points(density(fol[,1,length(modeled_age)]),type='l',col='green')
-points(density(fine_root[,1,length(modeled_age)]),type='l',col='blue')
-points(density(coarse_root[,1,length(modeled_age)]),type='l',col='orange')
-points(density(total[,1,length(modeled_age)]),type='l',col='black')
+#par(mfrow=c(1,1),mar = c(4,4,2,2),oma = c(3,3,2,2))
+#plot(density(stem[,1,length(modeled_age)]),xlim=c(0,300),ylim=c(0,1),col='red')
+#points(density(fol[,1,length(modeled_age)]),type='l',col='green')
+#points(density(fine_root[,1,length(modeled_age)]),type='l',col='blue')
+#points(density(coarse_root[,1,length(modeled_age)]),type='l',col='orange')
+#points(density(total[,1,length(modeled_age)]),type='l',col='black')
 dev.off()

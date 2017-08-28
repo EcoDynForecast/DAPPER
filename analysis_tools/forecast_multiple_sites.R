@@ -4,11 +4,11 @@ working_directory = '/Users/quinn/Dropbox (VTFRS)/Research/DAPPER'
 input_directory = '/Users/quinn/Dropbox (VTFRS)/Research/DAPPER_inputdata/'
 run_name = 'test'
 #restart_chain = 'duke_state_space_without_trans_2.1.2017-07-21.13.19.13.Rdata'
-restart_chain =  'BG_SS2_val1.1.2017-08-26.10.11.10.Rdata'
+restart_chain =  'BG_SS2_val1.1.2017-08-27.09.16.09.Rdata'
 priors_file = 'default_priors.csv'
 obs_set = 21 #14 #Select which plots are used in analysis.  See prepare_obs.R for number guide 
 focal_plotID = NA #14 #Select which plots are used in analysis.  See prepare_obs.R for number guide 
-val_set = 1
+val_set = 0
 fr_model = 1  # 1 = estimate FR for each plot, 2 = empirical FR model
 FR_fert_assumption = 0 #0 = assume fertilization plots have FR = 1, 1 = do not assume fertilization plots have FR = 1
 use_fol = TRUE  #TRUE= use allometric estimates of foliage biomass in fitting
@@ -18,7 +18,7 @@ state_space = 1
 plotFR = NA
 windows_machine = FALSE
 
-PARAMETER_UNCERT = FALSE
+PARAMETER_UNCERT = TRUE
 nsamples = 100
 
 load(paste(working_directory,'/chains/',restart_chain,sep=''))
@@ -381,8 +381,13 @@ for(plotnum in 1:nplots){
         }
         site[5] = output[3] + (1.0/12.) #StartAge
         site[26] = rnorm(1,output[4],new_pars[52]) #LAI
+        if(is.na(site[26])) {site[26]=0.1}
         if(site[26] < 0.0) {site[26]=0.1}
-        site[8] = rnorm(1,output[5],new_pars[53]) #WS
+
+        site[8] = rnorm(1,output[5],(1.2+new_pars[53] +output[5]*new_pars[64]))  #WS
+        site[8] = rnorm(1,output[5],0.15+new_pars[53] +output[5]*(0.015))  #WS
+        if(is.na(site[8])) {site[8]=0.1}
+        if(site[8]< 0.0) {site[8]=0.1}
         site[20] = rnorm(1,output[6],new_pars[54])   #WCR
         site[7] = rnorm(1,output[7],new_pars[55])  #WRi
         site[9] = rnorm(1,output[8],new_pars[56]) #StemNo
@@ -425,7 +430,7 @@ for(plotnum in 1:nplots){
     tmp_age_obs = age[plotnum,which(obs[data_stream,plotnum,]!=-99)]
     tmp_stem_obs = obs[data_stream,plotnum,which(obs[data_stream,plotnum,]!=-99)]
     tmp_stem_obs_uncert = obs_uncert[data_stream,plotnum,which(obs_uncert[data_stream,plotnum,]!=-99)]
-    
+    tmp_stem_obs_uncert = tmp_stem_obs*0.025
     xlim_range = c(0,30) #c(min(output[,3])-1,max(output[,3])+1)
     ylim_range = c(0,max(c(tmp_stem_obs,stem_quant),na.rm=TRUE)) #range(c(observed,modeled[data_stream,]))
     plot(modeled_age,stem_quant[,2],type='l',ylim=ylim_range, xlab = 'Stand Age',ylab = 'Stem Biomass (Mg/ha)',main=plotlist[plotnum])

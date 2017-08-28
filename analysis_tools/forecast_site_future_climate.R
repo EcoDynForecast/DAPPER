@@ -4,7 +4,7 @@ working_directory = '/Users/quinn/Dropbox (VTFRS)/Research/DAPPER'
 input_directory = '/Users/quinn/Dropbox (VTFRS)/Research/DAPPER_inputdata/'
 run_name = 'parameter_process'
 #restart_chain = 'duke_state_space_without_trans_2.1.2017-07-21.13.19.13.Rdata'
-restart_chain = 'BG_SS_3_less_data_uncert.1.2017-08-23.13.09.13.Rdata'
+restart_chain =  'BG_SS2_val1.1.2017-08-27.09.16.09.Rdata'
 priors_file = 'default_priors.csv'
 fr_model = 1  # 1 = estimate FR for each plot, 2 = empirical FR model
 FR_fert_assumption = 0 #0 = assume fertilization plots have FR = 1, 1 = do not assume fertilization plots have FR = 1
@@ -12,7 +12,7 @@ use_fol = TRUE  #TRUE= use allometric estimates of foliage biomass in fitting
 use_dk_pars = 1  #0 = do not use 3 specific parameters for the Duke site, 1 = use the 3 specific parameters
 nstreams = 19
 state_space = 1
-plotFR = 1
+plotFR = NA
 windows_machine = FALSE
 
 load(paste(working_directory,'/chains/',restart_chain,sep=''))
@@ -123,6 +123,9 @@ dyn.load(code_library_plot)
 nmodels = length(clim_model)
 nperiods = length(startyear)
 plotnum = 1
+start_age = 2
+nyears = 26 - start_age
+nmonths = nyears*12
 
 
 age = array(-99,dim=c(nsamples,nperiods,nmodels,nplots,nmonths))
@@ -268,7 +271,7 @@ for(s in 1:nsamples){
       SoilClass=SoilClass
       
       if(!is.na(plotFR)){
-      FR = new_FR
+      FR = plotFR
       }else{
         FR = 1/(1+exp((new_pars[49] + new_pars[50]*Mean_temp-new_pars[51]*SI)))
       }
@@ -334,9 +337,7 @@ for(s in 1:nsamples){
       }
       
       for(mo in 1:nmonths){
-        
-        
- 
+      
         tmp=.Fortran( "r3pg_interface",
                       output_dim=as.integer(output_dim),
                       met=as.double(met[plotnum,,mo]),
