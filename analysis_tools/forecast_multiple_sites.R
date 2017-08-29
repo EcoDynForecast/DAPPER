@@ -19,7 +19,7 @@ plotFR = NA
 windows_machine = FALSE
 
 PARAMETER_UNCERT = TRUE
-nsamples = 100
+nsamples = 500
 
 load(paste(working_directory,'/chains/',restart_chain,sep=''))
 
