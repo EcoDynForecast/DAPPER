@@ -2,9 +2,9 @@ rm(list = ls())
 #---CONTROL INFORMATION----------------------------
 working_directory = '/Users/quinn/Dropbox (VTFRS)/Research/DAPPER'
 input_directory = '/Users/quinn/Dropbox (VTFRS)/Research/DAPPER_inputdata/'
-run_name = 'parameter'
+run_name = 'process'
 #restart_chain = 'duke_state_space_without_trans_2.1.2017-07-21.13.19.13.Rdata'
-restart_chain =  'BG_SS2_val1.1.2017-08-27.09.16.09.Rdata'
+restart_chain =  'SS_val5.1.2017-08-30.14.10.14.Rdata'
 priors_file = 'default_priors.csv'
 fr_model = 1  # 1 = estimate FR for each plot, 2 = empirical FR model
 FR_fert_assumption = 0 #0 = assume fertilization plots have FR = 1, 1 = do not assume fertilization plots have FR = 1
@@ -34,8 +34,8 @@ startyear = c(1985,2030)
 adjust_rain = c(1,1)
 adjust_fert =c(0,0)
 adjust_CO2 = c(0,0) 
-PROCESS_UNCERT = FALSE
-PARAMETER_UNCERT = TRUE
+PROCESS_UNCERT = TRUE
+PARAMETER_UNCERT = FALSE
 HOLD_CO2 = FALSE
 nsamples = 500
 
@@ -386,8 +386,7 @@ for(s in 1:nsamples){
           }else{ 
             if(PROCESS_UNCERT){
               site[26] = max(rnorm(1,output[4],new_pars[52]),0.1) #LAI
-              site[8] = rnorm(1,output[5],(new_pars[53] +output[5]*new_pars[64]))  #WS
-              site[8] = rnorm(1,output[5],0.15+new_pars[53] +output[5]*(0.015))  #WS
+              site[8] = rnorm(1,output[5],(1.5+new_pars[53] +output[5]*new_pars[64]))  #WS
               site[20] = rnorm(1,output[6],new_pars[54])   #WCR
               site[7] = rnorm(1,output[7],new_pars[55])  #WRi
               site[9] = rnorm(1,output[8],new_pars[56]) #StemNo

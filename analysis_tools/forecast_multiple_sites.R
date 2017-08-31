@@ -4,11 +4,11 @@ working_directory = '/Users/quinn/Dropbox (VTFRS)/Research/DAPPER'
 input_directory = '/Users/quinn/Dropbox (VTFRS)/Research/DAPPER_inputdata/'
 run_name = 'test'
 #restart_chain = 'duke_state_space_without_trans_2.1.2017-07-21.13.19.13.Rdata'
-restart_chain =  'BG_SS2_val1.1.2017-08-27.09.16.09.Rdata'
+restart_chain =  'SS_val6.1.2017-08-31.08.47.08.Rdata'
 priors_file = 'default_priors.csv'
 obs_set = 21 #14 #Select which plots are used in analysis.  See prepare_obs.R for number guide 
 focal_plotID = NA #14 #Select which plots are used in analysis.  See prepare_obs.R for number guide 
-val_set = 0
+val_set = 6
 fr_model = 1  # 1 = estimate FR for each plot, 2 = empirical FR model
 FR_fert_assumption = 0 #0 = assume fertilization plots have FR = 1, 1 = do not assume fertilization plots have FR = 1
 use_fol = TRUE  #TRUE= use allometric estimates of foliage biomass in fitting
@@ -178,6 +178,55 @@ age = init_states$age
 obs_gap = init_states$obs_gap
 obs_gap_next = init_states$obs_gap_next
 
+#####
+thinning_study_second_thin = read.csv(paste(input_directory,'/FMC_Thinning/TIER1_FMC_list_of_second_thin_plots.csv',sep=''))
+thin_event = array(0,dim=c(nplots,nmonths))
+for(plotnum in 1:nplots){
+  tmp_initdata = initdata[which(initdata$PlotID == plotlist[plotnum]),]
+  prev_nha = init_obs[5,plotnum]
+  thin_occured = 0
+  double_thin = 0
+  if(length(which(thinning_study_second_thin$PlotID ==  tmp_initdata$Plot)) == 1 & plotlist[plotnum] > 10000 & plotlist[plotnum] < 20000){
+    double_thin = 1
+  }
+  for(mo in (mo_start_end[plotnum,1]+1):mo_start_end[plotnum,2])
+    if(obs[5,plotnum,mo] != -99){
+      thin_event[plotnum,mo-1] =  prev_nha - obs[5,plotnum,mo] 
+      if(plotlist[plotnum] > 20000 & plotlist[plotnum] < 41000){
+        thin_event[plotnum,mo-1] = 0.0
+      }
+      if(plotlist[plotnum] > 42000 & plotlist[plotnum] < 50000){
+        thin_event[plotnum,mo-1] = 0.0
+      }
+      if(plotlist[plotnum] > 10000 & plotlist[plotnum] < 20000 & tmp_initdata$ThinTreatment == 1){
+        thin_event[plotnum,mo-1] = 0.0
+      }
+      if(plotlist[plotnum] >= 52001 & plotlist[plotnum] <= 52467 & tmp_initdata$ThinTreatment == 1){
+        thin_event[plotnum,mo-1] = 0.0
+      }
+      if(plotlist[plotnum] >= 72001 & plotlist[plotnum] <= 72076 & tmp_initdata$ThinTreatment == 1){
+        thin_event[plotnum,mo-1] = 0.0
+      }
+      if(plotlist[plotnum] > 10000 & plotlist[plotnum] < 20000 & tmp_initdata$ThinTreatment > 1 & thin_occured == 1 & double_thin == 0){
+        thin_event[plotnum,mo-1] = 0.0
+      }
+      if(plotlist[plotnum] >= 52001 & plotlist[plotnum] <= 52467 & tmp_initdata$ThinTreatment > 1 & (thin_event[plotnum,mo-1] < 400 | thin_occured == 1)){
+        thin_event[plotnum,mo-1] = 0.0
+      }
+      if(plotlist[plotnum] >= 72001 & plotlist[plotnum] <= 72076 & tmp_initdata$ThinTreatment > 1 & (thin_event[plotnum,mo-1] < 400 | thin_occured == 1)){
+        thin_event[plotnum,mo-1] = 0.0
+      }
+      
+      if(thin_event[plotnum,mo-1] < 200){
+        thin_event[plotnum,mo-1]  = 0
+      }else if(thin_occured == 0 & thin_event[plotnum,mo-1] >= 200){
+        thin_occured = 1
+      }
+      
+      prev_nha = obs[5,plotnum,mo]
+    }
+}
+
 #--- ASSIGN VECTOR FLAGGING PLOTS AS USED IN FITTING OR NOT
 fit_plot = set_fitted_plots(nplots,val_set,plotlist,initdata)
 num_in95 = 0
@@ -329,7 +378,7 @@ for(plotnum in 1:nplots){
       site = array(site_in)
       
       #THIS DEALS WITH THINNING BASED ON PROPORTION OF STEMS REMOVED
-      thin_event = array(0,dim=c(nplots,nmonths))
+      #thin_event = array(0,dim=c(nplots,nmonths))
       
       
       output_dim = noutput_variables  # NUMBER OF OUTPUT VARIABLES
@@ -384,8 +433,8 @@ for(plotnum in 1:nplots){
         if(is.na(site[26])) {site[26]=0.1}
         if(site[26] < 0.0) {site[26]=0.1}
 
-        site[8] = rnorm(1,output[5],(1.2+new_pars[53] +output[5]*new_pars[64]))  #WS
-        site[8] = rnorm(1,output[5],0.15+new_pars[53] +output[5]*(0.015))  #WS
+        site[8] = rnorm(1,output[5],(1.3+new_pars[53] +output[5]*new_pars[64]))  #WS
+        #site[8] = rnorm(1,output[5],0.15+new_pars[53] +output[5]*(0.015))  #WS
         if(is.na(site[8])) {site[8]=0.1}
         if(site[8]< 0.0) {site[8]=0.1}
         site[20] = rnorm(1,output[6],new_pars[54])   #WCR
