@@ -4,7 +4,7 @@ parnames = c(
   "pFS20",
   "StemConst",
   "StemPower",
-  "pR",
+  "pRF",
   "pRn",
   "SLA0",
   "SLA1",
@@ -17,7 +17,7 @@ parnames = c(
   "MaxCond",
   "LAIgcx",
   "CoeffCond",
-  "Duke thinPower",
+  "HardPineCondRatio",
   "wSx1000",
   "thinPower",
   "mF",
@@ -25,7 +25,7 @@ parnames = c(
   "mS",
   "Rttover",
   "Duke pCRS",
-  "fN0",
+  "Duke thinPower",
   "TMin",
   "Topt",
   "Tmax",
@@ -94,17 +94,17 @@ priormatrix[9,]  = c(5.9705,5.9705,2.15,2,0,8) #tSLA
 priormatrix[10,] = c(.56,0.55,0.70,1,1,100) #k 
 priormatrix[11,] = c(3,2,5,1,1,100) #fullCanAge  
 priormatrix[12,] = c(.2,0,1,1,1,100) #MaxIntcptn 
-priormatrix[13,] = c(2.1,2,6,1,1,100) #LAImaxIntcptn 
-priormatrix[14,] = c(0.04,0.02,.08,1,0,9) #alpha 
+priormatrix[13,] = c(5,2,6,1,1,100) #LAImaxIntcptn 
+priormatrix[14,] = c(0.04,0.02,.06,1,0,9) #alpha 
 priormatrix[15,] = c(0.02,0.005,0.03,1,0,10) #MaxCond 
 priormatrix[16,] = c(4.5,2.0,5.0,1,0,11)  #LAIgcx
 priormatrix[17,] = c(0.037,0.0408,0.0028,2,0,12)  #CoeffCond 
 priormatrix[18,] = c(1.0,0.0,10,1,1,13)  # HardPineCondRatio
-priormatrix[19,] = c(235,235,0.25,2,0,14) #wSx1000 c(170,100,450,1,0) 3PGPAPERS
+priormatrix[19,] = c(235,235,25,2,0,14) #wSx1000 c(170,100,450,1,0) 3PGPAPERS
 priormatrix[20,] = c(1.5,1.0,2.5,1,0,15)  #thinPower
 priormatrix[21,] = c(0.13,0.05,0.3,1,0,100) #mF
 priormatrix[22,] = c(0.0,0.0,1.0,1,1,100)  #AVIALABLE mR
-priormatrix[23,] = c(0.5,0.2,1,1,0,16) #mS
+priormatrix[23,] = c(0.5,0.1,1,1,0,16) #mS
 priormatrix[24,] = c(.04,0.0167,0.042,1,0,17)  #Rttover  c(.04,0.0167,0.0417,1,0,17) 
 priormatrix[25,] = c(0.20,0.15,0.35,1,0,18) #pCR for DUKE CAN BE m0  VAGUE 3PG PAPERS 
 priormatrix[26,] = c(1.5,1.0,2.5,1,0,15) # AVIALABLE thinpower for DUKE CAN BE fN0 VAGUE 3PG PAPERS
@@ -112,9 +112,9 @@ priormatrix[27,] = c(-2.44,4,2,2,0,19)  #Tmin
 priormatrix[28,] = c(23.72,25,2,2,0,20) #Topt 
 priormatrix[29,] = c(40.51,38,2,2,0,21) #Tmax 
 priormatrix[30,] = c(0.17,0.1780282,0.0162,2,0,22)  #kF 
-priormatrix[31,] = c(199,15,500,1,0,23)  #MaxAge  
-priormatrix[32,] = c(2.0,0.2,4,1,1,24) #nAge
-priormatrix[33,] = c(0.5,0.01,3,1,1,25) #rAge 
+priormatrix[31,] = c(120,16,200,1,0,23)  #MaxAge  
+priormatrix[32,] = c(2.0,0.2,4,1,0,24) #nAge
+priormatrix[33,] = c(0.5,0.01,3,1,0,25) #rAge 
 priormatrix[34,] = c(.48,.3,0.65,1,0,26) #y 
 priormatrix[35,] = c(1.50,1.00,1.8,1,0,27)#fCalpha700_h  
 priormatrix[36,] = c(1.3,1.00,1.8,1,0,28)  #fCalpha  
@@ -129,7 +129,7 @@ priormatrix[44,] = c(9.8e-4,0.0000,0.0025,1,1,100)#mort_rate_h
 priormatrix[45,] = c(16.2,16,3.8,2,0,35)  #SLA_h 
 priormatrix[46,] = c(0.3,0.15,0.35,1,0,36) #pCRS 
 priormatrix[47,] = c(0.84,0.50,1.0,1,0,37) #fCpFS700 
-priormatrix[48,] = c(235,235,0.25,2,0,14) #Duke wSx1000 CAN ALSO BE Leaftover
+priormatrix[48,] = c(235,235,25,2,0,14) #Duke wSx1000 CAN ALSO BE Leaftover
 priormatrix[49,] = c(0.0,-1.0,1.2,1,1,100) #FR Par 1 
 priormatrix[50,] = c(0.02,0.0,1.0,1,0,39) #FR Par 2 
 priormatrix[51,] = c(0.144,0.0,1.0,1,0,40) #FR Par 3 
