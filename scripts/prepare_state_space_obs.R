@@ -180,7 +180,7 @@ prepare_state_space_obs <- function(){
         #if(obs[6,plotnum,index]  == 0.0){
         #  obs[6,plotnum,index] = -99
         #}
-        if(meas_month != 8 & tmp$PlotID[1] > 40000 & tmp$PlotID[1] < 42000){
+        if(meas_month != 8 & meas_month != 7 & meas_month != 6 & tmp$PlotID[1] > 40000 & tmp$PlotID[1] < 42000){
           obs[6,plotnum,index]=-99
         }
         

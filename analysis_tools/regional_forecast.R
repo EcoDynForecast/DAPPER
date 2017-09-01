@@ -34,8 +34,7 @@ PAR_UNCERT = TRUE
 PROCESS_UNCERT = FALSE
 CLIMATE_UNCERT = FALSE
 variation_type <- 'median_climate'
-yearStart_list <- c(2030)
-sample_size <- 1
+yearStart_list <- c(1985)
 myRCP_list <- rcpCases[3]
 
 
