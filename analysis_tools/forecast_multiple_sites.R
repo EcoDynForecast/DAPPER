@@ -2,7 +2,7 @@ rm(list = ls())
 #---CONTROL INFORMATION----------------------------
 working_directory = '/Users/quinn/Dropbox (VTFRS)/Research/DAPPER'
 input_directory = '/Users/quinn/Dropbox (VTFRS)/Research/DAPPER_inputdata/'
-run_name = 'test'
+run_name = 'test1'
 #restart_chain = 'duke_state_space_without_trans_2.1.2017-07-21.13.19.13.Rdata'
 restart_chain =  'SS_val6.1.2017-08-31.17.33.17.Rdata'
 priors_file = 'default_priors.csv'
@@ -433,8 +433,8 @@ for(plotnum in 1:nplots){
         if(is.na(site[26])) {site[26]=0.1}
         if(site[26] < 0.0) {site[26]=0.1}
 
-        site[8] = rnorm(1,output[5],(1.3+new_pars[53] +output[5]*new_pars[64]))  #WS
-        #site[8] = rnorm(1,output[5],0.15+new_pars[53] +output[5]*(0.015))  #WS
+        site[8] = rnorm(1,output[5],(new_pars[53] +output[5]*new_pars[64]))  #WS
+        #site[8] = rnorm(1,output[5],(1.05+new_pars[53] +output[5]*new_pars[64]))  #WS
         if(is.na(site[8])) {site[8]=0.1}
         if(site[8]< 0.0) {site[8]=0.1}
         site[20] = rnorm(1,output[6],new_pars[54])   #WCR
