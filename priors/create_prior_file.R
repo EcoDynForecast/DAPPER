@@ -131,10 +131,10 @@ priormatrix[46,] = c(0.3,0.15,0.35,1,0,36) #pCRS
 priormatrix[47,] = c(0.84,0.50,1.0,1,0,37) #fCpFS700 
 priormatrix[48,] = c(235,235,25,2,0,14) #Duke wSx1000 CAN ALSO BE Leaftover
 priormatrix[49,] = c(0.0,-1.0,1.2,1,1,100) #FR Par 1 
-priormatrix[50,] = c(0.02,0.0,1.0,1,0,39) #FR Par 2 
-priormatrix[51,] = c(0.144,0.0,1.0,1,0,40) #FR Par 3 
+priormatrix[50,] = c(0.02,0.0,1.0,1,1,39) #FR Par 2 
+priormatrix[51,] = c(0.144,0.0,1.0,1,1,40) #FR Par 3 
 priormatrix[52,] = c(10,0.001,100,1,0,41) #LAI_SD 
-priormatrix[53,] = c(20,0.001,100,1,0,42) #WS_SD
+priormatrix[53,] = c(5,0.1,100,1,0,42) #WS_SD
 priormatrix[54,] = c(2,0.001,100,1,0,43) #WCR_SD
 priormatrix[55,] = c(5,0.001,100,1,0,44) #WR_SD
 priormatrix[56,] = c(100,0.001,1000,1,0,45) #Stem Density_SD
@@ -145,7 +145,7 @@ priormatrix[60,] = c(5,0.001,100,1,1,100) #Ctrans_SD
 priormatrix[61,] = c(1,0.001,100,1,0,50) #Root production SD
 priormatrix[62,] = c(1,0.001,100,1,0,49)#Foliage production SD
 priormatrix[63,] = c(0.0,0.0,1000,1,1,100) #LAI_SD_2
-priormatrix[64,] = c(0.01,0.0,1000,1,0,100)  #WS_SD_2
+priormatrix[64,] = c(0.01,0.0,1000,1,1,100)  #WS_SD_2
 priormatrix[65,] = c(0.0,0.0,1000,1,1,100)#WCR_SD_2
 priormatrix[66,] = c(0.0,0.0,1000,1,1,100)  #WR_SD_2
 priormatrix[67,] = c(0.0,0.0,1000,1,1,100)  #Stem Density_SD_2
@@ -158,7 +158,7 @@ priormatrix[73,] = c(0.0,0.0,1000,1,1,100)  #Foliage production SD_2
 priormatrix[74,] = c(1000,0.0,1000,1,1,100) #plot level uncertainity in WSx1000
 priormatrix[75,] = c(0.1,0.0,2,1,1,100) #plot level uncertainity in ThinPower
 priormatrix[76,] = c(0.01,0.0,2,1,1,100) #plot level uncertainity in mort_rate
-priormatrix[77,] = c(0.2,0.0,100,1,0,100)  #Foliage SD
+priormatrix[77,] = c(0.2,0.0,100,1,1,100)  #Foliage SD
 
 
 priors = cbind.data.frame(parnames,initial_value = priormatrix[,1],dist_par1 = priormatrix[,2], dist_par2 = priormatrix[,3],dist_type=priormatrix[,4],fit_par =priormatrix[,5],par_group =priormatrix[,5] ,row.names=NULL)

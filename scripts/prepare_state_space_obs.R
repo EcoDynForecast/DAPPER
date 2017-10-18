@@ -1,6 +1,6 @@
 prepare_state_space_obs <- function(){
   
-  obs_uncertainity_proportion = 0.1 
+  obs_uncertainity_proportion = 0.01 
   
   
   earliestYear = min(observations$YearMeas)

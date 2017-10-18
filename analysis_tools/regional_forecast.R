@@ -1,4 +1,4 @@
-### 3-PG Regional Runs for Quinn, Incorporating Parameter Uncertainty
+### 3-PG Regional Runs for Quinn,Incorporating Parameter Uncertainty
 rm(list = ls())
 if (!"compiler" %in% installed.packages()) install.packages("compiler")
 if (!"doParallel" %in% installed.packages()) install.packages("doParallel")
@@ -8,13 +8,26 @@ library(doParallel)
 
 enableJIT(1)
 
-output_location = "/Users/quinn/Downloads/"
-load("/Users/quinn/Dropbox (VTFRS)/Research/DAPPER/chains/SS_val6.1.2017-08-31.08.47.08.Rdata")
-code_library = "/Users/quinn/Dropbox (VTFRS)/Research/DAPPER/source_code/r3pg_interface.so"
-CO2 <- read.csv('/Users/quinn/Dropbox (VTFRS)/Research/DAPPER_inputdata/CO2/CO2_Concentrations_from_CMIP5_1950-2095.csv')
-Soils <- read.csv('/Users/quinn/Documents/PINEMAP_big_files/parameter_run/Soil_Inputs_LPNR_Clipped_and_Imputed_v4.csv')
-GCMs <- c("bcc-csm1-1-m","bcc-csm1-1","BNU-ESM","CanESM2","CCSM4","CNRM-CM5","CSIRO-Mk3-6-0","GFDL-ESM2G","GFDL-ESM2M","HadGEM2-CC365","HadGEM2-ES365","inmcm4","IPSL-CM5A-LR","IPSL-CM5A-MR","IPSL-CM5B-LR","MIROC-ESM-CHEM","MIROC-ESM","MIROC5","MRI-CGCM3","NorESM1-M", "metdata") # metdata is the Idaho reference dataset, indexed by rcpCase [1]
-rcpCases <- c('baseline', 'rcp45','rcp85')
+newriver = FALSE
+
+if(newriver){
+  output_location = "/work/newriver/rqthomas/DAPPER_regional_forecast/"
+  load("/home/rqthomas/DAPPER_regional_forecast/SS_val6.1.2017-09-03.08.22.08.Rdata")
+  code_library = "/home/rqthomas/DAPPER_regional_forecast/r3pg_interface.so"
+  CO2 <- read.csv('/home/rqthomas/DAPPER/DAPPER_inputdata/CO2/CO2_Concentrations_from_CMIP5_1950-2095.csv')
+  Soils <- read.csv('/home/rqthomas/DAPPER_regional_forecast/Soil_Inputs_LPNR_Clipped_and_Imputed_v4.csv')
+  GCMs <- c("bcc-csm1-1-m","bcc-csm1-1","BNU-ESM","CanESM2","CCSM4","CNRM-CM5","CSIRO-Mk3-6-0","GFDL-ESM2G","GFDL-ESM2M","HadGEM2-CC365","HadGEM2-ES365","inmcm4","IPSL-CM5A-LR","IPSL-CM5A-MR","IPSL-CM5B-LR","MIROC-ESM-CHEM","MIROC-ESM","MIROC5","MRI-CGCM3","NorESM1-M", "metdata") # metdata is the Idaho reference dataset, indexed by rcpCase [1]
+  rcpCases <- c('baseline', 'rcp45','rcp85')
+}else{
+  
+  output_location = "/Users/quinn/Downloads/"
+  load("/Users/quinn/Dropbox (VTFRS)/Research/DAPPER/chains/SS_val6.1.2017-08-31.08.47.08.Rdata")
+  code_library = "/Users/quinn/Dropbox (VTFRS)/Research/DAPPER/source_code/r3pg_interface.so"
+  CO2 <- read.csv('/Users/quinn/Dropbox (VTFRS)/Research/DAPPER_inputdata/CO2/CO2_Concentrations_from_CMIP5_1950-2095.csv')
+  Soils <- read.csv('/Users/quinn/Documents/PINEMAP_big_files/parameter_run/Soil_Inputs_LPNR_Clipped_and_Imputed_v4.csv')
+  GCMs <- c("bcc-csm1-1-m","bcc-csm1-1","BNU-ESM","CanESM2","CCSM4","CNRM-CM5","CSIRO-Mk3-6-0","GFDL-ESM2G","GFDL-ESM2M","HadGEM2-CC365","HadGEM2-ES365","inmcm4","IPSL-CM5A-LR","IPSL-CM5A-MR","IPSL-CM5B-LR","MIROC-ESM-CHEM","MIROC-ESM","MIROC5","MRI-CGCM3","NorESM1-M", "metdata") # metdata is the Idaho reference dataset, indexed by rcpCase [1]
+  rcpCases <- c('baseline', 'rcp45','rcp85')
+}
 
 ## Critical Parameters -- USER INPUT REQUIRED ####-----------------------------
 useParallel = TRUE
@@ -24,25 +37,27 @@ use_readr = TRUE
 precipModifier <- 1.0 # No toggle to precip
 MaxFR <- FALSE # No fertilization
 # Number of samples from parameter chain (will be ignored in the process_only case)
-sample_size <- 4
+sample_size <- 500
 # Number of processors to be used
-nprocessors <- 2 # Make sure to change this to the max processors!
+nprocessors <- 1 # Make sure to change this to the max processors!
 rotationAge <- 25
 
 
-PAR_UNCERT = TRUE
+PAR_UNCERT = FALSE
 PROCESS_UNCERT = FALSE
-CLIMATE_UNCERT = FALSE
-variation_type <- 'median_climate'
+CLIMATE_UNCERT = TRUE
+variation_type <- 'climate'
 yearStart_list <- c(1985)
 myRCP_list <- rcpCases[3]
 
-
-
 if(CLIMATE_UNCERT){
-myGCM_list <- c(GCMs[1:20],GCMs[1:20])
+  myGCM_list <- c(GCMs[1:20])
+  myRCP_list <- rep(rcpCases[3],length(myGCM_list))
+  yearStart_list <- rep(yearStart_list, length(myGCM_list))
 }else{
-myGCM_list <- c(GCMs[3],GCMs[3])
+  myGCM_list <- c(GCMs[3])
+  myRCP_list <- c(rcpCases[3])
+  yearStart_list = yearStart_list
 }
 
 if(PAR_UNCERT | PROCESS_UNCERT){
@@ -110,10 +125,10 @@ run.3PG.quick <- function(myHUC, yearStart, yearEnd, startAge = 2, precipModifie
                yearStart, # InitialYear
                1, # InitialMonth
                startAge, # 'EndAge', ACTUALLY THE STARTING AGE!!!
-               .95, # WFi
-               0.028, # WRi
+               1, # WFi
+               0.16, # WRi
                2, # WSi
-               1235, # StemNoi
+               1200, # StemNoi
                tmpSoils$aws0150, # ASWi
                tmpSoils$LAT, # Lat
                tmpFR, # FR
@@ -124,13 +139,13 @@ run.3PG.quick <- function(myHUC, yearStart, yearEnd, startAge = 2, precipModifie
                0.001, # WFi_H
                0.001, # WSi_H
                0.001, # WRi_H
-               2*0.2,
+               0.4,
                IrrigRate = 0.0,
                Throughfall = 1.0,
                tmp_site_index = 0.0,
                WCRi_H = 0.0,
                Wbud_H = 0.0,
-               LAI = 0.5,
+               LAI = -99,
                LAI_h = 0.01) # WCRi
   site <- array(site_in)
   site[is.na(site)] <- 0
@@ -142,9 +157,12 @@ run.3PG.quick <- function(myHUC, yearStart, yearEnd, startAge = 2, precipModifie
   
   
   output0 = array(NA,dim=c(nmonths,3))
-
+  
+  # dyn.load(code_library)
+  
+  
   for(mo in 1:nmonths){
-
+    
     tmp=.Fortran( "r3pg_interface",
                   output_dim=as.integer(output_dim),
                   met=as.double(t(met[mo,])),
@@ -166,61 +184,44 @@ run.3PG.quick <- function(myHUC, yearStart, yearEnd, startAge = 2, precipModifie
     
     output=array(tmp$out_var, dim=c(1,output_dim))
     
-    if(length(which(is.nan(output))) == 0){
-      
-      if(output[2] == 12){
-        site[3] = output[1]+1 #InitialYear
-        site[4] = 1  #InitialMonth
-      }else{
-        site[3] = output[1] #InitialYear
-        site[4] = output[2]+1  #InitialMonth	
-      }
-      site[5] = output[3] + (1.0/12.) #StartAge
-      
-      if(is.nan(output[26]) | is.na(output[26]) | output[26] < 0 ) {
-        site[26] = 0.5 * SLA * 0.1
-        site[8] = 1
-        site[7] = 0.5
-        site[9] = 1500
-        site[20] = 0.30
-        site[6] = 0.5
-        site[27] = max(rnorm(1,output[9],curr_pars[52]),0.0)  #Hardwood LAI
+    if(output[2] == 12){
+      site[3] = output[1]+1 #InitialYear
+      site[4] = 1  #InitialMonth
+    }else{
+      site[3] = output[1] #InitialYear
+      site[4] = output[2]+1  #InitialMonth    
+    }
+    site[5] = output[3] + (1.0/12.) #StartAge
+    
+    if(length(which(is.nan(output))) == 0  | output[26] < 0 ){
+      if(PROCESS_UNCERT){
+        site[26] = max(rnorm(1,output[4],curr_pars[52]),0.1) #LAI
+        site[8] = max(rnorm(1,output[5],(0.96+curr_pars[53] +output[5]*curr_pars[64])),2)  #WS
+        site[20] = max(rnorm(1,output[6],curr_pars[54]),0.4)   #WCR
+        site[7] = max(rnorm(1,output[7],curr_pars[55]),0.16)  #WRi
+        site[9] = max(rnorm(1,output[8],curr_pars[56]),1) #StemNo
+        site[6] = output[22] #WFi
+        site[27] = output[9] #Hardwood LAI
         site[25] = output[26] #Hardwood Bud
-        site[18] = rnorm(1,output[10],curr_pars[57]) #WS_H 
+        site[18] = output[10] #WS_H 
         site[24] = output[11]  #WCR_h
-        site[19] = rnorm(1,output[12],curr_pars[55]) #WR_H
+        site[19] = output[12] #WR_H
         site[10] = output[14] # ASW
         site[17] = output[23] #WF_H	
-      }else{ 
-        if(PROCESS_UNCERT){
-          site[26] = max(rnorm(1,output[4],curr_pars[52]),0.1) #LAI
-          site[8] = rnorm(1,output[5],(1.3+new_pars[53] +output[5]*new_pars[64]))  #WS
-          site[20] = rnorm(1,output[6],curr_pars[54])   #WCR
-          site[7] = rnorm(1,output[7],curr_pars[55])  #WRi
-          site[9] = rnorm(1,output[8],curr_pars[56]) #StemNo
-          site[6] = output[22] #WFi
-          site[27] = max(rnorm(1,output[9],curr_pars[52]),0.0)  #Hardwood LAI
-          site[25] = output[26] #Hardwood Bud
-          site[18] = rnorm(1,output[10],curr_pars[57]) #WS_H 
-          site[24] = output[11]  #WCR_h
-          site[19] = rnorm(1,output[12],curr_pars[55]) #WR_H
-          site[10] = output[14] # ASW
-          site[17] = output[23] #WF_H	
-        }else{
-          site[26] = output[4]
-          site[8] = output[5]
-          site[20] = output[6]
-          site[7] = output[7]
-          site[9] = output[8]
-          site[6] = output[22] #WFi    
-          site[27] = output[9] #  #Hardwood LAI
-          site[25] = output[26] #Hardwood Bud
-          site[18] = output[10] #WS_H 
-          site[24] = output[11]  #WCR_h
-          site[19] = output[12] #WR_H
-          site[10] = output[14] # ASW
-          site[17] = output[23] #WF_H	
-        }
+      }else{
+        site[26] = output[4]
+        site[8] = output[5]
+        site[20] = output[6]
+        site[7] = output[7]
+        site[9] = output[8]
+        site[6] = output[22] #WFi    
+        site[27] = output[9] #  #Hardwood LAI
+        site[25] = output[26] #Hardwood Bud
+        site[18] = output[10] #WS_H 
+        site[24] = output[11]  #WCR_h
+        site[19] = output[12] #WR_H
+        site[10] = output[14] # ASW
+        site[17] = output[23] #WF_H	
       }
       
       total =  site[6] + site[8] + site[20] + site[7]
@@ -229,40 +230,26 @@ run.3PG.quick <- function(myHUC, yearStart, yearEnd, startAge = 2, precipModifie
       output0[mo,3] =  total
       #print(c(mo,output[3],site[8],total))
     }else{
-      site_in <- c(yearStart, # PlantedYear
-                   1, # PlantedMonth
-                   yearStart, # InitialYear
-                   1, # InitialMonth
-                   startAge, # 'EndAge', ACTUALLY THE STARTING AGE!!!
-                   .95, # WFi
-                   0.028, # WRi
-                   2, # WSi
-                   1235, # StemNoi
-                   tmpSoils$aws0150, # ASWi
-                   tmpSoils$LAT, # Lat
-                   tmpFR, # FR
-                   1, # SoilClass
-                   as.numeric(tmpSoils$aws0150), # MaxASW
-                   0, # MinASW
-                   nomonths-startAge*12, # TotalMonths
-                   0.001, # WFi_H
-                   0.001, # WSi_H
-                   0.001, # WRi_H
-                   2*0.2,
-                   IrrigRate = 0.0,
-                   Throughfall = 1.0,
-                   tmp_site_index = 0.0,
-                   WCRi_H = 0.0,
-                   Wbud_H = 0.0,
-                   LAI = 0.5,
-                   LAI_h = 0.01) # WCRi
-      
-      site = array(site_in)
-      
-      mo = 1
+      site[26] = -99
+      site[8] = 2
+      site[7] = 0.16
+      site[9] = 1200
+      site[20] = 0.40
+      site[6] = 1
+      site[27] = output[9] #Hardwood LAI
+      site[25] = output[26] #Hardwood Bud
+      site[18] = output[10] #WS_H 
+      site[24] = output[11]  #WCR_h
+      site[19] = output[12] #WR_H
+      site[10] = output[14] #ASW
+      site[17] = output[23] #WF_H	
+      total =  site[6] + site[8] + site[20] + site[7]
+      output0[mo,1] =output[3]
+      output0[mo,2] = site[8]
+      output0[mo,3] =  total
     }
     #-------------------------------------------------------------------------------
-}
+  }
   age_25 <- which(output0[,1] >= 24.9 & output0[,1] < 26.0)
   output <- colMeans(output0[age_25,])
   
@@ -282,8 +269,7 @@ set.seed(2016)
 pars_sample_index <- sample(seq(1,niter,1),nsamples,replace = TRUE)
 
 
-for(r in 1:length(myRCP_list)){
-  
+for(r in 1:length(myGCM_list)){
   myRCP = myRCP_list[r]
   myGCM = myGCM_list[r]
   yearStart = yearStart_list[r]
@@ -293,6 +279,8 @@ for(r in 1:length(myRCP_list)){
   
   npars <- 80
   curr_pars <- rep(NA,npars)
+  
+  ptm <- proc.time()
   for(i in 1:npars){
     curr_pars[i] <- median(accepted_pars_thinned_burned[,i]) # Taking median here, modify for bootstrapping
   }
@@ -312,24 +300,43 @@ for(r in 1:length(myRCP_list)){
   base_year <- 1950
   if(RCP_index == 1){base_year <- 1979}
   
-  # Climate Data Loading
-  if(use_readr){
-  frostDays <- read_csv(paste('/Users/quinn/Documents/PINEMAP_big_files/parameter_run/Consolidated_Files_Imput/frostDays_', RCP_index,'_', myGCM,'_imput.csv', sep = ''))
-  rain <- read_csv(paste('/Users/quinn/Documents/PINEMAP_big_files/parameter_run/Consolidated_Files_Imput/rain_', RCP_index,'_', myGCM,'_imput.csv', sep = ''))
-  solarRad <- read_csv(paste('/Users/quinn/Documents/PINEMAP_big_files/parameter_run/Consolidated_Files_Imput/solarRad_', RCP_index,'_', myGCM,'_imput.csv', sep = ''))
-  tMax <- read_csv(paste('/Users/quinn/Documents/PINEMAP_big_files/parameter_run/Consolidated_Files_Imput/tMax_', RCP_index,'_', myGCM,'_imput.csv', sep = ''))
-  tMin <- read_csv(paste('/Users/quinn/Documents/PINEMAP_big_files/parameter_run/Consolidated_Files_Imput/tMin_', RCP_index,'_', myGCM,'_imput.csv', sep = ''))
+  #Climate Data Loading
+  
+  if(newriver){
+    if(use_readr){
+      frostDays <- read_csv(paste('/home/rqthomas/DAPER_regional_analysis/met_files/frostDays_', RCP_index,'_', myGCM,'_imput.csv', sep = ''))
+      rain <- read_csv(paste('/home/rqthomas/DAPER_regional_analysis/met_files/rain_', RCP_index,'_', myGCM,'_imput.csv', sep = ''))
+      solarRad <- read_csv(paste('/home/rqthomas/DAPER_regional_analysis/met_files/solarRad_', RCP_index,'_', myGCM,'_imput.csv', sep = ''))
+      tMax <- read_csv(paste('/home/rqthomas/DAPER_regional_analysis/met_files/tMax_', RCP_index,'_', myGCM,'_imput.csv', sep = ''))
+      tMin <- read_csv(paste('/home/rqthomas/DAPER_regional_analysis/met_files/tMin_', RCP_index,'_', myGCM,'_imput.csv', sep = ''))
+    }else{
+      frostDays <- read.csv(paste('/home/rqthomas/DAPER_regional_analysis/met_files/frostDays_', RCP_index,'_', myGCM,'_imput.csv', sep = ''))
+      rain <- read.csv(paste('/home/rqthomas/DAPER_regional_analysis/met_files/rain_', RCP_index,'_', myGCM,'_imput.csv', sep = ''))
+      solarRad <- read.csv(paste('/home/rqthomas/DAPER_regional_analysis/met_files/solarRad_', RCP_index,'_', myGCM,'_imput.csv', sep = ''))
+      tMax <- read.csv(paste('/home/rqthomas/DAPER_regional_analysis/met_files/tMax_', RCP_index,'_', myGCM,'_imput.csv', sep = ''))
+      tMin <- read.csv(paste('/home/rqthomas/DAPER_regional_analysis/met_files/tMin_', RCP_index,'_', myGCM,'_imput.csv', sep = ''))
+    }
   }else{
-    frostDays <- read.csv(paste('/Users/quinn/Documents/PINEMAP_big_files/parameter_run/Consolidated_Files_Imput/frostDays_', RCP_index,'_', myGCM,'_imput.csv', sep = ''))
-    rain <- read.csv(paste('/Users/quinn/Documents/PINEMAP_big_files/parameter_run/Consolidated_Files_Imput/rain_', RCP_index,'_', myGCM,'_imput.csv', sep = ''))
-    solarRad <- read.csv(paste('/Users/quinn/Documents/PINEMAP_big_files/parameter_run/Consolidated_Files_Imput/solarRad_', RCP_index,'_', myGCM,'_imput.csv', sep = ''))
-    tMax <- read.csv(paste('/Users/quinn/Documents/PINEMAP_big_files/parameter_run/Consolidated_Files_Imput/tMax_', RCP_index,'_', myGCM,'_imput.csv', sep = ''))
-    tMin <- read.csv(paste('/Users/quinn/Documents/PINEMAP_big_files/parameter_run/Consolidated_Files_Imput/tMin_', RCP_index,'_', myGCM,'_imput.csv', sep = ''))
+    if(use_readr){
+      frostDays <- read_csv(paste('/Users/quinn/Documents/PINEMAP_big_files/parameter_run/Consolidated_Files_Imput/frostDays_', RCP_index,'_', myGCM,'_imput.csv', sep = ''))
+      rain <- read_csv(paste('/Users/quinn/Documents/PINEMAP_big_files/parameter_run/Consolidated_Files_Imput/rain_', RCP_index,'_', myGCM,'_imput.csv', sep = ''))
+      solarRad <- read_csv(paste('/Users/quinn/Documents/PINEMAP_big_files/parameter_run/Consolidated_Files_Imput/solarRad_', RCP_index,'_', myGCM,'_imput.csv', sep = ''))
+      tMax <- read_csv(paste('/Users/quinn/Documents/PINEMAP_big_files/parameter_run/Consolidated_Files_Imput/tMax_', RCP_index,'_', myGCM,'_imput.csv', sep = ''))
+      tMin <- read_csv(paste('/Users/quinn/Documents/PINEMAP_big_files/parameter_run/Consolidated_Files_Imput/tMin_', RCP_index,'_', myGCM,'_imput.csv', sep = ''))
+    }else{
+      frostDays <- read.csv(paste('/Users/quinn/Documents/PINEMAP_big_files/parameter_run/Consolidated_Files_Imput/frostDays_', RCP_index,'_', myGCM,'_imput.csv', sep = ''))
+      rain <- read.csv(paste('/Users/quinn/Documents/PINEMAP_big_files/parameter_run/Consolidated_Files_Imput/rain_', RCP_index,'_', myGCM,'_imput.csv', sep = ''))
+      solarRad <- read.csv(paste('/Users/quinn/Documents/PINEMAP_big_files/parameter_run/Consolidated_Files_Imput/solarRad_', RCP_index,'_', myGCM,'_imput.csv', sep = ''))
+      tMax <- read.csv(paste('/Users/quinn/Documents/PINEMAP_big_files/parameter_run/Consolidated_Files_Imput/tMax_', RCP_index,'_', myGCM,'_imput.csv', sep = ''))
+      tMin <- read.csv(paste('/Users/quinn/Documents/PINEMAP_big_files/parameter_run/Consolidated_Files_Imput/tMin_', RCP_index,'_', myGCM,'_imput.csv', sep = ''))
+    }
   }
+  
   
   myHUCsFinal <- intersect(Soils$HUC12, frostDays$HUC12)
   if(test4HUCS){
-  myHUCsFinal <- myHUCsFinal[which(myHUCsFinal == 31101030505 | myHUCsFinal == 30601050202 | myHUCsFinal == 111401070404 | myHUCsFinal == 20802031301)]
+    #myHUCsFinal <- myHUCsFinal[which(myHUCsFinal == 31101030505 | myHUCsFinal == 30601050202 | myHUCsFinal == 111401070404 | myHUCsFinal == 20802031301)]
+    myHUCsFinal <- myHUCsFinal[1:50]
   }
   
   cl <- makeCluster(nprocessors)  
@@ -357,7 +364,7 @@ for(r in 1:length(myRCP_list)){
     tmp <- matrix(NA, nrow = length(myHUCsFinal), ncol = 4)
     
     #if(!useParallel){
-      dyn.load(code_library)
+    dyn.load(code_library)
     #}
     for(HUCindex in 1:length(myHUCsFinal)){
       tmp[HUCindex,] <- run.3PG.quick(myHUC = myHUCsFinal[HUCindex], yearStart = yearStart, yearEnd = yearEnd, startAge = 2, precipModifier = 1, MaxFR = MaxFR, base_year = base_year, curr_pars = curr_pars,FR_pars = FR_pars, HOLD_CO2 = HOLD_CO2, PROCESS_UNCERT = PROCESS_UNCERT) 
@@ -376,6 +383,9 @@ for(r in 1:length(myRCP_list)){
   rm(frostDays, rain, solarRad, tMax, tMin)
   
   save.image(file = paste(output_location,'/3PG_runs_for_', variation_type, '_using_', nsamples, '_based_on_', myGCM, '_and_', myRCP,'_and_startyear_of_',yearStart,'_FRset_',MaxFR,'_HOLDCO2_',HOLD_CO2,'.Rdata', sep = ''))      
+  
+  print(proc.time() - ptm)
+  
 }
 
 

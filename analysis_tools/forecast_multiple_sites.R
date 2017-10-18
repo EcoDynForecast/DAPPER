@@ -1,231 +1,9 @@
-rm(list = ls())
-#---CONTROL INFORMATION----------------------------
-working_directory = '/Users/quinn/Dropbox (VTFRS)/Research/DAPPER'
-input_directory = '/Users/quinn/Dropbox (VTFRS)/Research/DAPPER_inputdata/'
-run_name = 'test1'
-#restart_chain = 'duke_state_space_without_trans_2.1.2017-07-21.13.19.13.Rdata'
-restart_chain =  'SS_val6.1.2017-08-31.17.33.17.Rdata'
-priors_file = 'default_priors.csv'
-obs_set = 21 #14 #Select which plots are used in analysis.  See prepare_obs.R for number guide 
-focal_plotID = NA #14 #Select which plots are used in analysis.  See prepare_obs.R for number guide 
-val_set = 6
-fr_model = 1  # 1 = estimate FR for each plot, 2 = empirical FR model
-FR_fert_assumption = 0 #0 = assume fertilization plots have FR = 1, 1 = do not assume fertilization plots have FR = 1
-use_fol = TRUE  #TRUE= use allometric estimates of foliage biomass in fitting
-use_dk_pars = 1  #0 = do not use 3 specific parameters for the Duke site, 1 = use the 3 specific parameters
-nstreams = 19
-state_space = 1
-plotFR = NA
-windows_machine = FALSE
+forecast_multiple_sites <- function(WS_adjust = 0.0,chain = 'SS_val6.1.2017-09-03.08.22.08.Rdata',use_pdf = TRUE,file_name = 'test'){
 
-PARAMETER_UNCERT = TRUE
-nsamples = 500
+  run_name = file_name
+  
+  final_pdf = paste(working_directory,'/figures/',run_name,'.pdf',sep='')
 
-load(paste(working_directory,'/chains/',restart_chain,sep=''))
-
-all_studies = c(
-  '/SETRES/TIER4_SETRES',
-  '/PINEMAP/TIER3_PINEMAP',
-  '/NC2/TIER4_NC2',
-  '/Duke/TIER4_Duke',
-  '/Waycross/TIER4_Waycross',
-  '/FMC_Thinning/TIER1_FMC_Thinning',
-  #'/FBRC_AMERIFLU/TIER2_AMERIFLU',
-  #'/FBRC_IMPAC/TIER1_IMPAC',
-  #'/FBRC_IMPAC2/TIER2_IMPAC2',
-  #'/FBRC_PPINES/TIER2_PPINES',
-  #'/FBRC_VAR1/TIER2_VAR1',
-  #'/FBRC_WPPINES/TIER2_WPPINES',
-  #'/FMC_IMP_TIER1/TIER1_IMP',
-  #'/FMC_IMP_TIER2/TIER2_IMP',
-  #'/FPC_RS1/TIER1_RS1',
-  #'/FPC_RS2/TIER1_RS2',
-  #'/FPC_RS3/TIER1_RS3',
-  #'/FPC_RS5/TIER1_RS5',
-  #'/FPC_RS6/TIER1_RS6',
-  #'/FPC_RS7/TIER1_RS7',
-  #'/FPC_RS8/TIER1_RS8',
-  '/FPC_RW18/TIER2_RW18'
-  #'/FPC_RW19/TIER2_RW19',
-  #'/FPC_RW20/TIER2_RW20',
-  #'/PMRC_CPCD96_TIER1/TIER1_CPCD96',
-  #'/PMRC_CPCD96_TIER2/TIER2_CPCD96',
-  #'/PMRC_HGLOB87/TIER1_HGLOB87',
-  #'/PMRC_SAGCD96_TIER1/TIER1_SAGCD96',
-  #'/PMRC_SAGCD96_TIER2/TIER2_SAGCD96',
-  #'/PMRC_SAGSP85_TIER1/TIER1_SAGSP85',
-  #'/PMRC_SAGSP85_TIER2/TIER2_SAGSP85',
-  #'/PMRC_WGCD01_TIER1/TIER1_WGCD01',
-  #'/PMRC_WGCD01_TIER2/TIER2_WGCD01',
-  #'/TAMU_GSSS/TIER1_GSSS'
-  #'/FIA/VA_FIA'
-)
-#----------------------------------------------------
-
-#---SELECT COMPONENTS THAT ARE ALLOWED TO HAVE UNCERTAINITY--
-#plot_WSx1000 = FALSE  #include plot specific WSx1000 parameter
-#plot_thinpower = FALSE #include plot specific thinpower parameter
-#plot_mort_rate = FALSE #include plot specific mortality rate parameter
-
-#----------------------------------------------------
-
-#----------------------------------------------------
-
-#--OTHER INFO (WON'T CHANGE UNLESS MODIFY MODEL)-----
-npars_used_by_fortran = 48
-noutput_variables = 67
-process_model_pars = 51
-npars =80
-
-#---- ENTER THE FORTRAN LIBRARY NAMES HERE ----------
-if(windows_machine){
-  code_library_plot = paste(working_directory,'/source_code/r3pg_interface.dll',sep='')
-}else{
-  code_library_plot = paste(working_directory,'/source_code/r3pg_interface.so',sep='')
-}
-
-final_pdf = paste(working_directory,'/figures/',run_name,'.pdf',sep='')
-
-setwd(paste(working_directory,'/scripts/',sep=''))
-source('prepare_obs.R')
-source('prepare_state_space_obs.R')
-source('assign_control_plots.R')
-source('prepare_met.R')
-source('set_fitted_plots.R')
-source('init_state_space.R')
-
-setwd(working_directory)
-#----------------------------------------------------
-
-priors_in = read.csv(paste(working_directory,'/priors/',priors_file,sep=''))
-npars = length(priors_in$parnames)
-priormatrix = matrix(NA,npars,6)
-priormatrix[,1] = priors_in$initial_value
-priormatrix[,2] = priors_in$dist_par1
-priormatrix[,3] = priors_in$dist_par2
-priormatrix[,4] = priors_in$dist_type
-priormatrix[,5] = priors_in$fit_par
-priormatrix[,6] = priors_in$par_group
-
-parnames = priors_in$parnames
-
-#---  PREPARE OBSERVATIONS ---------------------------
-obs_list = prepare_obs(obs_set,FR_fert_assumption,use_fol)
-plotlist = obs_list$plotlist
-StudyName = obs_list$StudyName
-Treatment = obs_list$Treatment
-nplots= obs_list$nplots
-observations= obs_list$observations
-initdata= obs_list$initdata
-met_in = obs_list$met_in
-co2_in = obs_list$co2_in
-use_fol_state = obs_list$use_fol_state
-#-------------------------------------------------
-
-state_space_obs = prepare_state_space_obs()
-mo_start_end=state_space_obs$mo_start_end
-years = state_space_obs$years
-months = state_space_obs$months
-nmonths = state_space_obs$nmonths
-obs = state_space_obs$obs
-thin_event = state_space_obs$thin_event
-obs_uncert = state_space_obs$obs_uncert
-init_obs = state_space_obs$init_obs
-init_uncert = state_space_obs$init_uncert
-
-
-#----SET CONTROL PLOT INDEX---------------------------------------
-# this assigns the control plot to match with the treatment plot
-
-control_list = assign_control_plots(nplots,initdata,plotlist)
-control_plot_index =  control_list$control_plot_index
-matched_FR_plot_index = control_list$matched_FR_plot_index
-
-#--- CREATE CLIMATE INPUT ARRAYS --------------------------------
-met_tmp = prepare_met(met_in,initdata,mo_start_end,co2_in,nplots,nmonths,months,years)
-met = array(NA,dim=c(nplots,6,length(met_tmp$tmin[1,])))
-met[,1,] = met_tmp$tmin
-met[,2,] = met_tmp$tmax
-met[,3,] = met_tmp$precip
-met[,4,] = met_tmp$ra
-met[,5,] = met_tmp$frost
-met[,6,] = met_tmp$co2
-
-#-----INDEXING FOR THE PARAMETER VECTOR--------------------------
-# this helps speed up the analysis -----------------------------
-
-#index_guide = create_index_guide(npars,nplots)
-
-#-----TURN OFF HARDWOOD SIMULATION (0 = HARDWOODS ARE SIMULATED)-------
-exclude_hardwoods = array(1,dim=nplots)
-exclude_hardwoods[which(initdata$PlotID >= 40000 & initdata$PlotID < 42000)]=0
-
-init_pars = accepted_pars_thinned_burned[1,]
-new_pars = init_pars
-
-
-latent = obs
-init_states = init_state_space()
-latent[1,,] = init_states$init_state_space_LAI
-latent[2,,]=init_states$init_state_space_WS
-latent[3,,]=init_states$init_state_space_WCR
-latent[4,,]=init_states$init_state_space_WR
-latent[5,,]=init_states$init_state_space_stem_density
-latent[6,,] = init_states$init_state_space_LAI_H
-latent[7,,]=init_states$init_state_space_WS_H
-
-age = init_states$age
-obs_gap = init_states$obs_gap
-obs_gap_next = init_states$obs_gap_next
-
-#####
-thinning_study_second_thin = read.csv(paste(input_directory,'/FMC_Thinning/TIER1_FMC_list_of_second_thin_plots.csv',sep=''))
-thin_event = array(0,dim=c(nplots,nmonths))
-for(plotnum in 1:nplots){
-  tmp_initdata = initdata[which(initdata$PlotID == plotlist[plotnum]),]
-  prev_nha = init_obs[5,plotnum]
-  thin_occured = 0
-  double_thin = 0
-  if(length(which(thinning_study_second_thin$PlotID ==  tmp_initdata$Plot)) == 1 & plotlist[plotnum] > 10000 & plotlist[plotnum] < 20000){
-    double_thin = 1
-  }
-  for(mo in (mo_start_end[plotnum,1]+1):mo_start_end[plotnum,2])
-    if(obs[5,plotnum,mo] != -99){
-      thin_event[plotnum,mo-1] =  prev_nha - obs[5,plotnum,mo] 
-      if(plotlist[plotnum] > 20000 & plotlist[plotnum] < 41000){
-        thin_event[plotnum,mo-1] = 0.0
-      }
-      if(plotlist[plotnum] > 42000 & plotlist[plotnum] < 50000){
-        thin_event[plotnum,mo-1] = 0.0
-      }
-      if(plotlist[plotnum] > 10000 & plotlist[plotnum] < 20000 & tmp_initdata$ThinTreatment == 1){
-        thin_event[plotnum,mo-1] = 0.0
-      }
-      if(plotlist[plotnum] >= 52001 & plotlist[plotnum] <= 52467 & tmp_initdata$ThinTreatment == 1){
-        thin_event[plotnum,mo-1] = 0.0
-      }
-      if(plotlist[plotnum] >= 72001 & plotlist[plotnum] <= 72076 & tmp_initdata$ThinTreatment == 1){
-        thin_event[plotnum,mo-1] = 0.0
-      }
-      if(plotlist[plotnum] > 10000 & plotlist[plotnum] < 20000 & tmp_initdata$ThinTreatment > 1 & thin_occured == 1 & double_thin == 0){
-        thin_event[plotnum,mo-1] = 0.0
-      }
-      if(plotlist[plotnum] >= 52001 & plotlist[plotnum] <= 52467 & tmp_initdata$ThinTreatment > 1 & (thin_event[plotnum,mo-1] < 400 | thin_occured == 1)){
-        thin_event[plotnum,mo-1] = 0.0
-      }
-      if(plotlist[plotnum] >= 72001 & plotlist[plotnum] <= 72076 & tmp_initdata$ThinTreatment > 1 & (thin_event[plotnum,mo-1] < 400 | thin_occured == 1)){
-        thin_event[plotnum,mo-1] = 0.0
-      }
-      
-      if(thin_event[plotnum,mo-1] < 200){
-        thin_event[plotnum,mo-1]  = 0
-      }else if(thin_occured == 0 & thin_event[plotnum,mo-1] >= 200){
-        thin_occured = 1
-      }
-      
-      prev_nha = obs[5,plotnum,mo]
-    }
-}
 
 #--- ASSIGN VECTOR FLAGGING PLOTS AS USED IN FITTING OR NOT
 fit_plot = set_fitted_plots(nplots,val_set,plotlist,initdata)
@@ -233,8 +11,9 @@ num_in95 = 0
 num_out95 = 0
 num_tot = 0
 
-
+if(use_pdf){
 pdf(paste(working_directory,'/figures/',run_name,'.pdf',sep=''),width = 11,height = 11)
+}
 par(mfrow=c(4,4),mar = c(4,4,2,2),oma = c(3,3,2,2))
 
 dyn.load(code_library_plot)
@@ -433,7 +212,7 @@ for(plotnum in 1:nplots){
         if(is.na(site[26])) {site[26]=0.1}
         if(site[26] < 0.0) {site[26]=0.1}
 
-        site[8] = rnorm(1,output[5],(new_pars[53] +output[5]*new_pars[64]))  #WS
+        site[8] = rnorm(1,output[5],(WS_adjust+new_pars[53] +output[5]*new_pars[64]))  #WS
         #site[8] = rnorm(1,output[5],(1.05+new_pars[53] +output[5]*new_pars[64]))  #WS
         if(is.na(site[8])) {site[8]=0.1}
         if(site[8]< 0.0) {site[8]=0.1}
@@ -504,4 +283,233 @@ for(plotnum in 1:nplots){
   }
 }
 
+return(c(num_in95,num_out95,num_tot))
+if(use_pdf){
 dev.off()
+}
+}
+
+#---CONTROL INFORMATION----------------------------
+working_directory = '/Users/quinn/Dropbox (VTFRS)/Research/DAPPER'
+input_directory = '/Users/quinn/Dropbox (VTFRS)/Research/DAPPER_inputdata/'
+
+#restart_chain = 'duke_state_space_without_trans_2.1.2017-07-21.13.19.13.Rdata'
+restart_chain =  chain
+priors_file = 'default_priors.csv'
+obs_set = 21 #14 #Select which plots are used in analysis.  See prepare_obs.R for number guide 
+focal_plotID = NA #14 #Select which plots are used in analysis.  See prepare_obs.R for number guide 
+val_set = 6
+fr_model = 1  # 1 = estimate FR for each plot, 2 = empirical FR model
+FR_fert_assumption = 0 #0 = assume fertilization plots have FR = 1, 1 = do not assume fertilization plots have FR = 1
+use_fol = TRUE  #TRUE= use allometric estimates of foliage biomass in fitting
+use_dk_pars = 1  #0 = do not use 3 specific parameters for the Duke site, 1 = use the 3 specific parameters
+nstreams = 19
+state_space = 1
+plotFR = NA
+windows_machine = FALSE
+
+PARAMETER_UNCERT = TRUE
+nsamples = 10
+
+load(paste(working_directory,'/chains/',restart_chain,sep=''))
+
+all_studies = c(
+  '/SETRES/TIER4_SETRES',
+  '/PINEMAP/TIER3_PINEMAP',
+  '/NC2/TIER4_NC2',
+  '/Duke/TIER4_Duke',
+  '/Waycross/TIER4_Waycross',
+  '/FMC_Thinning/TIER1_FMC_Thinning',
+  #'/FBRC_AMERIFLU/TIER2_AMERIFLU',
+  #'/FBRC_IMPAC/TIER1_IMPAC',
+  #'/FBRC_IMPAC2/TIER2_IMPAC2',
+  #'/FBRC_PPINES/TIER2_PPINES',
+  #'/FBRC_VAR1/TIER2_VAR1',
+  #'/FBRC_WPPINES/TIER2_WPPINES',
+  #'/FMC_IMP_TIER1/TIER1_IMP',
+  #'/FMC_IMP_TIER2/TIER2_IMP',
+  #'/FPC_RS1/TIER1_RS1',
+  #'/FPC_RS2/TIER1_RS2',
+  #'/FPC_RS3/TIER1_RS3',
+  #'/FPC_RS5/TIER1_RS5',
+  #'/FPC_RS6/TIER1_RS6',
+  #'/FPC_RS7/TIER1_RS7',
+  #'/FPC_RS8/TIER1_RS8',
+  '/FPC_RW18/TIER2_RW18'
+  #'/FPC_RW19/TIER2_RW19',
+  #'/FPC_RW20/TIER2_RW20',
+  #'/PMRC_CPCD96_TIER1/TIER1_CPCD96',
+  #'/PMRC_CPCD96_TIER2/TIER2_CPCD96',
+  #'/PMRC_HGLOB87/TIER1_HGLOB87',
+  #'/PMRC_SAGCD96_TIER1/TIER1_SAGCD96',
+  #'/PMRC_SAGCD96_TIER2/TIER2_SAGCD96',
+  #'/PMRC_SAGSP85_TIER1/TIER1_SAGSP85',
+  #'/PMRC_SAGSP85_TIER2/TIER2_SAGSP85',
+  #'/PMRC_WGCD01_TIER1/TIER1_WGCD01',
+  #'/PMRC_WGCD01_TIER2/TIER2_WGCD01',
+  #'/TAMU_GSSS/TIER1_GSSS'
+  #'/FIA/VA_FIA'
+)
+#----------------------------------------------------
+
+#---SELECT COMPONENTS THAT ARE ALLOWED TO HAVE UNCERTAINITY--
+#plot_WSx1000 = FALSE  #include plot specific WSx1000 parameter
+#plot_thinpower = FALSE #include plot specific thinpower parameter
+#plot_mort_rate = FALSE #include plot specific mortality rate parameter
+
+#----------------------------------------------------
+
+#----------------------------------------------------
+
+#--OTHER INFO (WON'T CHANGE UNLESS MODIFY MODEL)-----
+npars_used_by_fortran = 48
+noutput_variables = 67
+process_model_pars = 51
+npars =80
+
+#---- ENTER THE FORTRAN LIBRARY NAMES HERE ----------
+  code_library_plot = paste(working_directory,'/source_code/r3pg_interface.so',sep='')
+
+
+setwd(paste(working_directory,'/scripts/',sep=''))
+source('prepare_obs.R')
+source('prepare_state_space_obs.R')
+source('assign_control_plots.R')
+source('prepare_met.R')
+source('set_fitted_plots.R')
+source('init_state_space.R')
+
+setwd(working_directory)
+#----------------------------------------------------
+
+priors_in = read.csv(paste(working_directory,'/priors/',priors_file,sep=''))
+npars = length(priors_in$parnames)
+priormatrix = matrix(NA,npars,6)
+priormatrix[,1] = priors_in$initial_value
+priormatrix[,2] = priors_in$dist_par1
+priormatrix[,3] = priors_in$dist_par2
+priormatrix[,4] = priors_in$dist_type
+priormatrix[,5] = priors_in$fit_par
+priormatrix[,6] = priors_in$par_group
+
+parnames = priors_in$parnames
+#---  PREPARE OBSERVATIONS ---------------------------
+obs_list = prepare_obs(obs_set,FR_fert_assumption,use_fol)
+plotlist = obs_list$plotlist
+StudyName = obs_list$StudyName
+Treatment = obs_list$Treatment
+nplots= obs_list$nplots
+observations= obs_list$observations
+initdata= obs_list$initdata
+met_in = obs_list$met_in
+co2_in = obs_list$co2_in
+use_fol_state = obs_list$use_fol_state
+#-------------------------------------------------
+
+state_space_obs = prepare_state_space_obs()
+mo_start_end=state_space_obs$mo_start_end
+years = state_space_obs$years
+months = state_space_obs$months
+nmonths = state_space_obs$nmonths
+obs = state_space_obs$obs
+thin_event = state_space_obs$thin_event
+obs_uncert = state_space_obs$obs_uncert
+init_obs = state_space_obs$init_obs
+init_uncert = state_space_obs$init_uncert
+
+
+#----SET CONTROL PLOT INDEX---------------------------------------
+# this assigns the control plot to match with the treatment plot
+
+control_list = assign_control_plots(nplots,initdata,plotlist)
+control_plot_index =  control_list$control_plot_index
+matched_FR_plot_index = control_list$matched_FR_plot_index
+
+#--- CREATE CLIMATE INPUT ARRAYS --------------------------------
+met_tmp = prepare_met(met_in,initdata,mo_start_end,co2_in,nplots,nmonths,months,years)
+met = array(NA,dim=c(nplots,6,length(met_tmp$tmin[1,])))
+met[,1,] = met_tmp$tmin
+met[,2,] = met_tmp$tmax
+met[,3,] = met_tmp$precip
+met[,4,] = met_tmp$ra
+met[,5,] = met_tmp$frost
+met[,6,] = met_tmp$co2
+
+#-----INDEXING FOR THE PARAMETER VECTOR--------------------------
+# this helps speed up the analysis -----------------------------
+
+#index_guide = create_index_guide(npars,nplots)
+
+#-----TURN OFF HARDWOOD SIMULATION (0 = HARDWOODS ARE SIMULATED)-------
+exclude_hardwoods = array(1,dim=nplots)
+exclude_hardwoods[which(initdata$PlotID >= 40000 & initdata$PlotID < 42000)]=0
+
+init_pars = accepted_pars_thinned_burned[1,]
+new_pars = init_pars
+
+
+latent = obs
+init_states = init_state_space()
+latent[1,,] = init_states$init_state_space_LAI
+latent[2,,]=init_states$init_state_space_WS
+latent[3,,]=init_states$init_state_space_WCR
+latent[4,,]=init_states$init_state_space_WR
+latent[5,,]=init_states$init_state_space_stem_density
+latent[6,,] = init_states$init_state_space_LAI_H
+latent[7,,]=init_states$init_state_space_WS_H
+
+age = init_states$age
+obs_gap = init_states$obs_gap
+obs_gap_next = init_states$obs_gap_next
+
+#####
+thinning_study_second_thin = read.csv(paste(input_directory,'/FMC_Thinning/TIER1_FMC_list_of_second_thin_plots.csv',sep=''))
+thin_event = array(0,dim=c(nplots,nmonths))
+for(plotnum in 1:nplots){
+  tmp_initdata = initdata[which(initdata$PlotID == plotlist[plotnum]),]
+  prev_nha = init_obs[5,plotnum]
+  thin_occured = 0
+  double_thin = 0
+  if(length(which(thinning_study_second_thin$PlotID ==  tmp_initdata$Plot)) == 1 & plotlist[plotnum] > 10000 & plotlist[plotnum] < 20000){
+    double_thin = 1
+  }
+  for(mo in (mo_start_end[plotnum,1]+1):mo_start_end[plotnum,2])
+    if(obs[5,plotnum,mo] != -99){
+      thin_event[plotnum,mo-1] =  prev_nha - obs[5,plotnum,mo] 
+      if(plotlist[plotnum] > 20000 & plotlist[plotnum] < 41000){
+        thin_event[plotnum,mo-1] = 0.0
+      }
+      if(plotlist[plotnum] > 42000 & plotlist[plotnum] < 50000){
+        thin_event[plotnum,mo-1] = 0.0
+      }
+      if(plotlist[plotnum] > 10000 & plotlist[plotnum] < 20000 & tmp_initdata$ThinTreatment == 1){
+        thin_event[plotnum,mo-1] = 0.0
+      }
+      if(plotlist[plotnum] >= 52001 & plotlist[plotnum] <= 52467 & tmp_initdata$ThinTreatment == 1){
+        thin_event[plotnum,mo-1] = 0.0
+      }
+      if(plotlist[plotnum] >= 72001 & plotlist[plotnum] <= 72076 & tmp_initdata$ThinTreatment == 1){
+        thin_event[plotnum,mo-1] = 0.0
+      }
+      if(plotlist[plotnum] > 10000 & plotlist[plotnum] < 20000 & tmp_initdata$ThinTreatment > 1 & thin_occured == 1 & double_thin == 0){
+        thin_event[plotnum,mo-1] = 0.0
+      }
+      if(plotlist[plotnum] >= 52001 & plotlist[plotnum] <= 52467 & tmp_initdata$ThinTreatment > 1 & (thin_event[plotnum,mo-1] < 400 | thin_occured == 1)){
+        thin_event[plotnum,mo-1] = 0.0
+      }
+      if(plotlist[plotnum] >= 72001 & plotlist[plotnum] <= 72076 & tmp_initdata$ThinTreatment > 1 & (thin_event[plotnum,mo-1] < 400 | thin_occured == 1)){
+        thin_event[plotnum,mo-1] = 0.0
+      }
+      
+      if(thin_event[plotnum,mo-1] < 200){
+        thin_event[plotnum,mo-1]  = 0
+      }else if(thin_occured == 0 & thin_event[plotnum,mo-1] >= 200){
+        thin_occured = 1
+      }
+      
+      prev_nha = obs[5,plotnum,mo]
+    }
+}
+
+
+

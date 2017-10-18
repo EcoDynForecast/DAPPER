@@ -1,18 +1,18 @@
-rm(list = ls())
+i#rm(list = ls())
 
 forecast_future <- function(run_name,PARAMETER_UNCERT,PROCESS_UNCERT,HOLD_CO2_PARAMETERS,HOLD_NONCO2_PARAMETERS,single_GCM,rcp = 85){
   
   #---SELECT COMPONENTS THAT ARE ALLOWED TO HAVE UNCERTAINITY--
   if(rcp == 85){
-    load('/Users/quinn/Dropbox (VTFRS)/Research/PINEMAP/DAPER_development/DAPER_master/DAPER_simple/analysis/Tier3_all_climate_models_RCP85.Rdata')
+    load(paste(output_directory,'/Tier3_all_climate_models_RCP85.Rdata',sep=''))
   }else if(rcp == 45){
-    load(paste(working_directory,'analysis/Tier3_all_climate_models_RCP45.Rdata',sep=''))
+    load(paste(output_directory,'/Tier3_all_climate_models_RCP45.Rdata',sep=''))
   }
   
-  final_pdf = paste(working_directory,'/figures/',run_name,'.pdf',sep='')
+  final_pdf = paste(output_directory,'/site_output/',run_name,'.pdf',sep='')
   HOLD_CO2 = FALSE
   
-  outfile = paste(output_directory,'/',run_name,'.Rdata',sep='')
+  outfile = paste(output_directory,'/site_output/',run_name,'.Rdata',sep='')
   if(single_GCM){
     clim_model = c(3)
   }else{
@@ -52,9 +52,9 @@ forecast_future <- function(run_name,PARAMETER_UNCERT,PROCESS_UNCERT,HOLD_CO2_PA
   start_age = 2
   WFi = 1 #"WFi"
   WSi = 2 #"WSi"
-  WCRi = 0.6
-  WRi = 0.5 #"WRi"
-  StemNum = 1500 #"StemNoi"
+  WCRi = 0.4
+  WRi = 0.16 #"WRi"
+  StemNum = 1200 #"StemNoi"
   
   for(s in 1:nsamples){
     if(PARAMETER_UNCERT == FALSE){
@@ -187,7 +187,7 @@ forecast_future <- function(run_name,PARAMETER_UNCERT,PROCESS_UNCERT,HOLD_CO2_PA
         if(!is.na(plotFR)){
           FR = plotFR
         }else{
-          FR = 1/(1+exp((new_pars[49] + new_pars[50]*Mean_temp-new_pars[51]*SI)))
+          FR = 1/(1+exp((new_pars[49] + new_pars[50]*Mean_temp-new_pars[51]*plotSI)))
         }
         
         if(initdata[plotnum,12] == 1) { FR = 1}
@@ -200,7 +200,7 @@ forecast_future <- function(run_name,PARAMETER_UNCERT,PROCESS_UNCERT,HOLD_CO2_PA
         
         SLA = 3.5754 + (5.4287 - 3.5754) * exp(-log(2) * (start_age / 5.9705)^2)
         SLA_h = 16.2
-        
+
         site_in = c(PlantedYear, #PlantedYear
                     PlantedMonth, #"PlantedMonth"
                     InitialYear, #"InitialYear"
@@ -210,7 +210,7 @@ forecast_future <- function(run_name,PARAMETER_UNCERT,PROCESS_UNCERT,HOLD_CO2_PA
                     WRi, #"WRi"
                     WSi, #"WSi"
                     StemNum, #"StemNoi"
-                    ASWi = MaxASW, #"ASWi"
+                    ASWi = plotMaxASW, #"ASWi"
                     Lat, #"Lat"
                     FR, #"FR"
                     SoilClass, #"SoilClass"
@@ -272,116 +272,81 @@ forecast_future <- function(run_name,PARAMETER_UNCERT,PROCESS_UNCERT,HOLD_CO2_PA
           
           output=array(tmp$out_var, dim=c(1,output_dim))
           
-          if(length(which(is.nan(output))) == 0){
-            
-            if(output[2] == 12){
-              site[3] = output[1]+1 #InitialYear
-              site[4] = 1  #InitialMonth
-            }else{
-              site[3] = output[1] #InitialYear
-              site[4] = output[2]+1  #InitialMonth	
-            }
-            site[5] = output[3] + (1.0/12.) #StartAge
-            
-            if(is.nan(output[26]) | is.na(output[26]) | output[26] < 0 ) {
-              site[26] = 0.5 * SLA * 0.1
-              site[8] = 1
-              site[7] = 0.5
-              site[9] = 1500
-              site[20] = 0.30
-              site[6] = 0.5
-              site[27] = output[9]  #Hardwood LAI
+          if(output[2] == 12){
+            site[3] = output[1]+1 #InitialYear
+            site[4] = 1  #InitialMonth
+          }else{
+            site[3] = output[1] #InitialYear
+            site[4] = output[2]+1  #InitialMonth	
+          }
+          site[5] = output[3] + (1.0/12.) #StartAge
+          
+          if(length(which(is.nan(output))) == 0  | output[26] < 0 ){
+            if(PROCESS_UNCERT){
+              site[26] = max(rnorm(1,output[4],new_pars[52]),0.1) #LAI
+              site[8] = max(rnorm(1,output[5],(0.96+new_pars[53] +output[5]*new_pars[64])),2)  #WS
+              site[20] = max(rnorm(1,output[6],new_pars[54]),0.4)   #WCR
+              site[7] = max(rnorm(1,output[7],new_pars[55]),0.16)  #WRi
+              site[9] = max(rnorm(1,output[8],new_pars[56]),1) #StemNo
+              site[6] = output[22] #WFi
+              site[27] = output[9] #Hardwood LAI
               site[25] = output[26] #Hardwood Bud
               site[18] = output[10] #WS_H 
               site[24] = output[11]  #WCR_h
               site[19] = output[12] #WR_H
               site[10] = output[14] # ASW
               site[17] = output[23] #WF_H	
-            }else{ 
-              if(PROCESS_UNCERT){
-                site[26] = max(rnorm(1,output[4],new_pars[52]),0.1) #LAI
-                site[8] = rnorm(1,output[5],(1.5+new_pars[53] +output[5]*new_pars[64]))  #WS
-                site[20] = rnorm(1,output[6],new_pars[54])   #WCR
-                site[7] = rnorm(1,output[7],new_pars[55])  #WRi
-                site[9] = rnorm(1,output[8],new_pars[56]) #StemNo
-                site[6] = output[22] #WFi
-                site[27] = max(rnorm(1,output[9],new_pars[52]),0.0)  #Hardwood LAI
-                site[25] = output[26] #Hardwood Bud
-                site[18] = rnorm(1,output[10],new_pars[57]) #WS_H 
-                site[24] = output[11]  #WCR_h
-                site[19] = rnorm(1,output[12],new_pars[55]) #WR_H
-                site[10] = output[14] # ASW
-                site[17] = output[23] #WF_H	
-              }else{
-                site[26] = output[4]
-                site[8] = output[5]
-                site[20] = output[6]
-                site[7] = output[7]
-                site[9] = output[8]
-                site[6] = output[22] #WFi    
-                site[27] = output[9]  #Hardwood LAI
-                site[25] = output[26] #Hardwood Bud
-                site[18] = output[10] #WS_H 
-                site[24] = output[11]  #WCR_h
-                site[19] = output[12] #WR_H
-                site[10] = output[14] # ASW
-                site[17] = output[23] #WF_H	
-              }
-            }
-            
-            age[s,yearnum,m,plotnum,mo] = output[3]
-            lai[s,yearnum,m,plotnum,mo]  = site[26]
-            stem[s,yearnum,m,plotnum,mo]  = site[8]
-            stem_density[s,yearnum,m,plotnum,mo] = site[9]
-            coarse_root[s,yearnum,m,plotnum,mo] = site[20]
-            fine_root[s,yearnum,m,plotnum,mo] = site[7]
-            fol[s,yearnum,m,plotnum,mo] = output[22]
-            total[s,yearnum,m,plotnum,mo] = fol[s,yearnum,m,plotnum,mo] +  stem[s,yearnum,m,plotnum,mo] +  fine_root[s,yearnum,m,plotnum,mo] + coarse_root[s,yearnum,m,plotnum,mo]
-            fSW[s,yearnum,m,plotnum,mo] = output[49]
-            ET[s,yearnum,m,plotnum,mo]= output[17]
-            Total_Ctrans[s,yearnum,m,plotnum,mo]= output[18] + output[19]
-            GPP[s,yearnum,m,plotnum,mo]= output[22]*0.5
-            #runoff[s,yearnum,m,plotnum,mo]= output[40] 
-            if(mo >1){
-              runoff[s,yearnum,m,plotnum,mo]= runoff[s,yearnum,m,plotnum,mo-1] + output[40] 
             }else{
-              runoff[s,yearnum,m,plotnum,mo]= output[40]    
+              site[26] = output[4]
+              site[8] = output[5]
+              site[20] = output[6]
+              site[7] = output[7]
+              site[9] = output[8]
+              site[6] = output[22] #WFi    
+              site[27] = output[9] #  #Hardwood LAI
+              site[25] = output[26] #Hardwood Bud
+              site[18] = output[10] #WS_H 
+              site[24] = output[11]  #WCR_h
+              site[19] = output[12] #WR_H
+              site[10] = output[14] # ASW
+              site[17] = output[23] #WF_H	
             }
-            WUE_ctrans[s,yearnum,m,plotnum,mo]= GPP[s,yearnum,m,plotnum,mo]/ET[s,yearnum,m,plotnum,mo]
-            WUE_ET[s,yearnum,m,plotnum,mo]= GPP[s,yearnum,m,plotnum,mo]/Total_Ctrans[s,yearnum,m,plotnum,mo]
           }else{
-            mo = 1
-            site_in = c(PlantedYear, #PlantedYear
-                        PlantedMonth, #"PlantedMonth"
-                        InitialYear, #"InitialYear"
-                        InitialMonth, #"InitialMonth"
-                        start_age, 
-                        WFi, #"WFi"
-                        WRi, #"WRi"
-                        WSi, #"WSi"
-                        StemNum, #"StemNoi"
-                        ASWi = MaxASW, #"ASWi"
-                        Lat, #"Lat"
-                        FR, #"FR"
-                        SoilClass, #"SoilClass"
-                        MaxASW, #"MaxASW"
-                        MinASW, #"MinASW"
-                        TotalMonths = 1,
-                        WFi_H = 0.001,
-                        WSi_H = 0.001,
-                        WRi_H = 0.001,
-                        WCRi,
-                        IrrigRate = 0.0,
-                        Throughfall = 1.0,
-                        tmp_site_index,  
-                        WCRi_H = 0.0,
-                        Wbud_H = 0.0,
-                        LAI = -99,
-                        LAI_h = 0.01
-            )
-            
-            site = array(site_in)
+            site[26] = -99
+            site[8] = 2
+            site[7] = 0.16
+            site[9] = 1200
+            site[20] = 0.40
+            site[6] = 1
+            site[27] = output[9] #Hardwood LAI
+            site[25] = output[26] #Hardwood Bud
+            site[18] = output[10] #WS_H 
+            site[24] = output[11]  #WCR_h
+            site[19] = output[12] #WR_H
+            site[10] = output[14] #ASW
+            site[17] = output[23] #WF_H	
           }
+          
+          age[s,yearnum,m,plotnum,mo] = output[3]
+          lai[s,yearnum,m,plotnum,mo]  = site[26]
+          stem[s,yearnum,m,plotnum,mo]  = site[8]
+          stem_density[s,yearnum,m,plotnum,mo] = site[9]
+          coarse_root[s,yearnum,m,plotnum,mo] = site[20]
+          fine_root[s,yearnum,m,plotnum,mo] = site[7]
+          fol[s,yearnum,m,plotnum,mo] = output[22]
+          total[s,yearnum,m,plotnum,mo] = fol[s,yearnum,m,plotnum,mo] +  stem[s,yearnum,m,plotnum,mo] +  fine_root[s,yearnum,m,plotnum,mo] + coarse_root[s,yearnum,m,plotnum,mo]
+          fSW[s,yearnum,m,plotnum,mo] = output[49]
+          ET[s,yearnum,m,plotnum,mo]= output[17]
+          Total_Ctrans[s,yearnum,m,plotnum,mo]= output[18] + output[19]
+          GPP[s,yearnum,m,plotnum,mo]= output[22]*0.5
+          #runoff[s,yearnum,m,plotnum,mo]= output[40] 
+          if(mo >1){
+            runoff[s,yearnum,m,plotnum,mo]= runoff[s,yearnum,m,plotnum,mo-1] + output[40] 
+          }else{
+            runoff[s,yearnum,m,plotnum,mo]= output[40]    
+          }
+          WUE_ctrans[s,yearnum,m,plotnum,mo]= GPP[s,yearnum,m,plotnum,mo]/ET[s,yearnum,m,plotnum,mo]
+          WUE_ET[s,yearnum,m,plotnum,mo]= GPP[s,yearnum,m,plotnum,mo]/Total_Ctrans[s,yearnum,m,plotnum,mo]
         }
       }
     }
@@ -428,7 +393,7 @@ forecast_future <- function(run_name,PARAMETER_UNCERT,PROCESS_UNCERT,HOLD_CO2_PA
   
   save(lai,stem,stem_density,coarse_root,fine_root,fol,total,fSW,ET,Total_Ctrans,GPP,runoff,WUE_ctrans,WUE_ET,age,nperiods,file = outfile)
   
-  pdf(paste(working_directory,'/figures/',run_name,'.pdf',sep=''),width = 11,height = 11)
+  pdf(final_pdf,width = 11,height = 11)
   
   par(mfrow=c(3,4),mar = c(4,4,2,2),oma = c(3,3,2,2))
   
@@ -512,10 +477,9 @@ forecast_future <- function(run_name,PARAMETER_UNCERT,PROCESS_UNCERT,HOLD_CO2_PA
 
 
 #---CONTROL INFORMATION----------------------------
-working_directory = '/Users/quinn/Dropbox (VTFRS)/Research/DAPPER'
-input_directory = '/Users/quinn/Dropbox (VTFRS)/Research/DAPPER_inputdata/'
-#restart_chain = 'duke_state_space_without_trans_2.1.2017-07-21.13.19.13.Rdata'
-restart_chain =  'SS_val6.1.2017-08-31.08.47.08.Rdata'
+working_directory = '/Users/quinn/Dropbox (VTFRS)/Research/DAPPER_papers/regional_forecasting/DAPPER-master-dc63257a38f2490e07141f944697d37b1f09fc41'
+input_directory = '/Users/quinn/Dropbox (VTFRS)/Research/DAPPER_papers/regional_forecasting/DAPPER_inputdata-master-371d43926201fde43cb7b879ec07e142280a77b0'
+restart_chain =  chain
 priors_file = 'default_priors.csv'
 fr_model = 2  # 1 = estimate FR for each plot, 2 = empirical FR model
 FR_fert_assumption = 0 #0 = assume fertilization plots have FR = 1, 1 = do not assume fertilization plots have FR = 1
@@ -528,7 +492,7 @@ windows_machine = FALSE
 
 load(paste(working_directory,'/chains/',restart_chain,sep=''))
 
-output_directory = '/Users/quinn/Documents'
+output_directory = '/Users/quinn/Dropbox (VTFRS)/Research/DAPPER_papers/regional_forecasting/'
 
 
 
@@ -537,7 +501,7 @@ output_directory = '/Users/quinn/Documents'
 #statelist = c('FL','GA','VA','OK')
 
 
-plotlist = c(30018) #THIS IS GA
+plotlist = c(30017) #THIS IS GA
 focal_plotID = plotlist
 plotSI = c(15.49341)
 plotMaxASW = c(141)
@@ -546,9 +510,6 @@ startyear = c(1985,2030)
 adjust_rain = c(1,1)
 adjust_fert =c(0,0)
 adjust_CO2 = c(0,0) 
-
-
-
 
 all_studies = c(
   '/PINEMAP/TIER3_PINEMAP'
@@ -615,8 +576,7 @@ use_fol_state = obs_list$use_fol_state
 
 #-----INDEXING FOR THE PARAMETER VECTOR--------------------------
 # this helps speed up the analysis -----------------------------
-co2_in = read.csv('/Users/quinn/Dropbox/Research/PINEMAP/DAPER_development/DAPER_master/DAPER_simple/climate_data/CO2_Concentrations_from_CMIP5_1950-2095.csv')
-#index_guide = create_index_guide(npars,nplots)
+co2_in = read.csv('/Users/quinn/Dropbox (VTFRS)/Research/DAPPER_papers/regional_forecasting/DAPPER_inputdata-master-371d43926201fde43cb7b879ec07e142280a77b0/CO2/CO2_Concentrations_from_CMIP5_1950-2095.csv')
 
 #-----TURN OFF HARDWOOD SIMULATION (0 = HARDWOODS ARE SIMULATED)-------
 exclude_hardwoods = array(1,dim=nplots)
