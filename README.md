@@ -59,6 +59,18 @@ gfortran -shared  -fPIC -o DAPPER_MCMC.so DAPPER_MCMC_mod.f90 DAPPER_plot_mod.o 
 gfortran -shared  -fPIC -o r3pg_interface.dll R3PG_R_INTERFACE.f90 R3PG_MODEL_MOD.o
 ```
 
+**Step 2: Prepare your input directory **
+
+You need a separate directory to hold the input files.  The directory should contain a folder for each study and a folder for CO2.  The folder for each study must have three files
+- Study_name_met.csv
+- Study_name_obs.csv
+- Study_name_plotlist.csv
+
+The first is the meterology drivers, the second is the observations that are compared to the model predictions, and the third is characteristics of each plot including the initial conditions and soil information
+
+The *DAPPER_inputdata_public* provides an example of the input directory using the plots at the Duke site (McCarthy et al. 2010 New Phytologist)
+
+
 **Step 2: Change the paths in the `run_DAPPER.R` script**
 
 The 'run_DAPPER.R` script is runs the full analysis.  Change the following paths for the DAPPER code and DAPPER input data to match the paths on your computer
