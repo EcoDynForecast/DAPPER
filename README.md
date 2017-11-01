@@ -189,6 +189,7 @@ Your chain will be located in the `working_directory/chains/` directory
 
 A PDF with the chains, marginal histograms of the parameters, plot predictions with observations, and latent state for the focal plot is found in `working_directory/figures/`
 
+**EXAMPLE**
 As a example we provide the `run_DAPPER.R` script for assimilating observations from the Duke site.  This assimilation uses observations of GEP and ET from the Ameriflux database, biomass observations from McCarthy et al. 2010 (New Phytologist), and LAI produced by Eric Ward. 
 
 ```{r}
