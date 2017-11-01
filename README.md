@@ -68,7 +68,7 @@ You need a separate directory to hold the input files.  The directory should con
 
 The first is the meterology drivers, the second is the observations that are compared to the model predictions, and the third is characteristics of each plot including the initial conditions and soil information
 
-The *DAPPER_inputdata_public* repository provides an example of the input directory using the plots at the Duke site (McCarthy et al. 2010 New Phytologist)
+The *DAPPER_inputdata_public* repository (https://code.vt.edu/rqthomas/DAPPER_inputdata_public) provides an example of the input directory using the plots at the Duke site (McCarthy et al. 2010 New Phytologist)
 
 
 **Step 3: Change the paths in the `run_DAPPER.R` script**
