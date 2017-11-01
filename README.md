@@ -59,7 +59,7 @@ gfortran -shared  -fPIC -o DAPPER_MCMC.so DAPPER_MCMC_mod.f90 DAPPER_plot_mod.o 
 gfortran -shared  -fPIC -o r3pg_interface.dll R3PG_R_INTERFACE.f90 R3PG_MODEL_MOD.o
 ```
 
-**Step 2: Prepare your input directory **
+**Step 2: Prepare your input directory**
 
 You need a separate directory to hold the input files.  The directory should contain a folder for each study and a folder for CO2.  The folder for each study must have three files
 - Study_name_met.csv
@@ -71,7 +71,7 @@ The first is the meterology drivers, the second is the observations that are com
 The *DAPPER_inputdata_public* provides an example of the input directory using the plots at the Duke site (McCarthy et al. 2010 New Phytologist)
 
 
-**Step 2: Change the paths in the `run_DAPPER.R` script**
+**Step 3: Change the paths in the `run_DAPPER.R` script**
 
 The 'run_DAPPER.R` script is runs the full analysis.  Change the following paths for the DAPPER code and DAPPER input data to match the paths on your computer
 
@@ -79,7 +79,7 @@ The 'run_DAPPER.R` script is runs the full analysis.  Change the following paths
 working_directory =  '/Users/quinn/Dropbox/Research/DAPPER_papers/regional_forecasting/DAPPER'
 input_directory = '/Users/quinn/Dropbox/Research/DAPPER_papers/regional_forecasting/DAPPER_inputdata'
 ```
-**Step 3: Change your MCMC chain options**
+**Step 4: Change your MCMC chain options**
 
 Set the number of iterations that you want to run.  The total length of the MCMC chain will be the number of iterations x the number of fit parameters.
 
@@ -99,7 +99,7 @@ Set the interval between save iterations in the chain.  This will thin the chain
 thin_interval = 2
 ```
 
-**Step 4: Set your priors file**
+**Step 5: Set your priors file**
 
 Your prior file is a csv file that is located in the working_directory/priors folder
 
@@ -107,13 +107,13 @@ Your prior file is a csv file that is located in the working_directory/priors fo
 priors_file = 'default_priors.csv'
 ```
 
-**Step 5:  Name your run**
+**Step 6:  Name your run**
 
 ```{r}
 run_name = 'SS_analysis'
 ```
 
-**Step 6: Define starting point for MCMC chain**
+**Step 7: Define starting point for MCMC chain**
 
 If you set `restart_from_chain = FALSE` then the chain will start at the initial value set in the priors csv file.
 
@@ -121,7 +121,7 @@ If you set `restart_from_chain = TRUE` then the chain will start using the final
 
 Note:  the previously run chain has to have the same parameters and plots as the current chain for the restart to work without error
 
-**Step 7: Define set of plots used in the assimilation**
+**Step 8: Define set of plots used in the assimilation**
 
 Change the `obs_set` variable to the number corresponding to the plot set that you want to run.  See lines 163 through 253 in the `working_directory/scripts/prepare_obs.R` script for a list of the supported sets of plots.  As an example:
 
@@ -146,7 +146,7 @@ all_studies = c(
 )
 ```
 
-**Step 8: Set other options**
+**Step 9: Set other options**
 
 `create_plot`: (TRUE/FALSE) If TRUE then a PDF analyzing the assimilation will be produced
 
@@ -176,11 +176,11 @@ all_studies = c(
 
 `plot_WSx1000`,`plot_thinpower`,`plot_mort_rate`: Development stage, always set to FALSE
 
-**Step 9: Run run_DAPPER.R script**
+**Step 10: Run run_DAPPER.R script**
 
 Run the entire `run_DAPPER.R` script.  This will run all the other scripts and code.
 
-**Step 10: Analyze assimilation**
+**Step 11: Analyze assimilation**
 
 Your chain will be located in the `working_directory/chains/` directory
 
