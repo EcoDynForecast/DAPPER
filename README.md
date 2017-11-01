@@ -7,6 +7,7 @@ The repository has the latest updates.  If you are interested in the code used i
 Please use the following citations to reference the DAPPER approach
 
 Thomas, R. Q., E. B. Brooks, , E. J. Ward, R. H. Wynne, T. J. Albaugh, H. Dinon-Aldridge, H. E. Burkhart, J.-C. Domec, T. R. Fox, C. A. Gonzalez-Benecke, T. A. Martin, A. Noormets, D. A. Sampson, and R. O. Teskey. 2017. Leveraging 35 years of Pinus taeda research in the southeastern US to constrain forest carbon cycle predictions: regional data assimilation using ecosystem experiments. Biogeosciences 14:3525-3547.
+
 Thomas, R. Q., A. L. Jersild, E. B. Brooks, V. A. Thomas, R. H. Wynne. A mid-century ecological forecast with partitioned uncertainty predicts increases in loblolly pine forest productivity. In Prep.
 
 **Step 1: Compile the fortran code**
