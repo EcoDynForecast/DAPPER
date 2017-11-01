@@ -2,6 +2,13 @@ Welcome to the Git Repository for the DAPPER (Data Assimilation for Predicting P
 
 The approach uses the language R to initiate and analyze a simulation and uses Fortran to execute a simulation.  We are assuming that you have R and a fortran compiler on your computer or cluster.
 
+The repository has the latest updates.  If you are interested in the code used in Thomas et al. Submitted, please download Tag 'Regional_Forecasting_Paper_2017'
+
+Please use the following citations to reference the DAPPER approach
+
+Thomas, R. Q., E. B. Brooks, , E. J. Ward, R. H. Wynne, T. J. Albaugh, H. Dinon-Aldridge, H. E. Burkhart, J.-C. Domec, T. R. Fox, C. A. Gonzalez-Benecke, T. A. Martin, A. Noormets, D. A. Sampson, and R. O. Teskey. 2017. Leveraging 35 years of Pinus taeda research in the southeastern US to constrain forest carbon cycle predictions: regional data assimilation using ecosystem experiments. Biogeosciences 14:3525-3547.
+Thomas, R. Q., A. L. Jersild, E. B. Brooks, V. A. Thomas, R. H. Wynne. A mid-century ecological forecast with partitioned uncertainty predicts increases in loblolly pine forest productivity. In Prep.
+
 **Step 1: Compile the fortran code**
 
 Obtain a fortran compiler for your computer. We have tested the code for gfortran on Macs and the Linux cluster at Virginia Tech.  
