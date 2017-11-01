@@ -1,4 +1,4 @@
-Welcome to the Git Repository for the DAPPER (Data Assimilation for Predicting Productivity in Ecosystem and Regions) approach.
+**Welcome to the Git Repository for the DAPPER (Data Assimilation for Predicting Productivity in Ecosystem and Regions) approach.**
 
 The approach uses the language R to initiate and analyze a simulation and uses Fortran to execute a simulation.  We are assuming that you have R and a fortran compiler on your computer or cluster.
 
