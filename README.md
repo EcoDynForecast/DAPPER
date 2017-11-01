@@ -66,14 +66,14 @@ You need a separate directory to hold the input files.  The directory should con
 - Study_name_obs.csv
 - Study_name_plotlist.csv
 
-The first is the meterology drivers, the second is the observations that are compared to the model predictions, and the third is characteristics of each plot including the initial conditions and soil information
+The first is the meterology drivers, the second is the observations that are compared to the model predictions, and the third is characteristics of each plot including the initial conditions and soil information.
 
-The *DAPPER_inputdata_public* repository (https://code.vt.edu/rqthomas/DAPPER_inputdata_public) provides an example of the input directory using the plots at the Duke site (McCarthy et al. 2010 New Phytologist)
+The *DAPPER_inputdata_public* repository (https://code.vt.edu/rqthomas/DAPPER_inputdata_public) provides an example of the input directory using the plots at the Duke site (McCarthy et al. 2010 New Phytologist).
 
 
 **Step 3: Change the paths in the `run_DAPPER.R` script**
 
-The 'run_DAPPER.R` script is runs the full analysis.  Change the following paths for the DAPPER code and DAPPER input data to match the paths on your computer
+The 'run_DAPPER.R` script runs the full analysis.  Change the following paths for the DAPPER code and DAPPER input data to match the paths on your computer
 
 ```{r}
 working_directory =  '/Users/quinn/Dropbox/Research/DAPPER_papers/regional_forecasting/DAPPER'
@@ -93,7 +93,7 @@ Set the number of iterations that you want to throw away as the burn in
 burn = 10000
 ```
 
-Set the interval between save iterations in the chain.  This will thin the chain and reduce the size of your saved chain
+Set the interval between iterations in the chain taht you want to save. This will thin the chain and reduce the size of your saved chain
 
 ```{r}
 thin_interval = 2
@@ -117,20 +117,23 @@ run_name = 'SS_analysis'
 
 If you set `restart_from_chain = FALSE` then the chain will start at the initial value set in the priors csv file.
 
-If you set `restart_from_chain = TRUE` then the chain will start using the final iteration of a previously run chain: `restart_chain =  'SS_val6.1.2017-09-03.08.22.08.Rdata'`
+If you set `restart_from_chain = TRUE` then the chain will start using the final iteration of a previously run chain:
 
-Note:  the previously run chain has to have the same parameters and plots as the current chain for the restart to work without error
+```{r}
+restart_chain =  'SS_val6.1.2017-09-03.08.22.08.Rdata'
+```
+
+Note:  the previously run chain has to have the same parameters and plots as the current chain for the restart to work without error.
 
 **Step 8: Define set of plots used in the assimilation**
 
-Change the `obs_set` variable to the number corresponding to the plot set that you want to run.  See lines 163 through 253 in the `working_directory/scripts/prepare_obs.R` script for a list of the supported sets of plots.  As an example:
+Change the `obs_set` variable to the integer corresponding to the set of plots that you want to use in the assimilation.  See lines 163 through 253 in the `working_directory/scripts/prepare_obs.R` script for a list of the supported sets of plots.  As an example:
 
 ```{r}
 obs_set = 14 #This is for plots at the Duke Site
-obs_set = 21 #This is the full set of 294 plots
 ```
 
-Note that `focal_plotID` allow you to assimilate a single plot but you have to know its ID in the input data.
+Note that `focal_plotID` allows you to assimilate a single plot but you have to know its ID in the input data.
 
 Make sure that your plots are in the input_directory and the directory with in the input_directory is included in the `all_studies` vector (and not commented out).  For example the following vector would run the the 294 plots in Thomas et al. 2017:
 
@@ -148,9 +151,9 @@ all_studies = c(
 
 **Step 9: Set other options**
 
-`create_plot`: (TRUE/FALSE) If TRUE then a PDF analyzing the assimilation will be produced
+`create_plot`: (TRUE/FALSE) If TRUE, then a PDF analyzing the assimilation will be produced
 
-`only_create_plot`: (TRUE/FALSE) If TRUE, then use the restart_chain to make PDF analyzing the assimilation with running a new assimilation
+`only_create_plot`: (TRUE/FALSE) If TRUE, then use the restart_chain to make PDF analyzing the chain without running a new assimilation
 
 `val_set`: (integer) If you want to hold a subset of plots out from the assimilation as validation, define the validation set here.  The validation set is an integer that corresponds to a set of plots defined in the `/working_directory/validation_sets/validation_sets.csv` file.
 
