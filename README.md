@@ -165,3 +165,49 @@ Run the entire `run_DAPPER.R` script.  This will run all the other scripts and c
 Your chain will be located in the `working_directory/chains/` directory
 
 A PDF with the chains, marginal histograms of the parameters, plot predictions with observations, and latent state for the focal plot is found in `working_directory/figures/`
+
+As a example we provide the `run_DAPPER.R` script for assimilating observations from the Duke site.  This assimilation uses observations of GEP and ET from the Ameriflux database, biomass observations from McCarthy et al. 2010 (New Phytologist), and LAI produced by Eric Ward. 
+
+```{r}
+rm(list = ls())
+#---CONTROL INFORMATION----------------------------
+working_directory =  '/Users/quinn/Dropbox/Research/DAPPER_papers/regional_forecasting/DAPPER'
+input_directory = '/Users/quinn/Dropbox/Research/DAPPER_papers/regional_forecasting/DAPPER_inputdata'
+niter = 20000
+chain_number = 1
+burn =  10000
+thin_interval = 2
+run_name = 'Your_duke_assimilation'
+restart_from_chain = FALSE
+restart_chain =  NA
+priors_file = 'default_priors.csv'
+create_plot = TRUE
+only_create_plot = FALSE
+obs_set = 14 #Select which plots are used in analysis.  See prepare_obs.R for number guide 
+focal_plotID = NA #30001 #Setting a value here causes only a single plot to be simulated and fit
+val_set = 0  #Select which plots are withheld from fitting.  0 includes all plot
+fr_model = 1  # 1 = estimate FR for each plot, 2 = empirical FR model
+FR_fert_assumption = 0 #0 = assume fertilization plots have FR = 1, 1 = do not assume fertilization plots have FR = 1
+FR_separate_npar_groups = TRUE  #Assigns a different parameter group to groups of FR values
+use_fol = TRUE  #TRUE= use allometric estimates of foliage biomass in fitting
+use_dk_pars = 1  #0 = do not use 3 specific parameters for the Duke site, 1 = use the 3 specific parameters
+use_age_edc = 0  #0 = do not use an ecological constraint on the age function (see code); 1 = use the constraint
+use_sm_edc = 0  #0 = do not use an ecological constraint on the soil moisture function (see code); 1 = use the constraint
+use_fr_edc = 0   #0 = do note use an ecological constraint on the SI - FR function (see code); 1 = use the constraint
+nstreams = 19
+state_space = 1
+tracked_plotnum = 1
+windows_machine = FALSE
+#----------------------------------------------------
+all_studies = c(
+  '/Duke/TIER4_Duke'
+)
+
+#---SELECT COMPONENTS THAT ARE ALLOWED TO HAVE UNCERTAINITY--
+plot_WSx1000 = FALSE  #include plot specific WSx1000 parameter
+plot_thinpower = FALSE #include plot specific thinpower parameter
+plot_mort_rate = FALSE #include plot specific mortality rate parameter
+
+setwd(paste(working_directory,'/scripts/',sep=''))
+source('prepare_DAPPER_MCMC.R')
+```
