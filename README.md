@@ -87,7 +87,7 @@ Set the number of iterations that you want to run.  The total length of the MCMC
 niter = 20000
 ```
 
-Set the number of iterations that you want to throw away as the burn in
+Set the number of iterations that you want to throw away as the burn in.  Value must be 1 or greater.
 
 ```{r}
 burn = 10000
