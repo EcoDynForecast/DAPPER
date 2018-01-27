@@ -1,3 +1,4 @@
+#rm(list = ls())
 if (!"mvtnorm" %in% installed.packages()) install.packages("mvtnorm")
 if (!"ncdf4" %in% installed.packages()) install.packages("ncdf4")
 if (!"glmtools" %in% installed.packages()) install.packages('glmtools', repos=c('http://cran.rstudio.com', 'http://owi.usgs.gov/R'))
@@ -5,10 +6,21 @@ library(mvtnorm)
 library(glmtools)
 library(ncdf4)
 
+#### set working directory
+pathDAPPER = '/Users/laurapuckett/Documents/Research/GIT/DAPPER/' 
+EnKF_directory = '/Users/laurapuckett/Documents/Spring_2018/Research_Spring_2018/'
+setwd(EnKF_directory)
+
+#### define variables needed for DAPPER functions
+working_directory = pathDAPPER # this is references in prepare_update_states(), and prepare_obs()
+input_directory = '/Users/laurapuckett/Documents/Research/GIT/DAPPER_inputdata/'
+output_directory = '/Users/laurapuckett/Documents/Research/GIT/DAPPER_projects/'
+plotlist = c(40001) #THIS IS Duke Forest
+focal_plotID = plotlist#
 
 #### source required functions
-source(prepare_update_states.R)
-source(update_states.R)
+source('prepare_update_states.R')
+source('update_states.R')
 
 #---------------------------------------------------------
 ###### MAIN EnKF CODE ######
@@ -21,38 +33,33 @@ USE_SYNTHETIC_DATA = FALSE
 USE_OBS_COORD = FALSE
 USE_OBS_CONTRAINT = TRUE
 
-nsteps = 1 # nmonths
+
 start_forecast_step = 1
 
-#calibFolder = '/Users/quinn/Dropbox (VTFRS)/Research/SSC_forecasting/FCR-GLM/SCC/Calibration' # fix
-pathDAPPER = '/Users/laurapuckett/Documents/Research/GIT/DAPPER/' 
-EnKF_directory = '/Users/laurapuckett/Documents/Spring_2018/Research_Spring_2018/'
-setwd(EnKF_directory)
 
-# GET Prepare_update_states info
-prep_update_states <- unlist(prepare_update_states())
-
-# LAI, WS, WCR, WFR, Stem_Count, ASW
-gamma_LAI = median_pars[52]
-gamma_WS = median_pars[53]
-gamma_WCR = median_pars[54]
-gamma_WFR = median_pars[55] - median_pars[54] ### check this equation
-gamma_Stem_Count = 
-gamma_ASW = 
-
-rho_LAI = 0 #median_pars[63]
-rho_WS = 0  #median_pars[64]
-rho_WCR =0 # median_pars[65]
-rho_WFR = 0 #median_pars[66]
-rho_Stem_Count
-rho_ASW
+# Define variables needed for prepare_update_states or update_states
+plotnum = 1
+all_studies = c('/Duke/TIER4_Duke')
+nsteps = 1
 
 
+# Retreieve variables from prepare_update_states() needed for update_states()
+prep_update_states <- prepare_update_states(plotnum)
+output_dim = prep_update_states$output_dim
+pars = prep_update_states$pars
+site = prep_update_states$site
+nopars = prep_update_states$nopars
+nosite = prep_update_states$nosite
+met = prep_update_states$met
+thin_event = prep_update_states$thin_event
+exclude_hardwoods = prep_update_states$exclude_hardwoods
+median_pars = prep_update_states$median_pars
+ASW_max = prep_update_states$ASW_max
 
 
 #USE FIRST OBSERVATION AS THE INITIAL CONDITIONS
 if(!USE_SYNTHETIC_DATA){
-  #realdata = read.csv(file.path(calibFolder, 'Files', "FCR_CTD_wide_Dec14_Dec16.csv", fsep = .Platform$file.sep), header = TRUE)
+  realdata = read.csv(file = "/Users/laurapuckett/Documents/Spring_2018/Research_Spring_2018/fake_LAI_data.csv", header = TRUE, sep = ",")
 }else{
   realdata = read.csv(file = "/Users/laurapuckett/Documents/Spring_2018/Research_Spring_2018/fake_LAI_data.csv", header = TRUE, sep = ",")
 }
@@ -85,9 +92,9 @@ if(!USE_OBS_CONTRAINT){
 
 #FIGURE OUT WHICH LOCATIONS HAVE OBSERVATIONS
 obs_index = rep(NA,length(observedLAI))
-for(i in 1:length(observedLAI)){
-  obs_index[i] = which.min(abs(the_depths_init - observedLAI[i])) # how does this work?
-}
+#for(i in 1:length(observedLAI)){
+ # obs_index[i] = which.min(abs(the_depths_init - observedLAI[i])) # how does this work?
+#}
 
 #A matrix for knowing which state the observation corresponds to
 z_states <- t(matrix(obs_index, nrow = length(obs_index), ncol = nsteps))
@@ -95,93 +102,81 @@ z_states <- t(matrix(obs_index, nrow = length(obs_index), ncol = nsteps))
 #Process error 
 # fix - this needs a lot of work. Supposed to be sigma = gamma + rho*value
 
-sigma = array(data = NA, dim = 15)
-sigma[1] = # what should sigma Age be
-sigma[2] = gamma_LAI
-sigma[3] = gamma_WS # gamma_WS+ rho_WS * last stem measurement
-sigma[4] = gamma_Stem_Density
-sigma[5] = gamma_WCR
-sigma[6] = gamma_WR
-sigma[7] = gamma_foliage_production
-sigma[8] = 0 # what should sigma total be?
-sigma[9] = 0 # what should fSW be?
-sigma[10] = gamma_ET
-sigma[11] = gamma_Ctrans # is this total Ctrans?
-sigma[12] = 0 # is this gamma_GEP - gamma_ET?
-sigma[13] = 0 # runoff
-sigma[14] = 0 # WUE_ctrans
-sigma[15] = 0 # WUE_ET
+# Define variables for Qt matrix
+# need to incorporate rho into sigma later
+sigma = array(data = NA, dim = nstates)
+sigma[1] = median_pars[52] # gamma_LAI
+sigma[2] = median_pars[53] +  median_pars[64] # WS, gamma_WS+ rho_WS * last stem measurement
+sigma[3] = median_pars[54] # WCR
+sigma[4] = median_pars[55] ### check this one ## WFR
+sigma[5] = .1 # gamma_Stem_Count - look into this, should have a gamma
+sigma[6] = .1 # gamma_ASW
+
+rho_LAI = 0 #median_pars[63]
+rho_WS = 0  #median_pars[64]
+rho_WCR =0 # median_pars[65]
+rho_WFR = 0 #median_pars[66]
+rho_Stem_Count = 0
+rho_ASW = 0
+
 Qt = diag(sigma) # fix this part
 
 
 #Measurement error 
 psi = rep(0.0001,length(obs_index)) # update this later
 
-#Initial conditions
+#Initial states
+init_LAI = 1 # WFi # change these to starting values for Duke forest (at age 11ish) 
+init_WS = 2 # WSi
+init_WCR = 0.4 # WCRi
+init_WR = 0.16 # WRi
+init_Stem_Count = 1200 #"StemNoi"
+init_ASW = ASW_max 
+init_states <- array(data = c(init_LAI, init_WS, init_WCR, init_WR, init_Stem_Count, init_ASW), dim = c(nstates,1))
 x <- array(NA,dim=c(nsteps,nmembers,nstates))
-x[1,,] <- rmvnorm(n=nmembers, mean=init_states, sigma=as.matrix(Qt)) # create init_states at beginning
+x[1,,] <- rmvnorm(n=nmembers, mean=init_states, sigma=as.matrix(Qt)) 
 
 
 #Matrix to store ensemble specific deviations and innovations
 dit = array(NA,dim=c(nmembers,nstates))
 #dit_star = array(NA,dim=c(nmembers,nstates)) #Adaptive noise estimation
 
-Lat
-SoilClass
-MaxASW
-MinASW
-FR
+
 
 #loop through time steps
 for(i in 2:nsteps){ # runs 3PG for one time step for every member  (would use forecasting code)
   
   #i is the same as mo - make them the same, climate matrices should be built before mo 
-  InitialYear
-  InitialMonth
-  start_age
+  # need to update times in addition to states
+
+  site[3] = InitialYear
+  site[4] = InitialMonth
+  site[5] = start_age
   #Create array to hold DAPPER predictions for each ensemble
   x_star = array(NA, dim = c(nmembers,nstates))
   for(m in 1:nmembers){
     
-    # update site vector with previous states for each ensemble (site_in is site vector)
-    # this needs to be moved out of the update_states code
-   
+    ### updates the states in site array each timestep 
+    site[6] = x[i-1, m, 1] #"WFi" # can take LAI or WFi
+    site[7] = x[i-1, m, 4] # WFR - is this correct?
+    site[8] = x[i-1, m, 2] #"WSi"
+    site[9] = x[i-1, m, 5] #"StemNoi"
+    site[10] = x[i-1, m, 6] #"ASWi"
+    site[20] = x[i-1, m, 3] # WCRi
+    site[26] = x[i-1, m, 1] # same as WFi above
     
-    ### need to update this each timestep 
-    site_in = c(PlantedYear, #PlantedYear # where it left off in last time-step
-                PlantedMonth, #"PlantedMonth"
-                InitialYear, #"InitialYear"
-                InitialMonth, #"InitialMonth"
-                start_age,
-                WFi = , #"WFi" # can take LAI or WFi
-                WRi = x[i-1,m,1], #"WRi"
-                WSi = x[i-1,m,2], #"WSi"
-                StemNum = , #"StemNoi"
-                ASWi = , #"ASWi"
-                Lat, #"Lat"
-                FR = , #"FR"
-                SoilClass, #"SoilClass"
-                MaxASW, #"MaxASW"
-                MinASW, #"MinASW"
-                TotalMonths = 1,
-                WFi_H = 0.001,
-                WSi_H = 0.001,
-                WRi_H = 0.001,
-                WCRi = , # 
-                IrrigRate = 0.0,
-                Throughfall = 1.0,
-                tmp_site_index,  
-                WCRi_H = 0.0,
-                Wbud_H = 0.0,
-                LAI = , #
-                LAI_h = 0.01
-    )
-    
-    DAPPERstates <- unlist(update_states(mo,site_in))
+    DAPPER_states <- update_states(mo, plotnum, output_dim, pars, site, nopars, nosite, thin_event, met)
     
     #4) Fill x_star with temperatures from GLM
-    x_star[m,] = DAPPERstates # all of the updated states for the current member iteration
+    x_star[m,] = DAPPER_states # all of the updated states for the current member iteration
   }
+  
+  InitialMonth = InitialMonth + 1
+  if(InitialMonth > 12){
+    InitialMonth = 1
+    InitialYear = InitialYear + 1
+  }
+  start_age = start_age + 1/12
   
   #Corruption [nmembers x nstates] 
   NQt = rmvnorm(n=nmembers, sigma=as.matrix(Qt)) # matrix of diagaonal - error term (noise step in forecasting code)
@@ -192,7 +187,7 @@ for(i in 2:nsteps){ # runs 3PG for one time step for every member  (would use fo
   
   
   #Obs for time step
-  z_index = which(!is.na(z[i,]))
+  z_index = which(!is.na(z[i, ]))
   
   #if no observations at a time step then just propogate model uncertainity
   if(length(z_index) == 0 | i > start_forecast_step){
