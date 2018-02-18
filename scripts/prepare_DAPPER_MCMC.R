@@ -30,7 +30,7 @@ source('plot_output.R')
 setwd(working_directory)
 #--OTHER INFO (WON'T CHANGE UNLESS MODIFY MODEL)-----
 npars_used_by_fortran = 48
-noutput_variables = 67
+noutput_variables = 68
 process_model_pars = 51
 #----------------------------------------------------
 

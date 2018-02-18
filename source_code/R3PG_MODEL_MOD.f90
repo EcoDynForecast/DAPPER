@@ -739,6 +739,8 @@ subroutine R3PG_MODEL(output_dim,met,pars,site,thin_event,nopars,nomet, &
         else
             OUTPUT(output_index,67) = WS - WSi
         endif
+        
+        OUTPUT(output_index,68) = (((avDBH / 200.0D0) ** 2.0D0) * Pi) * StemNo  !Basal Area in m2/ha
 
 
 		!-----------------------------

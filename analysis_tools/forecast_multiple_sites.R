@@ -363,7 +363,7 @@ all_studies = c(
 
 #--OTHER INFO (WON'T CHANGE UNLESS MODIFY MODEL)-----
 npars_used_by_fortran = 48
-noutput_variables = 67
+noutput_variables = 68
 process_model_pars = 51
 npars =80
 

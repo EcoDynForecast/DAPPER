@@ -288,7 +288,7 @@ for(r in 1:length(myGCM_list)){
   npars_used_by_fortran <- 48
   pars <- curr_pars[1:npars_used_by_fortran]
   
-  noutput_variables <- 67
+  noutput_variables <- 68
   output_dim <- noutput_variables  # NUMBER OF OUTPUT VARIABLES
   nomet <- 6  # NUMBER OF VARIABLES IN METEROLOGY (met)
   nopars <- length(pars)
