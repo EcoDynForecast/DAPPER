@@ -666,6 +666,8 @@ plot_output <- function(){
               paste(fname,run_name,'_GEP_predicted_vs_observed.csv',sep=""),sep=",",col.names = TRUE,row.names = FALSE)
   write.table(data.frame(et_plotid,et_year,et_month,et_observed,et_predicted),
               paste(fname,run_name,'_ET_predicted_vs_observed.csv',sep=""),sep=",",col.names = TRUE,row.names = FALSE)
-  write.table(data.frame(ctrans_pine_plotid,ctrans_pine_year,ctrans_pine_month,ctrans_pine_observed,ctrans_hard_predicted,ctrans_hard_plotid,ctrans_hard_year,ctrans_hard_month,ctrans_hard_observed,ctrans_hard_predicted),
+  write.table(data.frame(ctrans_pine_plotid,ctrans_pine_year,ctrans_pine_month,ctrans_pine_observed),
               paste(fname,run_name,'_Ctrans_predicted_vs_observed.csv',sep=""),sep=",",col.names = TRUE,row.names = FALSE)
+  write.table(data.frame(ctrans_hard_plotid,ctrans_hard_year,ctrans_hard_month,ctrans_hard_observed,ctrans_hard_predicted),
+              paste(fname,run_name,'_Ctrans_h_predicted_vs_observed.csv',sep=""),sep=",",col.names = TRUE,row.names = FALSE)
   }

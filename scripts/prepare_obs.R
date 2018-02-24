@@ -109,7 +109,8 @@ prepare_obs <- function(obs_set,FR_fert_assumption,use_fol){
                             WOODY_H = observations$WOODY_H,FOL_H = observations$FOL_H,
                             LAI = observations$LAI,FOL_PROD = observations$FOL_PROD,FOL_PROD_H = observations$FOL_PROD_H,
                             FOL_PROD_TOTAL = observations$FOL_PROD_TOTAL, ROOT_COARSE = observations$ROOT_COARSE, LAI_H = observations$LAI_H,LAI_TOTAL = observations$LAI_TOTAL,
-                            GEP_sd = observations$GEP_sd, ET_sd = observations$ET_sd,WRest_sd = observations$WRest_sd,Ctrans_sd = observations$Ctrans_sd, ROOT_PROD_TOTAL = observations$ROOT_PROD_TOTAL)
+                            GEP_sd = observations$GEP_sd, ET_sd = observations$ET_sd,WRest_sd = observations$WRest_sd,Ctrans_sd = observations$Ctrans_sd, 
+                            ROOT_PROD_TOTAL = observations$ROOT_PROD_TOTAL,Ctrans_H_sd = observations$Ctrans_H_sd)
   
   observations$ROOT_FINE[which(observations$PlotID < 40000)] = -99
   observations$FOL[which(observations$PlotID > 42000 & observations$PlotID < 43000)] = -99
@@ -127,8 +128,8 @@ prepare_obs <- function(obs_set,FR_fert_assumption,use_fol){
   
   observations$ind_removed = -99
   
-  observations$Ctrans = -99
-  observations$Ctrans_H = -99
+  #observations$Ctrans = -99
+  #observations$Ctrans_H = -99
   #observations$ET = -99
   
 

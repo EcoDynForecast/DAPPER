@@ -256,7 +256,7 @@ prepare_state_space_obs <- function(){
         index = (meas_year - earliestYear)*12+1 + (meas_month-earliestMonth)
         obs[16,plotnum,index] = tmp$Ctrans_H[which(tmp$Ctrans_H != -99)][i]
         if((meas_month != 8) & tmp$PlotID[1] > 40000 & tmp$PlotID[1] < 42000){obs[16,plotnum,index]=-99}
-        obs_uncert[16,plotnum,index] = tmp$Ctrans_sd[which(tmp$Ctrans_H != -99)][i]
+        obs_uncert[16,plotnum,index] = tmp$Ctrans_H_sd[which(tmp$Ctrans_H != -99)][i]
       }
     }  
     
