@@ -22,15 +22,15 @@ update_states <- function(mo,plotnum,output_dim,pars,site,nopars,nosite, thin_ev
   
   output=array(tmp$out_var, dim=c(1,output_dim))
 
-  
+  # below matchings have been confirmed
   LAI  = output[4]
   WS  = output[5]
   WCR = output[6]
-  WFR = output[7]
+  WR = output[7]
   Stem_Count = output[8]
   ASW = output[14]
   
-  DAPPERstates <- c(LAI = LAI, WS = WS, WCR = WCR, WFR = WFR, Stem_Count = Stem_Count, ASW =  ASW) # LAI, WS, WCR, WFR, Stem_Count, ASW
+  DAPPERstates <- c(LAI = LAI, WS = WS, WCR = WCR, WR = WR, Stem_Count = Stem_Count, ASW =  ASW) # LAI, WS, WCR, WFR, Stem_Count, ASW, FR
   return(DAPPERstates)
   
 }  

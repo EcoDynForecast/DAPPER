@@ -1,4 +1,4 @@
-prepare_update_states <- function(plotnum){ # add some soft of time component as input
+prepare_update_states <- function(plotnum, startyear, nmonths, start_age){ 
   #rm(list = ls())
   run_name = 'EnKF_trial_1'
   restart_chain <- c("all.1.2017-11-17.16.13.16.Rdata")
@@ -44,10 +44,7 @@ prepare_update_states <- function(plotnum){ # add some soft of time component as
   HOLD_NONCO2_PARAMETERS=FALSE
   single_GCM=TRUE
   rcp = 85
-  
-  startyear = 2017 # change this? co2start = startyear + startage currently 
-  endyear = 2017
-  nmonths = 1
+
   adjust_rain = 1
   adjust_fert = 0
   adjust_CO2 = 0
@@ -113,7 +110,6 @@ prepare_update_states <- function(plotnum){ # add some soft of time component as
   }
   
   
-  start_age = 2
 
   
   print(all_studies)
@@ -163,7 +159,6 @@ prepare_update_states <- function(plotnum){ # add some soft of time component as
     median_pars[p] = median(accepted_pars_thinned_burned[,p])
   }
   new_pars = median_pars
-  start_age = 2
   WFi = 1 #"WFi"
   WSi = 2 #"WSi"
   WCRi = 0.4
@@ -187,7 +182,7 @@ prepare_update_states <- function(plotnum){ # add some soft of time component as
     
     
     met = array(NA,c(6))
-    yrnum = (startyear+start_age) - 1950
+    yrnum = (startyear+start_age) - 1950 # years since 1950 + start_age
     endno = (((yrnum*12)+1)+nmonths)
     tmax = curr_met_in_tasmax[((yrnum*12)+2):endno]
     tmin = curr_met_in_tasmin[((yrnum*12)+2):endno]
@@ -195,16 +190,15 @@ prepare_update_states <- function(plotnum){ # add some soft of time component as
     solar = (curr_met_in_rsds[((yrnum*12)+2):endno])/1000000*86400
     frost = curr_met_in_frost[((yrnum*12)+2):endno]
     
-    c02start = startyear #+start_age ######### used to be startyear + startage
-    co2plot = co2_in[which(co2_in$Year >= c02start & co2_in$Year <= endyear),]
+    c02start = startyear # used to be startyear + start_age # WHY??
+    co2plot = co2_in[which(co2_in$Year >= c02start & co2_in$Year <= endyear), ]
     if (rcp == 45){
-      co2 = co2plot[,2]
+      co2 = rep(co2plot[,2],each=12 )
     }
     if (rcp == 85){
-      co2 = co2plot[,3]
+      co2 = rep(co2plot[,3],each=12 )
     }
     
-
     met = array(NA,dim=c(nplots,6,length(tmax)))
     met[,1,] = t(tmin)  #Tmin
     met[,2,] = t(tmax)  # Tmax
@@ -309,7 +303,7 @@ prepare_update_states <- function(plotnum){ # add some soft of time component as
   
   
   #THIS DEALS WITH THINNING BASED ON PROPORTION OF STEMS REMOVED
-  thin_event <- array(data = rep(0),dim = c(plotnum, mo))
+  thin_event <- array(data = rep(0),dim = c(plotnum, nmonths))
   
   output_dim = noutput_variables  # NUMBER OF OUTPUT VARIABLES
   nomet = 6  # NUMBER OF VARIABLES IN METEROLOGY (met)

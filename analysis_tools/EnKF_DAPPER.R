@@ -1,4 +1,4 @@
-#rm(list = ls())
+rm(list = ls())
 if (!"mvtnorm" %in% installed.packages()) install.packages("mvtnorm")
 if (!"ncdf4" %in% installed.packages()) install.packages("ncdf4")
 if (!"glmtools" %in% installed.packages()) install.packages('glmtools', repos=c('http://cran.rstudio.com', 'http://owi.usgs.gov/R'))
@@ -7,14 +7,14 @@ library(glmtools)
 library(ncdf4)
 
 #### set working directory
-pathDAPPER = '/Users/laurapuckett/Documents/Research/GIT/DAPPER/' 
-EnKF_directory = '/Users/laurapuckett/Documents/Spring_2018/Research_Spring_2018/'
+pathDAPPER = '/Users/laurapuckett/Documents/Research/Current/DAPPER/' 
+EnKF_directory = '/Users/laurapuckett/Documents/Research/Current/DAPPER/analysis_tools/'
 setwd(EnKF_directory)
 
 #### define variables needed for DAPPER functions
 working_directory = pathDAPPER # this is references in prepare_update_states(), and prepare_obs()
-input_directory = '/Users/laurapuckett/Documents/Research/GIT/DAPPER_inputdata/'
-output_directory = '/Users/laurapuckett/Documents/Research/GIT/DAPPER_projects/'
+input_directory = '/Users/laurapuckett/Documents/Research/Current/DAPPER_inputdata/'
+output_directory = '/Users/laurapuckett/Documents/Research/Current/DAPPER_projects/'
 plotlist = c(40001) #THIS IS Duke Forest
 focal_plotID = plotlist#
 
@@ -26,25 +26,57 @@ source('update_states.R')
 ###### MAIN EnKF CODE ######
 
 #See table 1 in Rastetter et al. 2010
-nmembers = 50
+nmembers = 200
 NO_UNCERT = FALSE
 ADD_NOISE_TO_OBS = FALSE
-USE_SYNTHETIC_DATA = FALSE
+USE_SYNTHETIC_DATA = TRUE
 USE_OBS_COORD = FALSE
 USE_OBS_CONTRAINT = TRUE
 
 
-start_forecast_step = 1
+#start_forecast_step = 1
 
 
 # Define variables needed for prepare_update_states or update_states
 plotnum = 1
 all_studies = c('/Duke/TIER4_Duke')
-nsteps = 1
 
 
+#### get obs and build array for all months
+if(USE_SYNTHETIC_DATA){
+  origdata = read.csv(file = paste(EnKF_directory,"/duke_input.csv", sep = ""), header = TRUE, sep = ",")
+  realdata = origdata[which(origdata$PlotID == 40001), ]
+  
+}else{
+  # fill this in with realdata source later
+  }
+
+years = realdata$Year[which(realdata$Age != -99)]
+startyear = min(years)
+startmonth = min(realdata$Month[which(realdata$Year == startyear)])
+endyear = max(years)
+#endmonth = max(realdata$month[which(realdata$year == endyear)])
+start_age = realdata$Age[which(realdata$Year == startyear && realdata$Month == startmonth)]
+nmonths = (endyear - startyear +1)*12
+observed = realdata[which(realdata$LAI != "NA" & realdata$LAI != -99 & realdata$Age != -99), ]
+observed_months = (observed$Year-startyear)*12 + observed$Month
+
+# create array to hold observation or NA for each month
+z <- array(data = NA, dim = c(nmonths,1))
+for (i in 1:nmonths){
+  for (j in 1:length(observed_months))
+    {
+    if(i == observed_months[j] && j %% 1 == 0)
+      {
+      z[i, 1] <- observed$LAI[j]
+
+    }
+  }
+}
+  
 # Retreieve variables from prepare_update_states() needed for update_states()
-prep_update_states <- prepare_update_states(plotnum)
+mo = 1
+prep_update_states <- prepare_update_states(plotnum, startyear, nmonths, start_age)
 output_dim = prep_update_states$output_dim
 pars = prep_update_states$pars
 site = prep_update_states$site
@@ -57,85 +89,68 @@ median_pars = prep_update_states$median_pars
 ASW_max = prep_update_states$ASW_max
 
 
-#USE FIRST OBSERVATION AS THE INITIAL CONDITIONS
-if(!USE_SYNTHETIC_DATA){
-  realdata = read.csv(file = "/Users/laurapuckett/Documents/Spring_2018/Research_Spring_2018/fake_LAI_data.csv", header = TRUE, sep = ",")
-}else{
-  realdata = read.csv(file = "/Users/laurapuckett/Documents/Spring_2018/Research_Spring_2018/fake_LAI_data.csv", header = TRUE, sep = ",")
-}
-observedLAI = realdata[1,2] # (one obs for now) change this when there is actual data
 
-
-#NUMBER OF STATE SIMULATED = SPECIFIED DEPTHS
-nstates <- 6 #nlayers_init
+#Initial states
+nstates <- 7 #nlayers_init
+init_LAI = 1.1 #realdata$LAI[1] # 
+init_WS = 49.56 # WSi
+init_WCR = 13.82 # WCRi
+init_WR = 2.68 # WRi was 0.16
+init_Stem_Count = 1511 #"StemNoi"
+init_ASW = ASW_max 
+init_Fr = 0.2 #site[12]
+init_states <- array(data = c(init_LAI, init_WS, init_WCR, init_WR, init_Stem_Count, init_ASW, init_Fr), dim = c(nstates,1))
 # LAI, WS, WCR, WFR, Stem_Count, ASW
 
 #Observations for each observed state at each time step
 #an observation with at least 1 observation but without an observation in a time-step gets assigned an NA
-z <- t(matrix(rep(NA,length(observedLAI)), nrow = length(observedLAI), ncol = nsteps))
+#z <- t(matrix(rep(NA,length(observedLAI)), nrow = length(observedLAI), ncol = nsteps))
 
-for(i in 1:nsteps){
+#for(i in 1:nmonths){
   #index = which(as.POSIXct(realdata$datetime) == full_time[i])
   #if(length(index) > 0){
-    index = 1
-    z[i,] = unlist(realdata[1,2]) # fix - reformat later for correct file format
+    #z[i,] = LAI_obs_array[i,5] # fix - reformat later for correct file format
     #if(ADD_NOISE_TO_OBS & i > 1){
     #  z[i,] = rnorm(length( z[i,]), z[i,],0.1)
     #}
   #}
-}
+#}
 
 if(!USE_OBS_CONTRAINT){
   z_obs = z
   z[,] = NA
 }
 
-#FIGURE OUT WHICH LOCATIONS HAVE OBSERVATIONS
-obs_index = rep(NA,length(observedLAI))
-#for(i in 1:length(observedLAI)){
- # obs_index[i] = which.min(abs(the_depths_init - observedLAI[i])) # how does this work?
-#}
-
-#A matrix for knowing which state the observation corresponds to
-z_states <- t(matrix(obs_index, nrow = length(obs_index), ncol = nsteps))
-
-#Process error 
-# fix - this needs a lot of work. Supposed to be sigma = gamma + rho*value
-
 # Define variables for Qt matrix
 # need to incorporate rho into sigma later
 sigma = array(data = NA, dim = nstates)
-sigma[1] = median_pars[52] # gamma_LAI
-sigma[2] = median_pars[53] +  median_pars[64] # WS, gamma_WS+ rho_WS * last stem measurement
+sigma[1] = 0.01*median_pars[52] # gamma_LAI
+sigma[2] = median_pars[53] +  median_pars[64]*init_states[2] # WS, gamma_WS+ rho_WS * last stem measurement
 sigma[3] = median_pars[54] # WCR
 sigma[4] = median_pars[55] ### check this one ## WFR
 sigma[5] = .1 # gamma_Stem_Count - look into this, should have a gamma
 sigma[6] = .1 # gamma_ASW
+sigma[7] = 0.001
 
-rho_LAI = 0 #median_pars[63]
-rho_WS = 0  #median_pars[64]
-rho_WCR =0 # median_pars[65]
-rho_WFR = 0 #median_pars[66]
-rho_Stem_Count = 0
-rho_ASW = 0
-
-Qt = diag(sigma) # fix this part
-
+Qt = diag(sigma) 
+#rho_LAI = 0 #median_pars[63]
+#rho_WS = 0  #median_pars[64]
+#rho_WCR =0 # median_pars[65]
+#rho_WFR = 0 #median_pars[66]
+#rho_Stem_Count = 0
+#rho_ASW = 0
 
 #Measurement error 
-psi = rep(0.0001,length(obs_index)) # update this later
+psi = 0.0001 # update this later
 
-#Initial states
-init_LAI = 1 # WFi # change these to starting values for Duke forest (at age 11ish) 
-init_WS = 2 # WSi
-init_WCR = 0.4 # WCRi
-init_WR = 0.16 # WRi
-init_Stem_Count = 1200 #"StemNoi"
-init_ASW = ASW_max 
-init_states <- array(data = c(init_LAI, init_WS, init_WCR, init_WR, init_Stem_Count, init_ASW), dim = c(nstates,1))
-x <- array(NA,dim=c(nsteps,nmembers,nstates))
-x[1,,] <- rmvnorm(n=nmembers, mean=init_states, sigma=as.matrix(Qt)) 
+Qt_init = Qt*10
+x <- array(NA,dim=c(nmonths,nmembers,nstates))
+x[1,,] <- rmvnorm(n=nmembers, mean=init_states, sigma=as.matrix(Qt_init)) 
+x[1,which(x[1,,7] < 0),7] = 0
+x[1,which(x[1,,7] > 1 ),7] = 1
 
+InitialYear = startyear
+InitialMonth = startmonth
 
 #Matrix to store ensemble specific deviations and innovations
 dit = array(NA,dim=c(nmembers,nstates))
@@ -144,7 +159,8 @@ dit = array(NA,dim=c(nmembers,nstates))
 
 
 #loop through time steps
-for(i in 2:nsteps){ # runs 3PG for one time step for every member  (would use forecasting code)
+for(i in 2:nmonths){ # runs 3PG for one time step for every member  (would use forecasting code)
+  ## update part of Qt matrix that changes through time
   
   #i is the same as mo - make them the same, climate matrices should be built before mo 
   # need to update times in addition to states
@@ -157,19 +173,24 @@ for(i in 2:nsteps){ # runs 3PG for one time step for every member  (would use fo
   for(m in 1:nmembers){
     
     ### updates the states in site array each timestep 
-    site[6] = x[i-1, m, 1] #"WFi" # can take LAI or WFi
-    site[7] = x[i-1, m, 4] # WFR - is this correct?
+    site[6] = -99 #"WFi" # can take LAI or WFi
+    site[7] = x[i-1, m, 4] # WR - is this correct?
+    if(site[7] < 0 | is.na(site[7]) ){ # cheat for now, need to fix the problem for real later
+      site[7] = 0
+    }
     site[8] = x[i-1, m, 2] #"WSi"
     site[9] = x[i-1, m, 5] #"StemNoi"
     site[10] = x[i-1, m, 6] #"ASWi"
     site[20] = x[i-1, m, 3] # WCRi
     site[26] = x[i-1, m, 1] # same as WFi above
+    site[12] = x[i-1,m,7] #FR
     
-    DAPPER_states <- update_states(mo, plotnum, output_dim, pars, site, nopars, nosite, thin_event, met)
+    DAPPER_states <- update_states(mo = i, plotnum, output_dim, pars, site, nopars, nosite, thin_event, met)
     
-    #4) Fill x_star with temperatures from GLM
-    x_star[m,] = DAPPER_states # all of the updated states for the current member iteration
+    #4) Fill x_star with states from DAPPER
+    x_star[m,] = c(DAPPER_states,site[12]) # all of the updated states for the current member iteration
   }
+
   
   InitialMonth = InitialMonth + 1
   if(InitialMonth > 12){
@@ -183,6 +204,18 @@ for(i in 2:nsteps){ # runs 3PG for one time step for every member  (would use fo
   
   #Matrix Corrupted state estimate [nmembers x nstates]
   x_corr = x_star + NQt
+  for(mem in 1:nmembers){
+    if(x_corr[mem, 7] >1)
+    {
+      x_corr[mem,7] = 1
+    }
+    for(sta in 1:nstates){
+      if(x_corr[mem, sta] < 0){
+        x_corr[mem, sta] = 0
+      }
+    }
+  }
+
   ## builing ^ starting point  
   
   
@@ -190,23 +223,21 @@ for(i in 2:nsteps){ # runs 3PG for one time step for every member  (would use fo
   z_index = which(!is.na(z[i, ]))
   
   #if no observations at a time step then just propogate model uncertainity
-  if(length(z_index) == 0 | i > start_forecast_step){
+  if(length(which(!is.na(z[i, ]))) == 0){
     x[i,,] = x_corr
     if(NO_UNCERT){
       x[i,,] = x_star
     }
-    
   }else{
     print(i)
     #if observation then calucate Kalman adjustment
     zt = z[i,z_index] # will be time series of LAI from landsat
-    z_states_t = z_states[i,z_index]
+    #z_states_t = z_states[i,z_index]
     yit = array(NA,dim=c(nmembers,length(zt)))
     
-    #Assign which states have obs in the time step
     H <- array(0,dim=c(length(zt),nstates))
     for(j in 1:length(z_index)){
-      H[j,z_states_t[j]] = 1
+      H[j,1] = 1
     }
     
     #Extract the data uncertainity for the data types present during the time-step
@@ -237,11 +268,9 @@ for(i in 2:nsteps){ # runs 3PG for one time step for every member  (would use fo
       #Ensemble specific estimate and innovation covariance
       if(m == 1){
         Pit = tcrossprod(dit[m,])
-        #Pit_star = tcrossprod(dit_star[m,])  #Adaptive noise estimation
         Sit = tcrossprod(yit[m,])
       }else{
         Pit = tcrossprod(dit[m,]) +  Pit
-        #Pit_star = tcrossprod(dit_star[m,]) + Pit_star #Adaptive noise estimation
         Sit = tcrossprod(yit[m,]) +  Sit
       }
     }
@@ -256,55 +285,113 @@ for(i in 2:nsteps){ # runs 3PG for one time step for every member  (would use fo
     Kt <- crossprod(t(crossprod(Pt,t(H))), solve(St, tol=1e-30))
     
     #Adaptive noise estimation
-    beta = 0.55
-    #Gammat = (1 - beta)*crossprod(t(crossprod(Pt,t(H))), solve(H, tol=1e-30))
-    #Qt_hat = Gammat(St - H*Pt_star*H - t(N_psi))*Gammat
-    #Q = alpha*Q+ (1-alpha)*Qt_hat
+
     #Ensemble specific updated state
     for(m in 1:nmembers){
       x[i,m,] = t((x_corr[m,]) + crossprod(t(Kt), yit[m,]))
       if(NO_UNCERT){
         x[i,m,] = x_star[m,]
       }
+      for(n in 1:nstates){
+        if( x[i,m,n] < 0 ){
+          x[i,m,n] = 0
+        }
+      }
     }
     if(length(which(is.na(x[i,,]))) > 0){dies = i}
   }
 }
-
 #par(mfrow=c(2,3),mar = c(4,4,2,2),oma = c(3,3,2,2))
 #hist(x[nsteps,,1],main='state 1',xlab='value')
 #hist(x[nsteps,,2],main='state 2',xlab='value')
 #hist(x[nsteps,,3],main='state 3',xlab='value')
 
-par(mfrow=c(4,3))
+# par(mfrow=c(4,3))
+# 
+# if(!USE_OBS_CONTRAINT){
+#   z = z_obs
+# }
+# 
+# #c(1,4,7,10,13,16,19,22,25,28,29)
+# for(i in c(1,4,7,10,13,16,19,22,25,28,29)){
+#   #for(i in 1:nlayers_init){
+#   model = i
+#   if(length(which(z_states[1,] == i) > 0)){
+#     obs = which(z_states[1,] == i)
+#   }else{
+#     obs = NA
+#   }
+#   #ylim = range(c(x[,,model],c(z[,obs])),na.rm = TRUE)
+#   ylim = range(c(x[,,],c(z[,])),na.rm = TRUE)
+#   plot(x[,1,model],type='l',ylab='surface temperature (celsius)',xlab='time step (day)',main = the_depths_init[i],ylim=ylim)
+#   for(m in 2:nmembers){
+#     points(x[,m,model],type='l')
+#   }
+#   
+#   if(!is.na(obs)){
+#     tmp = z[,obs]
+#     tmp[is.na(tmp)] = -999
+#     points(tmp,col='red',pch=19,cex=2.0)
+#   }
+# }
 
-if(!USE_OBS_CONTRAINT){
-  z = z_obs
+par(mfrow = c(3,3))
+# LAI
+plot(x[ , 1, 1],type='l',ylim=c(0,5))
+for (n in 2:nmembers)
+{
+  points(x[ , n, 1],type='l') 
+}
+points(z, col = 'red')
+
+# WS
+ylim = range(c(x[ ,,2]))
+plot(x[ , 1, 2],type='l',ylim=ylim)
+for (n in 2:nmembers)
+{
+  points(x[ , n, 2],type='l') 
+}
+#Fr
+ylim = range(c(x[ ,,7]))
+plot(x[ , 1, 7],type='l',ylim=ylim)
+for (n in 2:nmembers)
+{
+  points(x[ , n, 7],type='l') 
 }
 
-#c(1,4,7,10,13,16,19,22,25,28,29)
-for(i in c(1,4,7,10,13,16,19,22,25,28,29)){
-  #for(i in 1:nlayers_init){
-  model = i
-  if(length(which(z_states[1,] == i) > 0)){
-    obs = which(z_states[1,] == i)
-  }else{
-    obs = NA
-  }
-  #ylim = range(c(x[,,model],c(z[,obs])),na.rm = TRUE)
-  ylim = range(c(x[,,],c(z[,])),na.rm = TRUE)
-  plot(x[,1,model],type='l',ylab='surface temperature (celsius)',xlab='time step (day)',main = the_depths_init[i],ylim=ylim)
-  for(m in 2:nmembers){
-    points(x[,m,model],type='l')
-  }
-  
-  if(!is.na(obs)){
-    tmp = z[,obs]
-    tmp[is.na(tmp)] = -999
-    points(tmp,col='red',pch=19,cex=2.0)
-  }
-}
+#ylim = range(c(x[ , ,3]))
+#plot(x[ , 1, 3],type='l',ylim=ylim)
+#for (n in 2:nmembers)
+#{
+#  points(x[ , n, 3],type='l') 
+#}
 
+quant_WS = array(NA,dim=c(nmonths, 3))
+quant_LAI = array(NA, dim = c(nmonths, 3))
+quant_Fr = array(NA, dim = c(nmonths, 3))
+for (n in 1:nmonths){
+  quant_WS[n, ] = quantile(x[n, , 2], c(0.25,0.5,0.75))
+  quant_LAI[n, ] = quantile(x[n, , 1], c(0.25, 0.5, 0.75))
+  quant_Fr[n, ] = quantile(x[n, , 7], c(0.25, 0.5, 0.75))
+}
+plot(quant_LAI[ , 1], type = 'l', ylim = range(quant_LAI, na.rm = TRUE), xlab = 'months', ylab = 'LAI')
+lines(quant_LAI[ ,2])
+lines(quant_LAI[ ,3])
+
+plot(quant_WS[ , 1],type='l',ylim=range(quant_WS, na.rm = TRUE),xlab = 'months',ylab = 'WS')
+lines(quant_WS[ ,2])
+lines(quant_WS[ ,3])
+
+plot(quant_Fr[ , 1],type='l',ylim=range(quant_Fr, na.rm = TRUE),xlab = 'months',ylab = 'Fr')
+lines(quant_Fr[ ,2])
+lines(quant_Fr[ ,3])
+#difference between 75% and 25% interval over time
+plot(quant_WS[ ,3] - quant_WS[ ,1], type = 'l')
+temp = z
+temp[!is.na(temp)] = 4
+points(temp[ ,1])
+
+hist(x[nmonths, , 7])
 
 
 
