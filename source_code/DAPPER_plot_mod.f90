@@ -148,7 +148,7 @@ subroutine likelihood(plotnum &
 	SD1(3) = new_pars(54)
 	SD1(4) = new_pars(55)
 	SD1(5) = new_pars(56)
-	SD1(6) = SD1(1)
+	SD1(6) = new_pars(63) !TEMP TO SEPARATE PINE AND HARD LAI
 	SD1(7) = new_pars(57)
 	SD1(8) = -99
 	SD1(9) = -99
@@ -163,7 +163,7 @@ subroutine likelihood(plotnum &
 	SD1(18) = new_pars(62)	
 	Foliage_SD = new_pars(77)
 		
-	SD2(1) = new_pars(63)
+	SD2(1) = 0.0 !new_pars(63)
 	SD2(2) = new_pars(64)
 	SD2(3) = new_pars(65)
 	SD2(4) = new_pars(66)

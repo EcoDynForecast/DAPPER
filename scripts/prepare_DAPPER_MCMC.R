@@ -52,33 +52,11 @@ for(p in 1:npars){
     priormatrix[p,6] = index
     index = index + 1
   }else{
-    priormatrix[p,6] = 100
+    priormatrix[p,6] = 10000
   }
 }
 
-data_uncertainity_npar_group = index
-index = index + 1
-if(plot_WSx1000){
-plot_WSx1000_pargroup = index
-index = plot_WSx1000_pargroup + 8
-}else{
-  plot_WSx1000_pargroup = 100
-}
 
-FR_npar_group = index
-if(fr_model == 1 & FR_separate_npar_groups == TRUE){ #when fitting FR there are more par groups
-  npar_groups = FR_npar_group + 8
-}else if(fr_model == 2 & FR_separate_npar_groups == TRUE){
-  npar_groups = FR_npar_group + 4
-}else{
-  npar_groups = FR_npar_group
-}
-
-
-
-
-plot_thinpower_pargroup = 100 
-plot_mort_rate_pargroup = 100 
 
 #---- ENTER THE FORTRAN LIBRARY NAMES HERE ----------
 if(windows_machine){
@@ -89,7 +67,7 @@ if(windows_machine){
   code_library_plot = paste(working_directory,'/source_code/r3pg_interface.so',sep='')
 }
 
-final_pdf = paste(working_directory,'/figures/',run_name,'_chain_',chain_number,'.pdf',sep='')
+final_pdf = paste(working_directory,'/figures/',run_name,'.pdf',sep='')
 #----------------------------------------------------
 
 #---  PREPARE OBSERVATIONS ---------------------------
@@ -102,6 +80,31 @@ met_in = obs_list$met_in
 co2_in = obs_list$co2_in
 use_fol_state = obs_list$use_fol_state
 #-------------------------------------------------
+data_uncertainity_npar_group = index
+index = index + 1
+if(plot_WSx1000){
+  plot_WSx1000_pargroup = index
+  index = plot_WSx1000_pargroup + 8
+}else{
+  plot_WSx1000_pargroup = 10000
+}
+
+FR_npar_group = index
+if(fr_model == 1 & FR_separate_npar_groups == 1){ #when fitting FR there are more par groups
+  npar_groups = FR_npar_group + 8
+}else if(fr_model == 2 & FR_separate_npar_groups == 1){
+  npar_groups = FR_npar_group + 4
+}else if(fr_model == 1 & FR_separate_npar_groups == 2){
+  npar_groups = FR_npar_group + nplots - 1
+}else{
+  npar_groups = FR_npar_group
+}
+
+
+plot_thinpower_pargroup = 10000 
+plot_mort_rate_pargroup = npar_groups + 10000 
+#--------------------------------
+
 
 state_space_obs = prepare_state_space_obs()
 mo_start_end=state_space_obs$mo_start_end
@@ -228,7 +231,8 @@ obs_gap_next = init_states$obs_gap_next
 tmp =  strsplit(as.character(Sys.time()), " ")
 date = tmp[[1]][1]
 time = strsplit(as.character(tmp[[1]][2]), ":")
-chain_file_name = paste(run_name,chain_number,date,time[[1]][1],time[[1]][2],time[[1]][1],'Rdata',sep=".")
+#chain_file_name = paste(run_name,chain_number,date,time[[1]][1],time[[1]][2],time[[1]][1],'Rdata',sep=".")
+chain_file_name = paste(run_name,'Rdata',sep=".")
 final_chain_file_name = paste(working_directory,'/chains/',chain_file_name,sep="")
 
 #-----------------------------------------------------------------
@@ -265,6 +269,7 @@ accepted_pars_thinned_burned = array(-999,dim=c(length(sample_index),length(init
 like_chain = array(-999,dim=c(length(sample_index)))
 tracked_plot = array(-99, dim=c(length(sample_index),nstreams,nmonths))
 #----------------------------------------------------------------
+
 
 #------RUN FORTRAN CODE---------------------------------
 if(only_create_plot == FALSE){

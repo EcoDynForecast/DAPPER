@@ -1,6 +1,6 @@
 prepare_obs <- function(obs_set,FR_fert_assumption,use_fol){
   #-----READ IN OBSERVATED DATA------------------------
-
+  
   initdata = NULL
   for(s in 1:length(all_studies)){
     d = read.csv(paste(input_directory,all_studies[s],'_plotlist.csv',sep=''))
@@ -35,13 +35,13 @@ prepare_obs <- function(obs_set,FR_fert_assumption,use_fol){
   
   initdata$ThinTreatment[which(initdata$PlotID >= 52001 & initdata$PlotID <= 52467)]  = initdata$Plot[which(initdata$PlotID >= 52001 & initdata$PlotID <= 52467)] 
   initdata$ThinTreatment[which(initdata$PlotID >= 72001 & initdata$PlotID <= 72076)]  = initdata$Plot[which(initdata$PlotID >= 72001 & initdata$PlotID <= 72076)] 
-
+  
   initdata$Treatment[which(initdata$PlotID >= 52001 & initdata$PlotID <= 52467)]  = as.character(initdata$Plot[which(initdata$PlotID >= 52001 & initdata$PlotID <= 52467)]) 
   initdata$Treatment[which(initdata$PlotID >= 72001 & initdata$PlotID <= 72076)]  = as.character(initdata$Plot[which(initdata$PlotID >= 72001 & initdata$PlotID <= 72076)]) 
   initdata$Treatment[which(initdata$PlotID >= 10001 & initdata$PlotID < 20000)]  = as.character(initdata$ThinTreatment[which(initdata$PlotID >= 10001 & initdata$PlotID < 20000)]) 
   initdata = initdata[which(initdata$ThinTreatment == 1 | initdata$ThinTreatment == 0), ]
   initdata$Treatment = as.factor(initdata$Treatment)
-    
+  
   initdata = data.frame(PlotID = initdata$PlotID,SiteID = initdata$SiteID,LAT_WGS84=initdata$LAT_WGS84,
                         Planting_year = initdata$Planting_year,PlantMonth = initdata$PlantMonth,
                         PlantDensityHa = initdata$PlantDensityHa,Initial_ASW = initdata$Initial_ASW, ASW_min = initdata$ASW_min,
@@ -55,9 +55,9 @@ prepare_obs <- function(obs_set,FR_fert_assumption,use_fol){
                         IrrFlag = initdata$IrrFlag,IrrLevel = initdata$IrrLevel,Initial_LAI = initdata$Initial_LAI,Initial_LAI_code = initdata$Initial_LAI_code,
                         Initial_WR_code = initdata$Initial_WR_code, StudyName = initdata$StudyName, Treatment = initdata$Treatment, ThinTreatment = initdata$ThinTreatment,Plot = initdata$Plot)
   
-
+  
   initdata$SoilClass = 1.0 
-
+  
   
   if(FR_fert_assumption == 1){
     initdata$FR[which(initdata$PlotID > 20000 & initdata$PlotID < 30000)] = -99
@@ -128,11 +128,34 @@ prepare_obs <- function(obs_set,FR_fert_assumption,use_fol){
   
   observations$ind_removed = -99
   
-  #observations$Ctrans = -99
-  #observations$Ctrans_H = -99
-  #observations$ET = -99
+  if(use_ctrans == 0){
+    observations$Ctrans = -99
+    observations$Ctrans_H = -99
+  }
   
-
+  if(use_et_uncert == 0){
+    observations$ET = -99
+  }
+  
+  if(use_gep == 0){
+    observations$GEP = -99
+  }
+  
+  if(use_ctrans_uncert == 0){
+    print('here')
+    observations$Ctrans_sd = 0.001
+    observations$Ctrans_H_sd = 0.001
+  }
+  
+  if(use_et_uncert == 0){
+    observations$ET_sd = 0.001
+  }
+  
+  if(use_gep_uncert == 0){
+    observations$GEP_sd = 0.001
+  }
+  
+  
   
   met_in = NULL
   for(s in 1:length(all_studies)){
@@ -146,7 +169,7 @@ prepare_obs <- function(obs_set,FR_fert_assumption,use_fol){
   
   observations = observations[observations$PlotID %in% initdata$PlotID, ]
   
-
+  
   #-----------------------------------------------------------------
   #  Remove foliage data for treatment plots because based on model
   for(i in 1:length(observations$FOL)){
@@ -158,8 +181,8 @@ prepare_obs <- function(obs_set,FR_fert_assumption,use_fol){
     }
   } 
   
-
-
+  
+  
   #-----ORGANIZE CONTROL PLOT ID (FOR USE WITH EXPERIMENTAL DATA)
   control_plot_index = which(initdata$FertFlag == 0 & (initdata$CO2flag == -99 | initdata$CO2flag == 0)  & initdata$DroughtLevel == 1.0 & initdata$IrrFlag == 0.0)
   control_plot_fert_index = which((initdata$CO2flag == -99 | initdata$CO2flag == 0) & initdata$DroughtLevel == 1.0 & initdata$IrrFlag == 0.0) 

@@ -224,7 +224,10 @@ prepare_state_space_obs <- function(){
         meas_month = tmp$MonthMeas[which(tmp$GEP != -99)][i]
         index = (meas_year - earliestYear)*12+1 + (meas_month-earliestMonth)
         obs[12,plotnum,index] = tmp$GEP[which(tmp$GEP != -99)][i]
-        obs_uncert[12,plotnum,index] = tmp$GEP[which(tmp$GEP != -99)][i]*obs_uncertainity_proportion
+        obs_uncert[12,plotnum,index] = tmp$GEP_sd[which(tmp$GEP != -99)][i]
+        if(tmp$GEP_sd[which(tmp$GEP != -99)][i] == -99){
+          obs_uncert[12,plotnum,index] = tmp$GEP[which(tmp$GEP != -99)][i]*obs_uncertainity_proportion
+        }
       }
     }
     #ET
@@ -234,7 +237,10 @@ prepare_state_space_obs <- function(){
         meas_month = tmp$MonthMeas[which(tmp$ET != -99)][i]
         index = (meas_year - earliestYear)*12+1 + (meas_month-earliestMonth)
         obs[14,plotnum,index] = tmp$ET[which(tmp$ET != -99)][i]
-        obs_uncert[14,plotnum,index] = tmp$ET[which(tmp$ET != -99)][i]*obs_uncertainity_proportion
+        obs_uncert[14,plotnum,index] = tmp$ET_sd[which(tmp$ET != -99)][i]
+        if(tmp$ET_sd[which(tmp$ET != -99)][i] == -99){
+          obs_uncert[14,plotnum,index] = tmp$ET[which(tmp$ET != -99)][i]*obs_uncertainity_proportion
+        }
       }
     } 
     #Ctrans
@@ -245,6 +251,9 @@ prepare_state_space_obs <- function(){
         index = (meas_year - earliestYear)*12+1 + (meas_month-earliestMonth)
         obs[15,plotnum,index] = tmp$Ctrans[which(tmp$Ctrans != -99)][i]
         obs_uncert[15,plotnum,index] = tmp$Ctrans_sd[which(tmp$Ctrans != -99)][i]
+        if(tmp$Ctrans_sd[which(tmp$Ctrans != -99)][i] == -99){
+          obs_uncert[15,plotnum,index] = tmp$Ctrans[which(tmp$Ctrans != -99)][i]*obs_uncertainity_proportion
+        }
       }
     } 
     
@@ -255,8 +264,12 @@ prepare_state_space_obs <- function(){
         meas_month = tmp$MonthMeas[which(tmp$Ctrans_H != -99)][i]
         index = (meas_year - earliestYear)*12+1 + (meas_month-earliestMonth)
         obs[16,plotnum,index] = tmp$Ctrans_H[which(tmp$Ctrans_H != -99)][i]
-        if((meas_month != 8) & tmp$PlotID[1] > 40000 & tmp$PlotID[1] < 42000){obs[16,plotnum,index]=-99}
+        if((meas_month < 6 | meas_month > 9) & tmp$PlotID[1] > 40000 & tmp$PlotID[1] < 42000){obs[16,plotnum,index]=-99}
         obs_uncert[16,plotnum,index] = tmp$Ctrans_H_sd[which(tmp$Ctrans_H != -99)][i]
+        if(tmp$Ctrans_H_sd[which(tmp$Ctrans_H != -99)][i] == -99){
+          obs_uncert[16,plotnum,index] = tmp$Ctrans_H[which(tmp$Ctrans_H != -99)][i]*obs_uncertainity_proportion
+        }
+        
       }
     }  
     
