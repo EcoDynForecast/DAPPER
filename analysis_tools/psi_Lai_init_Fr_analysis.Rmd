@@ -1,0 +1,63 @@
+---
+title: "preliminary analysis of Fr with EnKF"
+output: pdf_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+EnKF_directory = '/Users/laurapuckett/Documents/Research/Current/DAPPER/analysis_tools/'
+pathDAPPER = '/Users/laurapuckett/Documents/Research/Current/DAPPER/' 
+working_directory = pathDAPPER # this is referenced in prepare_update_states(), and prepare_obs()
+setwd(EnKF_directory)
+source("EnKF_DAPPER.R")
+original_data = read.csv(file = paste(EnKF_directory,"/duke_input.csv", sep = ""), header = TRUE, sep = ",")
+realdata = original_data[which(original_data$PlotID == 40001), ]
+lower_psi = 0.0001
+higher_psi = 0.001
+```
+
+
+```{r, echo = FALSE}
+### (1) all LAI, Fr = site default, lower psi
+observed = realdata[which(realdata$LAI != "NA" & realdata$LAI != -99 & realdata$Age != -99), ]
+EnKF_DAPPER(psi = lower_psi, init_Fr = 0.8780736, observed = observed)
+
+```
+```{r, echo = FALSE}
+### (2) all LAI, Fr = 0.2, lower psi
+observed = realdata[which(realdata$LAI != "NA" & realdata$LAI != -99 & realdata$Age != -99), ]
+setwd(EnKF_directory)
+EnKF_DAPPER(psi = lower_psi, init_Fr = 0.2, observed = observed)
+
+```
+```{r, echo = FALSE}
+### (3) only winter LAI, Fr = default, lower psi
+observed = realdata[which(realdata$LAI != "NA" & realdata$LAI != -99 & realdata$Age != -99), ]
+observed = observed[which(observed$Month == 12 | observed$Month == 1 | observed$Month == 2), ]
+EnKF_DAPPER(psi = lower_psi, init_Fr = 0.8780736, observed = observed)
+
+```
+```{r, echo = FALSE}
+ ### (4) only winter LAI, Fr = 0.2, lower psi
+observed = realdata[which(realdata$LAI != "NA" & realdata$LAI != -99 & realdata$Age != -99), ]
+observed = observed[which(observed$Month == 12 | observed$Month == 1 | observed$Month == 2), ]
+EnKF_DAPPER(psi = lower_psi, init_Fr = 0.2, observed = observed)
+
+```
+
+```{r, echo = FALSE}
+### (5) all LAI, Fr = site default, higher psi
+observed = realdata[which(realdata$LAI != "NA" & realdata$LAI != -99 & realdata$Age != -99), ]
+EnKF_DAPPER(psi = higher_psi, init_Fr = 0.8780736, observed = observed)
+
+```
+
+```{r, echo = FALSE}
+### (6) all LAI, Fr = 0.2, higher psi
+observed = realdata[which(realdata$LAI != "NA" & realdata$LAI != -99 & realdata$Age != -99), ]
+EnKF_DAPPER(psi = higher_psi, init_Fr = 0.2, observed = observed)
+
+```
+```
+
+Note that the `echo = FALSE` parameter was added to the code chunk to prevent printing of the R code that generated the plot.
