@@ -1,4 +1,4 @@
-update_states <- function(mo,plotnum,output_dim,pars,site,nopars,nosite, thin_event, met){ # fix - need to alter to accept initial states as input 
+update_states <- function(mo,plotnum,output_dim,pars,site,nopars,nosite, thin_event, met, exclude_hardwoods, median_pars, ASW_max){ # fix - need to alter to accept initial states as input 
   #---CONTROL INFORMATION----------------------------
   #rm(list = ls())
   

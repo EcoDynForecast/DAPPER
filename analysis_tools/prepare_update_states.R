@@ -1,4 +1,4 @@
-prepare_update_states <- function(plotnum, startyear, nmonths, start_age){ 
+prepare_update_states <- function(plotnum, startyear, nmonths, start_age, endyear){ 
   #rm(list = ls())
   run_name = 'EnKF_trial_1'
   restart_chain <- c("all.1.2017-11-17.16.13.16.Rdata")
@@ -31,11 +31,11 @@ prepare_update_states <- function(plotnum, startyear, nmonths, start_age){
   
   setwd(paste(working_directory,'/scripts/',sep=''))
   source('prepare_obs.R')
-  source('prepare_state_space_obs.R')
-  source('assign_control_plots.R')
+  #source('prepare_state_space_obs.R')
+  #source('assign_control_plots.R')
   source('prepare_met.R')
   #source('initialize_pars.R')
-  source('init_state_space.R')
+  #source('init_state_space.R')
   
   run_name = run_name
   PARAMETER_UNCERT=FALSE

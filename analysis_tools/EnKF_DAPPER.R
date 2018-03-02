@@ -8,16 +8,16 @@ EnKF_DAPPER <- function(psi, init_Fr, observed){
   library(ncdf4)
   
   #### set working directory
-  pathDAPPER = '/Users/laurapuckett/Documents/Research/Current/DAPPER/' 
-  EnKF_directory = '/Users/laurapuckett/Documents/Research/Current/DAPPER/analysis_tools/'
+  #pathDAPPER = '/Users/laurapuckett/Documents/Research/Current/DAPPER/' 
+  #EnKF_directory = '/Users/laurapuckett/Documents/Research/Current/DAPPER/analysis_tools/'
   setwd(EnKF_directory)
   
   #### define variables needed for DAPPER functions
-  working_directory = pathDAPPER # this is referenced in prepare_update_states(), and prepare_obs()
-  input_directory = '/Users/laurapuckett/Documents/Research/Current/DAPPER_inputdata/'
-  output_directory = '/Users/laurapuckett/Documents/Research/Current/DAPPER_projects/'
-  plotlist = c(40001) #THIS IS Duke Forest
-  focal_plotID = plotlist #
+  #working_directory = pathDAPPER # this is referenced in prepare_update_states(), and prepare_obs()
+  #input_directory = '/Users/laurapuckett/Documents/Research/Current/DAPPER_inputdata/'
+  #output_directory = '/Users/laurapuckett/Documents/Research/Current/DAPPER_projects/'
+  #plotlist = c(40001) #THIS IS Duke Forest
+  #focal_plotID = plotlist #
   
   #### source required functions
   source('prepare_update_states.R')
@@ -27,20 +27,20 @@ EnKF_DAPPER <- function(psi, init_Fr, observed){
   ###### MAIN EnKF CODE ######
   
   #See table 1 in Rastetter et al. 2010
-  nmembers = 200
-  NO_UNCERT = FALSE
-  ADD_NOISE_TO_OBS = FALSE
-  USE_SYNTHETIC_DATA = TRUE
-  USE_OBS_COORD = FALSE
-  USE_OBS_CONTRAINT = TRUE
+  #nmembers = 200
+  #NO_UNCERT = FALSE
+  #ADD_NOISE_TO_OBS = FALSE
+  #USE_SYNTHETIC_DATA = TRUE
+  #USE_OBS_COORD = FALSE
+  #USE_OBS_CONTRAINT = TRUE
   
   
   #start_forecast_step = 1
   
   
   # Define variables needed for prepare_update_states or update_states
-  plotnum = 1
-  all_studies = c('/Duke/TIER4_Duke')
+  #plotnum = 1
+  #all_studies = c('/Duke/TIER4_Duke')
   
   
   #### get obs and build array for all months
@@ -52,7 +52,7 @@ EnKF_DAPPER <- function(psi, init_Fr, observed){
   startyear = min(years)
   startmonth = min(observed$Month[which(observed$Year == startyear)])
   endyear = max(years)
-  #endmonth = max(realdata$month[which(realdata$year == endyear)])
+  endmonth = max(realdata$month[which(realdata$year == endyear)])
   start_age = observed$Age[which(observed$Year == startyear && observed$Month == startmonth)]
   nmonths = (endyear - startyear +1)*12
   observed_months = (observed$Year-startyear)*12 + observed$Month
@@ -71,8 +71,8 @@ EnKF_DAPPER <- function(psi, init_Fr, observed){
   }
   
   # Retreieve variables from prepare_update_states() needed for update_states()
-  mo = 1
-  prep_update_states <- prepare_update_states(plotnum, startyear, nmonths, start_age)
+  #mo = 1
+  prep_update_states <- prepare_update_states(plotnum, startyear, nmonths, start_age, endyear)
   output_dim = prep_update_states$output_dim
   pars = prep_update_states$pars
   site = prep_update_states$site
@@ -157,7 +157,7 @@ EnKF_DAPPER <- function(psi, init_Fr, observed){
       site[26] = x[i-1, m, 1] # same as WFi above
       site[12] = x[i-1,m,7] #FR
       
-      DAPPER_states <- update_states(mo = i, plotnum, output_dim, pars, site, nopars, nosite, thin_event, met)
+      DAPPER_states <- update_states(mo = i, plotnum, output_dim, pars, site, nopars, nosite, thin_event, met, exclude_hardwoods, median_pars, ASW_max)
       
       #Fill x_star with states from DAPPER
       x_star[m,] = c(DAPPER_states,site[12]) # all of the updated states for the current member iteration
