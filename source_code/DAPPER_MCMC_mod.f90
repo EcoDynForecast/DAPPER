@@ -297,6 +297,7 @@ subroutine DAPPER_MCMC( &
 		SD2(16) = SD2(15)
 		SD2(17) = new_pars(72)
 		SD2(18) = new_pars(73)	
+		
     			
 			like_new = 0
    			prob_new(:) = 0.0
@@ -458,7 +459,8 @@ subroutine DAPPER_MCMC( &
     	  							Vv = V*(latent(data_stream,plotnum,mo)/ &
     	  								(SD1(data_stream)+pred(data_stream,plotnum,mo)*SD2(data_stream)) + &
             							 obs(data_stream,plotnum,mo)/obs_uncert(data_stream,plotnum,mo))
-									latent(data_stream,plotnum,mo) = normal_sample(Vv,V)  	 					 		
+									latent(data_stream,plotnum,mo) = normal_sample(Vv,V) 
+				 	 					 		
     	  						endif 
  								if(latent(data_stream,plotnum,mo) < 0) then
     	  							latent(data_stream,plotnum,mo) = 0.00001
@@ -497,6 +499,7 @@ subroutine DAPPER_MCMC( &
     	  					end do 
     	  				end do    
     	  				do data_stream=12,18
+    	  					
   							do mo = (mo_start_end(plotnum,1)+1),(mo_start_end(plotnum,2))
     	  						if(obs(data_stream,plotnum,mo) .NE. -99) then
     	  						V = 1/(1/(SD1(data_stream)+pred(data_stream,plotnum,mo)*SD2(data_stream)) &
@@ -504,7 +507,8 @@ subroutine DAPPER_MCMC( &
     	  							Vv = V*(latent(data_stream,plotnum,mo)/ &
     	  								(SD1(data_stream)+pred(data_stream,plotnum,mo)*SD2(data_stream)) + &
             							 obs(data_stream,plotnum,mo)/obs_uncert(data_stream,plotnum,mo))
-									latent(data_stream,plotnum,mo) = normal_sample(Vv,V) 	
+									latent(data_stream,plotnum,mo) = normal_sample(Vv,V) 
+
 									if(latent(data_stream,plotnum,mo) < 0) then
     	  								latent(data_stream,plotnum,mo) = 0.00001
     	  							endif 					 		

@@ -55,7 +55,7 @@ subroutine R3PG_MODEL(output_dim,met,pars,site,thin_event,nopars,nomet, &
         tempAlpha, fCalpha700,fCalpha700_h,fCg700,SWconst1,SWconst2, &
         SWpower1,SWpower2,mort_rate,						 &
         alpha_h, pfs_h, pR_h, mort_rate_h,SLA_h,pCRS,maxavDBH, &
-        fCpFS700,Leaftover,HardPineCondRatio
+        fCpFS700,Leaftover,HardPineCondRatio,fCg700_H,MaxCond_H,LAIgcx_H
 
 	!----------------------------------------------------------------
 	! STAND VARIABLES
@@ -91,7 +91,8 @@ subroutine R3PG_MODEL(output_dim,met,pars,site,thin_event,nopars,nomet, &
 				pS_h,pF_h,delWF_h,delWR_h,delWCR_h,delWS_h,Littfall_h,delLitter_h, &
 				delRoots_h,TotalW_h,TotalLitter_h,delWBud_h,leaved_out, &
 				delWBud_to_WF_h,Tmin_met,fCpFS0,fCpFS,delStems,delLitter, &
-				delRoots,Littfall,Vob,GPPc,GPPc_h
+				delRoots,Littfall,Vob,GPPc,GPPc_h, fCg0_H,fCg_H,LAIratio_pine,LAIratio_hard, &
+				conductance_pine, conductance_hard
 	!----------------------------------------------------------------     
 	! 3PG Variables
 
@@ -154,7 +155,7 @@ subroutine R3PG_MODEL(output_dim,met,pars,site,thin_event,nopars,nomet, &
 	fCpFS700 = pars(47)
 	Leaftover = pars(48)
 	
-    mR = 0.0
+    !mR = 0.0
     fN0 = 0.0
     m0 = 0.0
     BLcond = 0.1 
@@ -162,8 +163,11 @@ subroutine R3PG_MODEL(output_dim,met,pars,site,thin_event,nopars,nomet, &
 	Qa = -90
 	Qb = 0.8
 	gDM_mol = 24
+	tSLA = 5.9705
 	
-	HardPineCondRatio = pars(18)
+	MaxCond_H = pars(18)
+	fCg700_H  = pars(6)
+	LAIgcx_H = pars(9)
 
 	!Unique parameters for the Duke Forest
     if(site(23) == 1) then
@@ -237,9 +241,12 @@ subroutine R3PG_MODEL(output_dim,met,pars,site,thin_event,nopars,nomet, &
     WR = WRi 
     StemNo = StemNoi
     
+    SLA1 = SLA0
+    
     if(LAI_i .NE. -99) then  !OVERWRITE INITIAL FOLIAGE IF INITIAL LAI IS SUPPLIED
     	LAI = LAI_i
     	SLA = SLA1 + (SLA0 - SLA1) * Exp(-ln2 * (StandAge / tSLA)**2)
+    	SLA = SLA1
     	WF1 = LAI_i / (SLA * 0.1D0)
     else
     	if(clm) then
@@ -247,11 +254,11 @@ subroutine R3PG_MODEL(output_dim,met,pars,site,thin_event,nopars,nomet, &
         	SLA = LAI / (WF1+WF2)
     	else
     		SLA = SLA1 + (SLA0 - SLA1) * Exp(-ln2 * (StandAge / tSLA)**2)
+    		SLA = SLA1
         	LAI = (WF1+WF2) * SLA * 0.1D0
     	endif        
     endif
     
-
     !Hardwood LAI   
     if(LAI_i_h .NE. -99) then
     	LAI_h = LAI_i_h
@@ -357,12 +364,20 @@ subroutine R3PG_MODEL(output_dim,met,pars,site,thin_event,nopars,nomet, &
         else
     	  fAge = (1.0D0 / (1.0D0 + (RelAge / rAge) ** nAge))
     	end if
+    	
+    	m =  mR + (1-mR)*FR
 
         ! Calculate atmosphere CO2 modifier
-    	fCalphax = fCalpha700 / (2 - fCalpha700)
-    	fCg0 = fCg700 / (2 * fCg700 - 1)
+        fCalphax = (fCalpha700*m) / (2 - (fCalpha700*m))
+    	!fCalphax = fCalpha700 / (2 - fCalpha700)
     	fCalpha = fCalphax * CO2 / (350D0 * (fCalphax - 1) + CO2)
+    	fCg0 = fCg700 / (2 * fCg700 - 1)
         fCg = fCg0 / (1 + (fCg0 - 1) * CO2 / 350D0)
+        
+        fCalphax_h = fCalpha700_h*m / (2 - fCalpha700_h*m)
+        fCalpha_h = fCalphax_h * CO2 / (350D0 * (fCalphax_h - 1) + CO2) 
+        fCg0_H = fCg700_H / (2 * fCg700_H - 1)
+        fCg_H = fCg0_H / (1 + (fCg0_H - 1) * CO2 / 350D0)
    
     	! competition equation
 		fcomp =  1.0
@@ -370,19 +385,26 @@ subroutine R3PG_MODEL(output_dim,met,pars,site,thin_event,nopars,nomet, &
         !-----------------------------------
         !--  DO WATER BALANCE
         !-----------------------------------
-        LAIratio = (LAI+LAI_h) / LAIgcx
-        conductance = MaxCond * MIN(1.0D0, LAIratio) * fCg * fVPD* fSW * fAge
-
+        LAIratio_pine = (LAI) / LAIgcx
+        LAIratio_hard = (LAI_h) / LAIgcx_H
+        conductance_pine = MaxCond * MIN(1.0D0, LAIratio_pine) * fCg * fVPD * fSW * fAge
+		conductance_hard = MaxCond_H * MIN(1.0D0, LAIratio_hard) * fCg_h * fVPD * fSW
+		if(LAI_h == 0.0) then
+			conductance_hard = 0.0
+		endif
+		conductance = conductance_pine + conductance_hard
         if (conductance == 0 .OR. conductance < 0.0001) then
-        	CanCond = 0.0001D0
-        else
-            CanCond = conductance
+        	conductance = 0.0001D0
         end if
-
-        Transp = REAL(daysInMonth(calmonth),8) * &
-        getTranspiration(SolarRad, VPD, DayLength, BLcond,CanCond,Qa,Qb)*fFrost  !rainfall interception
-        Transp_pine = Transp*(HardPineCondRatio*LAI/(HardPineCondRatio*LAI + LAI_h))
-        Transp_hard = Transp*(LAI_h/(HardPineCondRatio*LAI + LAI_h))
+    
+        Transp_pine = REAL(daysInMonth(calmonth),8) * &
+        			getTranspiration(SolarRad, VPD, DayLength, BLcond, &
+        			conductance_pine,Qa,Qb)*fFrost
+        Transp_hard = REAL(daysInMonth(calmonth),8) * &
+        			getTranspiration((Exp(-k * LAI))*SolarRad, VPD, DayLength, BLcond, &
+        			conductance_hard,Qa,Qb)*fFrost
+        
+        Transp = Transp_pine + Transp_hard
         if (LAImaxIntcptn > 0) then
             LAImaxRatio = (LAI+LAI_h) / LAImaxIntcptn
             Intcptn = MaxIntcptn * MIN(1.0D0, LAImaxRatio)
@@ -420,7 +442,7 @@ subroutine R3PG_MODEL(output_dim,met,pars,site,thin_event,nopars,nomet, &
             CanCover = 1
         end if   
         
-        lightIntcptn = (1.0D0 - (Exp(-k * LAI)))
+		lightIntcptn = (1.0D0 - (Exp(-k * LAI)))
         
     	! Calculate PAR, APAR, APARu and GPP
     	RAD = SolarRad * REAL(DaysInMonth(calmonth), 8)        !MJ/m^2
@@ -429,16 +451,13 @@ subroutine R3PG_MODEL(output_dim,met,pars,site,thin_event,nopars,nomet, &
     	APARu = APAR  
     	! alphac has a new multiplier genetics
     	alphaC = alpha * fNutr * fT * fFrost * genetics * fCalpha * fVPD* fSW * fAge * fcomp
+    		
     	GPPmolc = APARu * alphaC             !mol/m**2    	
         GPPc = (GPPmolc * 12.0) / 100.0D0      !ton/ha	
     	GPPdm = (GPPc * 2.0)
     	NPP = GPPdm * y !assumes respiratory rate is constant
-
-    
- 
+    	
     	!---UNDERSTORY HARDWOOD
-        fCalphax_h = fCalpha700_h / (2 - fCalpha700_h)
-        fCalpha_h = fCalphax_h * CO2 / (350D0 * (fCalphax_h - 1) + CO2) 
     	lightIntcptn_h = (1.0D0 - (Exp(-k * LAI_h)))
     	APAR_h = (PAR - APAR) *lightIntcptn_h  !use the light left over by the understory pines\
     	alphaC_h = alpha_h * fNutr * fT * fFrost * fVPD * fSW * fCalpha_h
@@ -451,19 +470,16 @@ subroutine R3PG_MODEL(output_dim,met,pars,site,thin_event,nopars,nomet, &
 		!-----------------------------------
 		!- DETERMINE BIOMASS CHANGES
 		!-----------------------------------
-
- 		!calculate partitioning coefficients
-    	m = m0 + (1.0D0 - m0) * FR
     	    	
     	fCpFS0 = fCpFS700 / (2 * fCpFS700 - 1)
     	fCpFS = fCpFS0 / (1 + (fCpFS0 - 1) * CO2 / 350D0)
 
-        pFS = (pfsConst * avDBH ** pfsPower)*fCpFS
+        pFS = (pfsConst * avDBH ** pfsPower) *fCpFS
         
         if(clm) then
-          pFS = pFS2 
+          pFS = pFS20 
         endif 
-     	
+
     	pR = pRx
         !pR = pRn + (pRx - pRn)*(1-FR)
     	!pRx * pRn / (pRn + (pRx - pRn) * fVPD * fSW * m)   	
@@ -476,7 +492,6 @@ subroutine R3PG_MODEL(output_dim,met,pars,site,thin_event,nopars,nomet, &
         delWS = nlc*(1/pFS)
         delWCR = nlc*(1/pFS)*pCRS
         
-
     	!calculate litterfall & root turnover
     	delRoots = Rttover * WR
     	
@@ -490,30 +505,6 @@ subroutine R3PG_MODEL(output_dim,met,pars,site,thin_event,nopars,nomet, &
         
         WF2 = 0.0
         
-  
-
-        
-        !if(calmonth == 10) then
-    	!	WF2 = WF2+WF1
-    	!	WF1 = 0.0
-    	!endif
-    	
-    	!delLitter = WF2*mF
-    	!WF2 = WF2 - delLitter
-        
-        !if(calmonth == 11) then
-    	!	delLitter = WF2
-    	!else
-    	!	delLitter = 0.0
-    	!endif
-  
-        !if(delLitter <= WF2) then     
-        !    WF2 = WF2 - delLitter
-        !else 
-        !    WF2 = 0
-        !    WF1 = WF1 - (delLitter - WF2)
-        !endif
-
         WR = WR + delWR - delRoots
         WS = WS + delWS
         WCR = WCR + delWCR
@@ -598,9 +589,9 @@ subroutine R3PG_MODEL(output_dim,met,pars,site,thin_event,nopars,nomet, &
         		delStems = GetMortality(StemNo, WS,mS,wSx1000,thinPower)
                 ! ASSUMES TREES THAT DIED THROUGH SELF-THNNING DIDN"T HAVE FOLIAGE
                 ! ASSUMES TREES THAT DIED ARE SMALLER THAN THE AVERAGE SIZE TREE
-                !WF1 = WF1 - mS * delStems*(WF1/StemNo)
-            	!WF2 = WF2 - mS * delStems*(WF2/StemNo) 
-            	!delLitter = delLitter + mS * delStems*(WF1/StemNo) + mS * delStems*(WF2/StemNo) 
+                WF1 = WF1 - mS * delStems*(WF1/StemNo)
+            	WF2 = WF2 - mS * delStems*(WF2/StemNo) 
+            	delLitter = delLitter + mS * delStems*(WF1/StemNo) + mS * delStems*(WF2/StemNo) 
         		WR = WR - mS * delStems * (WR / StemNo)
                 WS = WS - mS * delStems * (WS / StemNo)
                 WCR = WCR - mS * delStems * (WCR / StemNo)
@@ -651,6 +642,7 @@ subroutine R3PG_MODEL(output_dim,met,pars,site,thin_event,nopars,nomet, &
              SLA = LAI / (WF1+WF2)
         else
              SLA = SLA1 + (SLA0 - SLA1) * Exp(-ln2 * (StandAge / tSLA)**2)
+             SLA = SLA1
              LAI = (WF1+WF2) * SLA * 0.1D0
         endif
         !Hardwood LAI

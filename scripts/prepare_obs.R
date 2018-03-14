@@ -128,12 +128,15 @@ prepare_obs <- function(obs_set,FR_fert_assumption,use_fol){
   
   observations$ind_removed = -99
   
+  
+  observations$Ctrans_sd = observations$Ctrans_sd*10
+  
   if(use_ctrans == 0){
     observations$Ctrans = -99
     observations$Ctrans_H = -99
   }
   
-  if(use_et_uncert == 0){
+  if(use_et == 0){
     observations$ET = -99
   }
   
@@ -142,7 +145,6 @@ prepare_obs <- function(obs_set,FR_fert_assumption,use_fol){
   }
   
   if(use_ctrans_uncert == 0){
-    print('here')
     observations$Ctrans_sd = 0.001
     observations$Ctrans_H_sd = 0.001
   }
@@ -154,8 +156,6 @@ prepare_obs <- function(obs_set,FR_fert_assumption,use_fol){
   if(use_gep_uncert == 0){
     observations$GEP_sd = 0.001
   }
-  
-  
   
   met_in = NULL
   for(s in 1:length(all_studies)){
@@ -208,7 +208,10 @@ prepare_obs <- function(obs_set,FR_fert_assumption,use_fol){
   nc2 = which(initdata$PlotID == 41001)
   IMP = which(initdata$PlotID > 50000 | initdata$PlotID < 20000)
   test = which(initdata$PlotID < 50000 | (initdata$PlotID >= 52001 & initdata$PlotID <=52467) | (initdata$PlotID >= 72001 & initdata$PlotID <= 72076))
-  
+  duke_1plot = which(initdata$PlotID == 40001)
+  duke_control = which(initdata$PlotID > 40000 & initdata$PlotID < 40001 & initdata$FertFlag == 0 & (initdata$CO2flag == -99 | initdata$CO2flag == 0)) 
+  duke_control_co2 = which(initdata$PlotID > 40000 & initdata$PlotID < 40001 & initdata$FertFlag == 0) 
+  duke_control_nfert = which(initdata$PlotID > 40000 & initdata$PlotID < 40001 & (initdata$CO2flag == -99 | initdata$CO2flag == 0)) 
   all_plots =  seq(1,length(initdata$PlotID),1)
   
   #-----------------------------------------------------------------
@@ -240,7 +243,7 @@ prepare_obs <- function(obs_set,FR_fert_assumption,use_fol){
     }else if(obs_set == 8){
       index = flux_sites
     }else if(obs_set == 9){
-      index =  duke_nc2
+      index =  duke_1plot
     }else if(obs_set == 10){
       index = not_duke_nc2
     }else if(obs_set == 11){
@@ -269,6 +272,12 @@ prepare_obs <- function(obs_set,FR_fert_assumption,use_fol){
       index = duke_nc2_setres_wcross_pinemap
     }else if(obs_set == 23){
       index = test
+    }else if(obs_set == 24){
+      index = duke_control
+    }else if(obs_set == 25){
+      index = duke_control_nfert
+    }else if(obs_set == 26){
+      index = duke_control_co2
     }
   }else{
     
