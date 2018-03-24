@@ -1,4 +1,4 @@
-EnKF_DAPPER <- function(psi, init_Fr, observed){ 
+EnKF_DAPPER <- function(psi, init_Fr, observed, Fr_uncert, LAI_uncert, run_name){ 
   #rm(list = ls())
   if (!"mvtnorm" %in% installed.packages()) install.packages("mvtnorm")
   if (!"ncdf4" %in% installed.packages()) install.packages("ncdf4")
@@ -12,47 +12,18 @@ EnKF_DAPPER <- function(psi, init_Fr, observed){
   #EnKF_directory = '/Users/laurapuckett/Documents/Research/Current/DAPPER/analysis_tools/'
   setwd(EnKF_directory)
   
-  #### define variables needed for DAPPER functions
-  #working_directory = pathDAPPER # this is referenced in prepare_update_states(), and prepare_obs()
-  #input_directory = '/Users/laurapuckett/Documents/Research/Current/DAPPER_inputdata/'
-  #output_directory = '/Users/laurapuckett/Documents/Research/Current/DAPPER_projects/'
-  #plotlist = c(40001) #THIS IS Duke Forest
-  #focal_plotID = plotlist #
-  
-  #### source required functions
+  #### source the required functions
   source('prepare_update_states.R')
   source('update_states.R')
   
   #---------------------------------------------------------
   ###### MAIN EnKF CODE ######
   
-  #See table 1 in Rastetter et al. 2010
-  #nmembers = 200
-  #NO_UNCERT = FALSE
-  #ADD_NOISE_TO_OBS = FALSE
-  #USE_SYNTHETIC_DATA = TRUE
-  #USE_OBS_COORD = FALSE
-  #USE_OBS_CONTRAINT = TRUE
   
-  
-  #start_forecast_step = 1
-  
-  
-  # Define variables needed for prepare_update_states or update_states
-  #plotnum = 1
-  #all_studies = c('/Duke/TIER4_Duke')
-  
-  
-  #### get obs and build array for all months
-
-  #original_data = read.csv(file = paste(EnKF_directory,"/duke_input.csv", sep = ""), header = TRUE, sep = ",")
-  #realdata = original_data[which(original_data$PlotID == 40001), ]
-  #observed = realdata[which(realdata$LAI != "NA" & realdata$LAI != -99 & realdata$Age != -99), ]
   years = observed$Year
   startyear = min(years)
   startmonth = min(observed$Month[which(observed$Year == startyear)])
   endyear = max(years)
-  endmonth = max(realdata$month[which(realdata$year == endyear)])
   start_age = observed$Age[which(observed$Year == startyear && observed$Month == startmonth)]
   nmonths = (endyear - startyear +1)*12
   observed_months = (observed$Year-startyear)*12 + observed$Month
@@ -100,16 +71,17 @@ EnKF_DAPPER <- function(psi, init_Fr, observed){
     z[,] = NA
   }
   
-  # Define variables for Qt matrix
+  # Defining variables for Qt matrix
   # need to incorporate rho into sigma later
+  # the values a re squared, because the variance, not std. dev., is what is used in rmvnorm()
   sigma = array(data = NA, dim = nstates)
-  sigma[1] = 0.01*median_pars[52] # gamma_LAI
-  sigma[2] = median_pars[53] +  median_pars[64]*init_states[2] # WS, gamma_WS+ rho_WS * last stem measurement
-  sigma[3] = median_pars[54] # WCR
-  sigma[4] = median_pars[55] ### check this one ## WFR
-  sigma[5] = .1 # gamma_Stem_Count - look into this, should have a gamma
-  sigma[6] = .1 # gamma_ASW
-  sigma[7] = 0.001
+  sigma[1] = (LAI_uncert)^2 #0.01*median_pars[52] # gamma_LAI
+  sigma[2] = (median_pars[53] +  median_pars[64]*init_states[2])^2 # WS, gamma_WS+ rho_WS * last stem measurement
+  sigma[3] = (median_pars[54])^2 # WCR
+  sigma[4] = (median_pars[55])^2 ### check this one ## WFR
+  sigma[5] = (.1)^2 # gamma_Stem_Count - look into this, should have a gamma
+  sigma[6] = (.1)^2 # gamma_ASW
+  sigma[7] = (Fr_uncert)^2 ##0.001
   
   Qt = diag(sigma) 
   #rho_LAI = 0 #median_pars[63]
@@ -122,7 +94,7 @@ EnKF_DAPPER <- function(psi, init_Fr, observed){
   #Measurement error 
   #psi = 0.0001 # function input for now
   
-  Qt_init = Qt*10
+  Qt_init = Qt
   x <- array(NA,dim=c(nmonths,nmembers,nstates))
   x[1,,] <- rmvnorm(n=nmembers, mean=init_states, sigma=as.matrix(Qt_init)) 
   x[1,which(x[1,,7] < 0),7] = 0
@@ -142,6 +114,7 @@ EnKF_DAPPER <- function(psi, init_Fr, observed){
     site[5] = start_age
     #Create array to hold DAPPER predictions for each ensemble
     x_star = array(NA, dim = c(nmembers,nstates))
+    x_corr = array(NA, dim = c(nmembers,nstates))
     for(m in 1:nmembers){
       
       ### updates the states in site array each timestep 
@@ -161,8 +134,27 @@ EnKF_DAPPER <- function(psi, init_Fr, observed){
       
       #Fill x_star with states from DAPPER
       x_star[m,] = c(DAPPER_states,site[12]) # all of the updated states for the current member iteration
+      #NQt = rmvnorm(n=1, sigma=as.matrix(Qt))
+      NQt = array(NA, dim = c(7))
+      NQt[1] = rnorm(n=1, 0, sigma[1])
+      NQt[2] = rnorm(n=1, 0, sigma[2])
+      NQt[3] = rnorm(n=1, 0, sigma[3])
+      NQt[4] = rnorm(n=1, 0, sigma[4])
+      NQt[5] = rnorm(n=1, 0, sigma[5])
+      NQt[6] = rnorm(n=1, 0, sigma[6])
+      NQt[7] = rnorm(n=1, 0, sigma[7])
+      x_corr[m,] = x_star[m,] + NQt
+      
+      if(x_corr[m, 7] >1)
+      {
+        x_corr[m,7] = 1
+      }
+      for(sta in 1:nstates){
+        if(x_corr[m, sta] < 0){
+          x_corr[m, sta] = 0
+        }
+      }
     }
-    
     
     InitialMonth = InitialMonth + 1
     if(InitialMonth > 12){
@@ -170,23 +162,6 @@ EnKF_DAPPER <- function(psi, init_Fr, observed){
       InitialYear = InitialYear + 1
     }
     start_age = start_age + 1/12
-    
-    #Corruption [nmembers x nstates] 
-    NQt = rmvnorm(n=nmembers, sigma=as.matrix(Qt)) # matrix of diagaonal - error term (noise step in forecasting code)
-    
-    #Matrix Corrupted state estimate [nmembers x nstates]
-    x_corr = x_star + NQt
-    for(mem in 1:nmembers){
-      if(x_corr[mem, 7] >1)
-      {
-        x_corr[mem,7] = 1
-      }
-      for(sta in 1:nstates){
-        if(x_corr[mem, sta] < 0){
-          x_corr[mem, sta] = 0
-        }
-      }
-    }
     
     #Obs for time step
     z_index = which(!is.na(z[i, ]))
@@ -267,9 +242,11 @@ EnKF_DAPPER <- function(psi, init_Fr, observed){
     }
   }
   
+  ###### save x as .rdata file ####
+  saveRDS(x, file=paste(EnKF_directory, "/x.rds", sep = ""))
   ###### PLOTS #############
   
-  par(mfrow = c(3,3))
+  par(mfrow = c(3,3), oma=c(0,0,2,0))
   # LAI
   plot(x[ , 1, 1],type='l',ylim=c(0,5), main = 'LAI')
   for (n in 2:nmembers)
@@ -277,6 +254,8 @@ EnKF_DAPPER <- function(psi, init_Fr, observed){
     points(x[ , n, 1],type='l') 
   }
   points(z, col = 'red')
+  
+  title(run_name, outer = TRUE, cex = 1.5)
   
   # WS
   ylim = range(c(x[ ,,2]))
@@ -293,20 +272,13 @@ EnKF_DAPPER <- function(psi, init_Fr, observed){
     points(x[ , n, 7],type='l') 
   }
   
-  #ylim = range(c(x[ , ,3]))
-  #plot(x[ , 1, 3],type='l',ylim=ylim)
-  #for (n in 2:nmembers)
-  #{
-  #  points(x[ , n, 3],type='l') 
-  #}
-  
   quant_WS = array(NA,dim=c(nmonths, 3))
   quant_LAI = array(NA, dim = c(nmonths, 3))
   quant_Fr = array(NA, dim = c(nmonths, 3))
   for (n in 1:nmonths){
-    quant_WS[n, ] = quantile(x[n, , 2], c(0.25,0.5,0.75))
-    quant_LAI[n, ] = quantile(x[n, , 1], c(0.25, 0.5, 0.75))
-    quant_Fr[n, ] = quantile(x[n, , 7], c(0.25, 0.5, 0.75))
+    quant_WS[n, ] = quantile(x[n, , 2], c(0.10,0.5,0.90))
+    quant_LAI[n, ] = quantile(x[n, , 1], c(0.10, 0.5, 0.90))
+    quant_Fr[n, ] = quantile(x[n, , 7], c(0.10, 0.5, 0.90))
   }
   plot(quant_LAI[ , 1], type = 'l', ylim = range(quant_LAI, na.rm = TRUE), xlab = 'months', ylab = 'LAI')
   lines(quant_LAI[ ,2])
@@ -320,13 +292,12 @@ EnKF_DAPPER <- function(psi, init_Fr, observed){
   lines(quant_Fr[ ,2])
   lines(quant_Fr[ ,3])
   
-  #difference between 75% and 25% interval over time
-  plot(quant_WS[ ,3] - quant_WS[ ,1], type = 'l')
-  temp = z
-  temp[!is.na(temp)] = 4
-  points(temp[ ,1])
+  plot(0,0) # place-holder
   
+  hist(x[nmonths, , 3], main = 'WS at last step')
   hist(x[nmonths, , 7], main = 'Fr at last step')
+
+  #### need to save the data as .rdata file
 }
 
 
