@@ -1,0 +1,294 @@
+---
+title: "Duke Canopy Transpiration"
+output:
+  html_document: default
+  pdf_document: default
+  word_document: default
+---
+
+```{r setup, include=TRUE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+#Plot priors
+```{r}
+rm(list = ls())
+priors_file = "/Users/laurapuckett/Documents/Research/Current/DAPPER/priors/duke_priors.csv"
+priors = read.csv(priors_file)
+parnames = priors$parnames
+```
+#Set-up DAPPER configuration shared across simulations
+```{r}
+#---CONTROL INFORMATION----------------------------
+working_directory =  '/Users/laurapuckett/Documents/Research/Current/DAPPER/'
+input_directory = '/Users/laurapuckett/Documents/Research/Current/DAPPER_inputdata/'
+niter = 50000 #150000 #10000 #500000#15000000 #5000000 # 5000000
+chain_number = 1
+burn =  25000 #75000 #25000 #15000000 # 100000 #2500000 #10000000 #500000 #2500000
+thin_interval = 10 # 10 #10 #10 #10 # 50 #500 #100 #100 #100
+run_name = 'Duke_for_EnKF_4'
+restart_from_chain = FALSE
+restart_chain =  NA #'state_space.1.2017-06-25.16.52.16.Rdata'
+priors_file = 'default_priors.csv'
+create_plot = TRUE
+only_create_plot = FALSE
+obs_set = 14 #Select which plots are used in analysis.  See prepare_obs.R for number guide 
+focal_plotID = NA #30001 #Setting a value here causes only a single plot to be simulated and fit
+val_set = 0  #Select which plots are withheld from fitting.  0 includes all plot
+fr_model = 1  # 1 = estimate FR for each plot, 2 = empirical FR model
+FR_fert_assumption = 0 #0 = assume fertilization plots have FR = 1, 1 = do not assume fertilization plots have FR = 1
+FR_separate_npar_groups = TRUE  #Assigns a different parameter group to groups of FR values
+use_fol = TRUE  #TRUE= use allometric estimates of foliage biomass in fitting
+use_dk_pars = 1  #0 = do not use 3 specific parameters for the Duke site, 1 = use the 3 specific parameters
+use_age_edc = 0  #0 = do not use an ecological constraint on the age function (see code); 1 = use the constraint
+use_sm_edc = 0  #0 = do not use an ecological constraint on the soil moisture function (see code); 1 = use the constraint
+use_fr_edc = 0   #0 = do note use an ecological constraint on the SI - FR function (see code); 1 = use the constraint
+nstreams = 19
+state_space = 1
+tracked_plotnum = 1
+windows_machine = FALSE
+#----------------------------------------------------
+all_studies = c(
+  #'/SETRES/TIER4_SETRES',
+  #'/PINEMAP/TIER3_PINEMAP',
+  #'/NC2/TIER4_NC2',
+  '/Duke/TIER4_Duke'
+  #'/Waycross/TIER4_Waycross',
+  #'/FMC_Thinning/TIER1_FMC_Thinning',
+  #'/FBRC_AMERIFLU/TIER2_AMERIFLU',
+  #'/FBRC_IMPAC/TIER1_IMPAC',
+  #'/FBRC_IMPAC2/TIER2_IMPAC2',
+  #'/FBRC_PPINES/TIER2_PPINES',
+  #'/FBRC_VAR1/TIER2_VAR1',
+  #'/FBRC_WPPINES/TIER2_WPPINES',
+  #'/FMC_IMP_TIER1/TIER1_IMP',
+  #'/FMC_IMP_TIER2/TIER2_IMP',
+  #'/FPC_RS1/TIER1_RS1',
+  #'/FPC_RS2/TIER1_RS2',
+  #'/FPC_RS3/TIER1_RS3',
+  #'/FPC_RS5/TIER1_RS5',
+  #'/FPC_RS6/TIER1_RS6',
+  #'/FPC_RS7/TIER1_RS7',
+  #'/FPC_RS8/TIER1_RS8',
+  #'/FPC_RW18/TIER2_RW18'
+  #'/FPC_RW19/TIER2_RW19',
+  #'/FPC_RW20/TIER2_RW20',
+  #'/PMRC_CPCD96_TIER1/TIER1_CPCD96',
+  #'/PMRC_CPCD96_TIER2/TIER2_CPCD96',
+  #'/PMRC_HGLOB87/TIER1_HGLOB87',
+  #'/PMRC_SAGCD96_TIER1/TIER1_SAGCD96',
+  #'/PMRC_SAGCD96_TIER2/TIER2_SAGCD96',
+  #'/PMRC_SAGSP85_TIER1/TIER1_SAGSP85',
+  #'/PMRC_SAGSP85_TIER2/TIER2_SAGSP85',
+  #'/PMRC_WGCD01_TIER1/TIER1_WGCD01',
+  #'/PMRC_WGCD01_TIER2/TIER2_WGCD01',
+  #'/TAMU_GSSS/TIER1_GSSS'
+  #'/FIA/VA_FIA'
+)
+
+#---SELECT COMPONENTS THAT ARE ALLOWED TO HAVE UNCERTAINITY--
+plot_WSx1000 = FALSE  #include plot specific WSx1000 parameter
+plot_thinpower = FALSE #include plot specific thinpower parameter
+plot_mort_rate = FALSE #include plot specific mortality rate parameter
+
+setwd(paste(working_directory,'/scripts/',sep=''))
+source('prepare_DAPPER_MCMC.R')
+```
+
+
+#Analysis
+
+```{r eval=TRUE}
+library('coda')
+library('corrplot')
+working_directory = "/Users/laurapuckett/Documents/Research/Current/DAPPER/"
+priors_file = 'duke_priors.csv'
+priors = read.csv(paste(working_directory,'/priors/',priors_file,sep=''))
+
+par_index = which(priors$fit_par == 0)
+par_index =par_index[par_index < 77]
+names_par_index = priors$parnames[par_index]
+
+setwd(paste(working_directory,'/chains/',sep=''))
+#Chain 1
+datafilename = "Duke_for_EnKF_1.1.2018-03-30.15.11.15.Rdata"
+load(datafilename)
+mcmc_out1 = mcmc(data = accepted_pars_thinned_burned[,par_index])
+colnames(mcmc_out1) = names_par_index
+mcmc_out_matrix =  accepted_pars_thinned_burned[,par_index]
+
+#Chain 2
+datafilename = "Duke_for_EnKF_2.1.2018-03-30.15.59.15.Rdata"
+load(datafilename)
+mcmc_out2 = mcmc(data = accepted_pars_thinned_burned[,par_index])
+colnames(mcmc_out2) = names_par_index
+
+#Chain 3
+datafilename = "Duke_for_EnKF_3.1.2018-03-30.16.54.16.Rdata"
+load(datafilename)
+mcmc_out3 = mcmc(data = accepted_pars_thinned_burned[,par_index])
+colnames(mcmc_out3) = names_par_index
+
+#Chain 4
+datafilename = "Duke_for_EnKF_4.1.2018-03-31.23.39.23.Rdata"
+load(datafilename)
+mcmc_out4 = mcmc(data = accepted_pars_thinned_burned[,par_index])
+colnames(mcmc_out4) = names_par_index
+
+mcmc_out = mcmc.list(mcmc_out1,mcmc_out2,mcmc_out3,mcmc_out4)
+
+setwd(paste(working_directory,'/figures/',sep=''))
+pdf('GEP_ET_T_analysis.pdf')
+plot(mcmc_out)
+corrplot(cor(mcmc_out_matrix))
+dev.off()
+
+gelman.diag(mcmc_out)
+GEP_ET_T_gelman = gelman.diag(mcmc_out)
+```
+
+#Analysis of chains
+
+```{r}
+library('coda')
+library('corrplot')
+
+priors_file = 'duke_priors.csv'
+priors = read.csv(paste(working_directory,'/priors/',priors_file,sep=''))
+
+par_index = which(priors$fit_par == 0)
+par_index =par_index[par_index < 77]
+names_par_index = parnames[par_index]
+
+setwd(paste(working_directory,'/chains/',sep=''))
+#Chain 1
+datafilename = "Duke_for_EnKF_1.1.2018-03-30.15.11.15.Rdata"
+load(datafilename)
+mcmc_out1 = mcmc(data = accepted_pars_thinned_burned[,par_index])
+rm(accepted_pars_thinned_burned)
+
+setwd(paste(working_directory,'/chains/',sep=''))
+
+
+setwd(paste(working_directory,'/figures/',sep=''))
+pdf('Duke_1.pdf')
+par(mfrow=c(3,3))
+for(p in 1:length(mcmc_out1[1,])){
+  xlim = range(density(mcmc_out1[,p])$x)
+  ylim = range(density(mcmc_out1[,p])$y)
+ plot(density(mcmc_out1[,p]),xlim=xlim,ylim=ylim,col='black',main=parnames[par_index[p]],xlab='value')
+ legend('topleft',c('Duke','Uncert'),col=c('black','red'),lty=c('solid','solid'),bty='n')
+}
+dev.off()
+```
+
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+
+#### set working directory
+pathDAPPER = '/Users/laurapuckett/Documents/Research/Current/DAPPER/' 
+EnKF_directory = '/Users/laurapuckett/Documents/Research/Current/DAPPER/analysis_tools/'
+setwd(EnKF_directory)
+
+#### source required functions
+source('prepare_update_states.R')
+source('update_states.R')
+source('EnKF_DAPPER.R')
+
+#### define variables needed for DAPPER functions
+working_directory = pathDAPPER # this is referenced in prepare_update_states(), and prepare_obs()
+input_directory = '/Users/laurapuckett/Documents/Research/Current/DAPPER_inputdata/'
+output_directory = '/Users/laurapuckett/Documents/Research/Current/DAPPER_projects/'
+plotlist = c(40005) #Duke Forest 40001, 40005
+focal_plotID = plotlist #
+  
+  
+#---------------------------------------------------------
+nmembers = 500
+NO_UNCERT = FALSE
+#ADD_NOISE_TO_OBS = FALSE
+#USE_SYNTHETIC_DATA = TRUE
+#USE_OBS_COORD = FALSE
+USE_OBS_CONTRAINT = TRUE
+  
+# Define variables needed for prepare_update_states or update_states
+plotnum = 1
+all_studies = c('/Duke/TIER4_Duke')
+  
+original_data = read.csv(file = paste(EnKF_directory,"/duke_input.csv", sep = ""), header = TRUE, sep = ",")
+realdata = original_data[which(original_data$PlotID == plotlist), ]
+observed = realdata[which(realdata$LAI != "NA" & realdata$LAI != -99 & realdata$Age != -99), ]
+
+run_name = 'EnKF_plot_40005'
+restart_chain <- c('Duke_for_EnKF_1.1.2018-03-30.15.11.15.Rdata')
+load(paste(working_directory,'/chains/',restart_chain,sep=''))
+priors_file = 'duke_priors.csv'
+####function output: <-   readRDS(paste(EnKF_directory, "/x.RDS", sep = ""))
+setwd(EnKF_directory)
+```
+
+```{r, echo = FALSE}
+ntrials = 4
+
+Fr_uncert = 0.1 # variation in fr from step to step in model
+psi = 0.05 # uncertainty in lai observations
+LAI_uncert = 0.145 # variation in lai from step to step, comes from chain - MAKE DYNAMIC
+init_Fr = 0.5 
+
+obs_used = "all"
+title = paste("Fr_uncert = ", Fr_uncert, ", psi = ", psi^2, ", obs = ", obs_used, ", LAI_uncert = ", LAI_uncert, sep = "")
+print(title)
+observed = realdata[which(realdata$LAI != "NA" & realdata$LAI != -99 & realdata$Age != -99), ]
+EnKF_DAPPER(psi, init_Fr, observed, Fr_uncert, LAI_uncert, run_name = title)
+output_all <-   readRDS(paste(EnKF_directory, "/x.RDS", sep = ""))
+dim_output = dim(output_all)
+output_trials = array(NA, dim = c(ntrials, dim_output))
+output_trials[1, , , ] = output_all
+
+
+obs_used = "february"
+title = paste("Fr_uncert = ", Fr_uncert, ", psi = ", psi^2, ", obs = ", obs_used, ", LAI_uncert = ", LAI_uncert, sep = "")
+print(title)
+observed = realdata[which(realdata$LAI != "NA" & realdata$LAI != -99 & realdata$Age != -99), ]
+observed = observed[which(observed$Month == 2), ]  # | observed$Year == min(observed$Year))
+EnKF_DAPPER(psi, init_Fr, observed, Fr_uncert, LAI_uncert, run_name = title)
+output_february <-   readRDS(paste(EnKF_directory, "/x.RDS", sep = ""))
+output_trials[2, , , ] = output_february
+
+
+obs_used = "august"
+title = paste("Fr_uncert = ", Fr_uncert, ", psi = ", psi^2, ", obs = ", obs_used, ", LAI_uncert = ", LAI_uncert, sep = "")
+print(title)
+observed = realdata[which(realdata$LAI != "NA" & realdata$LAI != -99 & realdata$Age != -99), ]
+observed = observed[which(observed$Month == 8), ] #| observed$Year == min(observed$Year)
+EnKF_DAPPER(psi, init_Fr, observed, Fr_uncert, LAI_uncert, run_name = title)
+output_august <-   readRDS(paste(EnKF_directory, "/x.RDS", sep = ""))
+output_trials[3, , , ] = output_august
+
+
+obs_used = "february & august"
+title = paste("Fr_uncert = ", Fr_uncert, ", psi = ", psi^2, ", obs = ", obs_used, ", LAI_uncert = ", LAI_uncert, sep = "")
+print(title)
+setwd(EnKF_directory)
+observed = realdata[which(realdata$LAI != "NA" & realdata$LAI != -99 & realdata$Age != -99), ]
+observed = observed[which(observed$Month == 8 | observed$Month == 2), ]
+EnKF_DAPPER(psi, init_Fr, observed, Fr_uncert, LAI_uncert, run_name = title)
+output_august_february <-   readRDS(paste(EnKF_directory, "/x.RDS", sep = ""))
+output_trials[4, , , ] = output_august_february
+dim_output = dim(output_trials)
+t_end = dim_output[2]
+range_fr = range(output_trials[ ,t_end,,7])
+
+load(paste(working_directory,'/chains/',restart_chain,sep=''))
+fr_from_mcmc = accepted_pars_thinned_burned[ , 77 + plotlist - 40000]
+
+
+par(mfrow = c(1,1))
+plot(density(output_trials[1,t_end, , 7]), col = "black", xlim = c(range_fr), ylim = c(0,10))
+lines(density(output_trials[2,t_end, , 7]), col = "brown")
+lines(density(output_trials[3,t_end, , 7]), col = "green")
+lines(density(output_trials[4,t_end, , 7]), col = "orange")
+lines(density(fr_from_mcmc), col = 'red')
+legend(x = "top",inset = 0,
+legend = c("all","february","august","feb & august", "mcmc"), col=c("black","brown","green","orange", "red"), lwd=5, cex= 0.75, horiz = TRUE)
+```
