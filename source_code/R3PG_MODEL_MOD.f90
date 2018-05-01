@@ -163,11 +163,11 @@ subroutine R3PG_MODEL(output_dim,met,pars,site,thin_event,nopars,nomet, &
 	Qa = -90
 	Qb = 0.8
 	gDM_mol = 24
-	tSLA = 5.9705
+	fullCanAge = 3.0
 	
 	MaxCond_H = pars(18)
 	fCg700_H  = pars(6)
-	LAIgcx_H = pars(9)
+	LAIgcx_H = pars(11)
 
 	!Unique parameters for the Duke Forest
     if(site(23) == 1) then
@@ -241,7 +241,7 @@ subroutine R3PG_MODEL(output_dim,met,pars,site,thin_event,nopars,nomet, &
     WR = WRi 
     StemNo = StemNoi
     
-    SLA1 = SLA0
+    !SLA1 = SLA0
     
     if(LAI_i .NE. -99) then  !OVERWRITE INITIAL FOLIAGE IF INITIAL LAI IS SUPPLIED
     	LAI = LAI_i
@@ -421,6 +421,8 @@ subroutine R3PG_MODEL(output_dim,met,pars,site,thin_event,nopars,nomet, &
         endif
         
         water_balance_error = 0
+        
+        runoff = 0
 
         if (ASW < MinASW) then
             water_balance_error = MinASW - ASW
@@ -564,6 +566,7 @@ subroutine R3PG_MODEL(output_dim,met,pars,site,thin_event,nopars,nomet, &
      		WF_h = WF_h - WF_h*(delStemN/StemNo)
      		WR_h = WR_h - WR_h*(delStemN/StemNo)
      		WCR_h = WCR_h - WCR_h*(delStemN/StemNo) 	
+     		WBud_h = WBud_h - WBud_h*(delStemN/StemNo) 	
         	StemNo = StemNo - delStemN
         endif
 
