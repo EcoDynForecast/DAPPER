@@ -2,9 +2,7 @@ EnKF_DAPPER <- function(psi, init_Fr, observed, Fr_uncert, LAI_uncert, run_name)
   #rm(list = ls())
   if (!"mvtnorm" %in% installed.packages()) install.packages("mvtnorm")
   if (!"ncdf4" %in% installed.packages()) install.packages("ncdf4")
-  if (!"glmtools" %in% installed.packages()) install.packages('glmtools', repos=c('http://cran.rstudio.com', 'http://owi.usgs.gov/R'))
   library(mvtnorm)
-  library(glmtools)
   library(ncdf4)
   
   #### set working directory
@@ -18,7 +16,6 @@ EnKF_DAPPER <- function(psi, init_Fr, observed, Fr_uncert, LAI_uncert, run_name)
   
   #---------------------------------------------------------
   ###### MAIN EnKF CODE ######
-  
   
   years = observed$Year
   startyear = min(years)
@@ -43,6 +40,7 @@ EnKF_DAPPER <- function(psi, init_Fr, observed, Fr_uncert, LAI_uncert, run_name)
   
   # Retreieve variables from prepare_update_states() needed for update_states()
   #mo = 1
+  plotnum = plotlist - 40000
   prep_update_states <- prepare_update_states(plotnum, startyear, nmonths, start_age, endyear)
   output_dim = prep_update_states$output_dim
   pars = prep_update_states$pars
@@ -53,16 +51,16 @@ EnKF_DAPPER <- function(psi, init_Fr, observed, Fr_uncert, LAI_uncert, run_name)
   thin_event = prep_update_states$thin_event
   exclude_hardwoods = prep_update_states$exclude_hardwoods
   median_pars = prep_update_states$median_pars
-  ASW_max = prep_update_states$ASW_max
+  #ASW_max = prep_update_states$ASW_max
   
   #Initial states
   nstates <- 7 #nlayers_init
-  init_LAI = 1.1 #realdata$LAI[1] # 
-  init_WS = 49.56 # WSi
-  init_WCR = 13.82 # WCRi
-  init_WR = 2.68 # WRi was 0.16
-  init_Stem_Count = 1511 #"StemNoi"
-  init_ASW = ASW_max 
+  init_LAI = observed$LAI[1] # 
+  init_WS = site[8] # WSi
+  init_WCR = site[20] # WCRi
+  init_WR = site[7] # WRi 
+  init_Stem_Count = site[9]
+  init_ASW = site[10] # initASW = MaxASW
   #init_Fr = site[12] - function input for now
   init_states <- array(data = c(init_LAI, init_WS, init_WCR, init_WR, init_Stem_Count, init_ASW, init_Fr), dim = c(nstates,1))
   
@@ -107,6 +105,7 @@ EnKF_DAPPER <- function(psi, init_Fr, observed, Fr_uncert, LAI_uncert, run_name)
   dit = array(NA,dim=c(nmembers,nstates))
   #dit_star = array(NA,dim=c(nmembers,nstates)) #Adaptive noise estimation
   
+  #site[11] = plot_lat # lat
   #loop through time steps
   for(i in 2:nmonths){ # runs 3PG for one time step for every member
     site[3] = InitialYear
@@ -127,10 +126,10 @@ EnKF_DAPPER <- function(psi, init_Fr, observed, Fr_uncert, LAI_uncert, run_name)
       site[9] = x[i-1, m, 5] #"StemNoi"
       site[10] = x[i-1, m, 6] #"ASWi"
       site[20] = x[i-1, m, 3] # WCRi
-      site[26] = x[i-1, m, 1] # same as WFi above
+      site[26] = x[i-1, m, 1] # LAI
       site[12] = x[i-1,m,7] #FR
       
-      DAPPER_states <- update_states(mo = i, plotnum, output_dim, pars, site, nopars, nosite, thin_event, met, exclude_hardwoods, median_pars, ASW_max)
+      DAPPER_states <- update_states(mo = i, pixelnum = 1, output_dim, pars, site, nopars, nosite, thin_event, met, exclude_hardwoods, median_pars)
       
       #Fill x_star with states from DAPPER
       x_star[m,] = c(DAPPER_states,site[12]) # all of the updated states for the current member iteration
@@ -189,7 +188,7 @@ EnKF_DAPPER <- function(psi, init_Fr, observed, Fr_uncert, LAI_uncert, run_name)
       
       
       #Ensemble mean
-      ens_mean = apply(x_corr, 2, mean)
+      ens_mean = apply(x_corr,2, mean)
       #ens_mean_star = apply(x_star, 2, mean) #Adaptive noise estimation
       
       #Loop through ensemble members
@@ -243,58 +242,45 @@ EnKF_DAPPER <- function(psi, init_Fr, observed, Fr_uncert, LAI_uncert, run_name)
   }
   
   ###### save x as .rdata file ####
-  saveRDS(x, file=paste(EnKF_directory, "/x.rds", sep = ""))
+  saveRDS(x, file=paste(EnKF_directory, "/x_", run_name, ".RDS", sep = ""))
   ###### PLOTS #############
   
-  par(mfrow = c(3,3), oma=c(0,0,2,0))
-  # LAI
-  plot(x[ , 1, 1],type='l',ylim=c(0,5), main = 'LAI')
+  par(mfrow = c(3,1), oma=c(0,0,2,0))
+  
+  #LAI
+  plot(startyear + (1/12)*1:nrow(x),x[ , 1, 1],type='l',ylim=c(0,5), main = 'LAI')
   for (n in 2:nmembers)
   {
-    points(x[ , n, 1],type='l') 
+    points(startyear + (1/12)*1:nrow(x),x[ , n, 1],type='l')
   }
-  points(z, col = 'red')
+  points(startyear + (1/12)*1:nrow(z), z, col = 'red')
+  
+  # NOT REAL DATA - making example diagram for paper
+  # axis1 = c(1,2,3,4,5);
+  # plot(axis1,x[8:12, 1, 1],type='l',ylim=c(1,4.5), main = 'LAI', xlab = 'month', ylab = 'LAI', xaxt='n')
+  # axis(1,at=seq_along(axis1), labels=c("aug","sep","oct","nov","dec"), las=2)
+  # for (n in 40:70)
+  # {
+  #   points(axis1,x[8:12, n, 1],type='l') 
+  # }
+  # points(c(3,4,5), c(3.2, 2.5, 2.2), col = 'red', pch = 8)
+  # 
+  # legend(x = "topright",inset = 0,
+  #        legend = c("ensemble members", "observations"),     col=c("black","red"), lwd=5, cex= 0.75, horiz = TRUE, lty = c(1,0), pch = c(26,8))
+  # 
   
   title(run_name, outer = TRUE, cex = 1.5)
-  
-  # WS
-  ylim = range(c(x[ ,,2]))
-  plot(x[ , 1, 2],type='l',ylim=ylim, main = 'WS')
-  for (n in 2:nmembers)
-  {
-    points(x[ , n, 2],type='l') 
-  }
-  #Fr
-  ylim = range(c(x[ ,,7]))
-  plot(x[ , 1, 7],type='l',ylim=ylim, main = 'Fr')
-  for (n in 2:nmembers)
-  {
-    points(x[ , n, 7],type='l') 
-  }
-  
-  quant_WS = array(NA,dim=c(nmonths, 3))
-  quant_LAI = array(NA, dim = c(nmonths, 3))
   quant_Fr = array(NA, dim = c(nmonths, 3))
   for (n in 1:nmonths){
-    quant_WS[n, ] = quantile(x[n, , 2], c(0.10,0.5,0.90))
-    quant_LAI[n, ] = quantile(x[n, , 1], c(0.10, 0.5, 0.90))
     quant_Fr[n, ] = quantile(x[n, , 7], c(0.10, 0.5, 0.90))
   }
-  plot(quant_LAI[ , 1], type = 'l', ylim = range(quant_LAI, na.rm = TRUE), xlab = 'months', ylab = 'LAI')
-  lines(quant_LAI[ ,2])
-  lines(quant_LAI[ ,3])
   
-  plot(quant_WS[ , 1],type='l',ylim=range(quant_WS, na.rm = TRUE),xlab = 'months',ylab = 'WS')
-  lines(quant_WS[ ,2])
-  lines(quant_WS[ ,3])
+  # LAI model quantiles
+  plot(startyear + (1/12)*1:nrow(x), quant_Fr[ , 1],type='l',ylim=range(quant_Fr, na.rm = TRUE),xlab = 'months',ylab = 'Fr')
+  lines(startyear + (1/12)*1:nrow(x), quant_Fr[ ,2])
+  lines(startyear + (1/12)*1:nrow(x), quant_Fr[ ,3])
   
-  plot(quant_Fr[ , 1],type='l',ylim=range(quant_Fr, na.rm = TRUE),xlab = 'months',ylab = 'Fr')
-  lines(quant_Fr[ ,2])
-  lines(quant_Fr[ ,3])
-  
-  plot(0,0) # place-holder
-  
-  hist(x[nmonths, , 3], main = 'WS at last step')
+  #Fr as histogram
   hist(x[nmonths, , 7], main = 'Fr at last step')
 
   #### need to save the data as .rdata file

@@ -1,11 +1,11 @@
 prepare_update_states <- function(plotnum, startyear, nmonths, start_age, endyear){ 
   #rm(list = ls())
-  run_name = 'EnKF_trial_1'
-  restart_chain <- c("all.1.2017-11-17.16.13.16.Rdata")
-  load(paste(working_directory,'/chains/',restart_chain,sep=''))
-  priors_file = 'default_priors.csv' ## fix (need to look at this)
+  #run_name = 'EnKF_trial_1'
+  #restart_chain <- c('Duke_for_EnKF_1.1.2018-03-30.15.11.15.Rdata')
+  #load(paste(working_directory,'/chains/',restart_chain,sep=''))
+  #priors_file = 'default_priors.csv' ## fix (need to look at this)
   plots = FALSE
-  
+  single_GCM = TRUE
   fr_model = 1  # 1 = estimate FR for each plot, 2 = empirical FR model
   FR_fert_assumption = 0 #0 = assume fertilization plots have FR = 1, 1 = do not assume fertilization plots have FR = 1
   use_fol = TRUE  #TRUE= use allometric estimates of foliage biomass in fitting
@@ -37,12 +37,10 @@ prepare_update_states <- function(plotnum, startyear, nmonths, start_age, endyea
   #source('initialize_pars.R')
   #source('init_state_space.R')
   
-  run_name = run_name
   PARAMETER_UNCERT=FALSE
   PROCESS_UNCERT=FALSE
   HOLD_CO2_PARAMETERS=FALSE
   HOLD_NONCO2_PARAMETERS=FALSE
-  single_GCM=TRUE
   rcp = 85
 
   adjust_rain = 1
@@ -58,13 +56,13 @@ prepare_update_states <- function(plotnum, startyear, nmonths, start_age, endyea
   priors_in = read.csv(paste(working_directory,'/priors/',priors_file,sep=''))
   npars = length(priors_in$parnames)
   ntotalpars = 125 ############# put this in is as fix for parameter_uncert = false, which was causing code to break
-  priormatrix = matrix(NA,npars,6)
-  priormatrix[,1] = priors_in$initial_value
-  priormatrix[,2] = priors_in$dist_par1
-  priormatrix[,3] = priors_in$dist_par2
-  priormatrix[,4] = priors_in$dist_type
-  priormatrix[,5] = priors_in$fit_par
-  priormatrix[,6] = priors_in$par_group
+  # priormatrix = matrix(NA,npars,6)
+  # priormatrix[,1] = priors_in$initial_value
+  # priormatrix[,2] = priors_in$dist_par1
+  # priormatrix[,3] = priors_in$dist_par2
+  # priormatrix[,4] = priors_in$dist_type
+  # priormatrix[,5] = priors_in$fit_par
+  # priormatrix[,6] = priors_in$par_group
   
   parnames = priors_in$parnames
   
@@ -148,23 +146,11 @@ prepare_update_states <- function(plotnum, startyear, nmonths, start_age, endyea
   
   
   load(paste(working_directory,'/chains/',restart_chain,sep=''))
-  
-  #----------------------------------------------------
-  
-  #----------------------------------------------------
-  
-  
   median_pars = rep(NA,ntotalpars)
   for(p in 1:ntotalpars){
     median_pars[p] = median(accepted_pars_thinned_burned[,p])
   }
   new_pars = median_pars
-  WFi = 1 #"WFi"
-  WSi = 2 #"WSi"
-  WCRi = 0.4
-  WRi = 0.16 #"WRi"
-  StemNum = 1200 #"StemNoi"
-  
   
   pars = new_pars[1:npars_used_by_fortran]
   FR = new_pars[npars+ plotnum] # fixed from hard-coded "77" to npars
@@ -244,8 +230,9 @@ prepare_update_states <- function(plotnum, startyear, nmonths, start_age, endyea
   WFi_H = initdata[plotnum,22]
   WSi_H = initdata[plotnum,23]
   WRi_H = initdata[plotnum,24]
+  StemNum = initdata[plotnum,6] # PlantDensityHa
   
-  #READ IN SITE DATA FROM FILE BASED ON PLOTNUM
+  #READ IN SITE DATA FROM FILE BASED ON plotlist
   Lat = LAT_WGS84
   ASWi = ASW_max
   MaxASW = ASW_max

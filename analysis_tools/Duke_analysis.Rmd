@@ -9,15 +9,95 @@ output:
 ```{r setup, include=TRUE}
 knitr::opts_chunk$set(echo = TRUE)
 ```
-#Plot priors
+##### PART 1: Organizing Data & Getting Parameter Chains Needed for Analysis
+ 
+### Code used for Processing Landsat LAI measurements
+## Age = 1 year old in 1984
+# original_data = read.csv(file = paste(EnKF_directory,"/Duke_LAI_Landsat.csv", sep = ""), header = TRUE, sep = ",")
+# observed = original_data[which(original_data$LAI != "NA" &original_data$LAI != -99 & original_data$Age != -99), ]
+# monthly_observed = data.frame(NA, dim = c(nrow(observed),8))
+# names(monthly_observed) <- c("system:time_start","Day","Year","Month","LAI","LAI_std	Sensor","Age")
+k = 1
+for (y in 1996:2017)
+# {
+#   for (m in c(1,2,3,4,11,12)) #### months without hardwood LAI
+#   {
+#     if (nrow(observed[which(observed$Month == m & observed$Year == y),])>0)
+#     {
+#       monthly_observed[k,1] = observed[which(observed$Month == m & observed$Year == y),][1,1]
+#       monthly_observed[k,2] = observed[which(observed$Month == m & observed$Year == y),][1,2]
+#       monthly_observed[k,3] = observed[which(observed$Month == m & observed$Year == y),][1,3]
+#       monthly_observed[k,4] = observed[which(observed$Month == m & observed$Year == y),][1,4]
+#       monthly_observed[k,5] = mean(observed[which(observed$Month == m & observed$Year == y),5])
+#       monthly_observed[k,6] = observed[which(observed$Month == m & observed$Year == y),][1,6]
+#       monthly_observed[k,7] = observed[which(observed$Month == m & observed$Year == y),][1,7]
+#       monthly_observed[k,8] = observed[which(observed$Month == m & observed$Year == y),][1,8]
+#       k = k+1
+#     }
+#   }
+# }
+# monthly_observed = monthly_observed[which(monthly_observed[,5] != "NA"),]
+
+
 ```{r}
 rm(list = ls())
-priors_file = "/Users/laurapuckett/Documents/Research/Current/DAPPER/priors/duke_priors.csv"
-priors = read.csv(priors_file)
-parnames = priors$parnames
+working_directory =  '/Users/laurapuckett/Documents/Research/Current/DAPPER/'
+EnKF_directory = '/Users/laurapuckett/Documents/Research/Current/DAPPER/analysis_tools/'
+plotlist = c(40001)
+
 ```
-#Set-up DAPPER configuration shared across simulations
-```{r}
+
+```{r} 
+### comparison of LAI observations
+### Duke LAI measurements
+ original_mean_monthly = read.csv(file = paste(EnKF_directory,"/landsat_mean_monthly_LAI.csv", sep = ""), header = TRUE, sep = ",")
+  mean_monthly = original_mean_monthly[which(original_mean_monthly$Year<2005 & original_mean_monthly$Year>1997 & original_mean_monthly$Month != 4),]
+  
+duke_original_data = read.csv(file = paste(EnKF_directory,"/duke_input.csv", sep = ""), header = TRUE, sep = ",")
+duke_realdata = duke_original_data[which(duke_original_data$PlotID == plotlist), ]
+duke_observed = duke_realdata[which(duke_realdata$LAI != "NA" & duke_realdata$LAI != -99 & duke_realdata$Age != -99 & (duke_realdata$Month == 11 | duke_realdata$Month == 12 | duke_realdata$Month == 1 | duke_realdata$Month == 2 | duke_realdata$Month == 3)),]
+
+plot(mean_monthly$Year + (1/12)*mean_monthly$Month, mean_monthly$LAI, col = 'red', type = 'p')
+points(duke_observed$Year + (1/12)*duke_observed$Month, duke_observed$LAI, col = 'black')
+lai_comparison = array(NA, dim = c(300,5))
+k = 1
+for (y in 1984:2017)
+{
+  for (m in 1:12)
+  {
+    if (length(duke_observed[which(duke_observed$Year == y & duke_observed$Month == m),6]) > 0 & length(mean_monthly[which(mean_monthly$Year == y & mean_monthly$Month == m),6] >0))
+    {
+      lai_comparison[k,1] = duke_observed[which(duke_observed$Year == y & duke_observed$Month == m),6]
+      lai_comparison[k,2] = mean_monthly[which(mean_monthly$Year == y & mean_monthly$Month == m),6]
+      lai_comparison[k,3] = y
+      lai_comparison[k,4] = m
+      lai_comparison[k,5] = lai_comparison[k,1] - lai_comparison[k,2]
+      k = k+1
+    }
+  }
+}
+lai_comparison = lai_comparison[which(lai_comparison[ ,1] != "NA"),]
+
+plot(lai_comparison[,3] + (1/12)*lai_comparison[,4], lai_comparison[,1], col = 'black', ylim = c(-1.5,3))
+points(lai_comparison[,3] + (1/12)*lai_comparison[,4], lai_comparison[,2], col = 'red')
+lines(lai_comparison[,3] + (1/12)*lai_comparison[,4], lai_comparison[,5], col = 'green')
+  legend(x = "top",inset = 0,
+         legend = c("duke","landsat","duke - landsat"))
+  
+mean(lai_comparison[,5]) ### -0.4701624
+mean_monthly_normalized = original_mean_monthly[which(original_mean_monthly$Year<2005 & original_mean_monthly$Year>1997 & original_mean_monthly$Month != 4),] 
+mean_monthly_normalized$LAI = mean_monthly_normalized$LAI - 0.4701624
+
+plot(duke_observed$Year + (1/12)*duke_observed$Month, duke_observed[,6], col = 'black')
+points(mean_monthly$Year + (1/12)*mean_monthly$Month, mean_monthly_normalized[,6], col = 'red')
+
+density(lai_comparison[,5])
+plot(density(lai_comparison[,5]))
+```
+
+### example of run_DAPPER code setup for default chain (all duke plots, all measurement types, default parameters being fit)
+# This set-up was used for 4 trials that were then tested for convergence. After convergence was shown, only the chain from the 1st trial was used (Duke_for_EnKF_1)
+
 #---CONTROL INFORMATION----------------------------
 working_directory =  '/Users/laurapuckett/Documents/Research/Current/DAPPER/'
 input_directory = '/Users/laurapuckett/Documents/Research/Current/DAPPER_inputdata/'
@@ -92,17 +172,16 @@ plot_mort_rate = FALSE #include plot specific mortality rate parameter
 
 setwd(paste(working_directory,'/scripts/',sep=''))
 source('prepare_DAPPER_MCMC.R')
-```
 
-
-#Analysis
+#Chain Analysis
 
 ```{r eval=TRUE}
 library('coda')
 library('corrplot')
-working_directory = "/Users/laurapuckett/Documents/Research/Current/DAPPER/"
-priors_file = 'duke_priors.csv'
+#working_directory = "/Users/laurapuckett/Documents/Research/Current/DAPPER/"
+priors_file = 'default_priors.csv'
 priors = read.csv(paste(working_directory,'/priors/',priors_file,sep=''))
+parnames = priors$parnames
 
 par_index = which(priors$fit_par == 0)
 par_index =par_index[par_index < 77]
@@ -137,18 +216,14 @@ colnames(mcmc_out4) = names_par_index
 mcmc_out = mcmc.list(mcmc_out1,mcmc_out2,mcmc_out3,mcmc_out4)
 
 setwd(paste(working_directory,'/figures/',sep=''))
-pdf('GEP_ET_T_analysis.pdf')
+pdf('EnKF_Fr_analysis.pdf')
 plot(mcmc_out)
 corrplot(cor(mcmc_out_matrix))
 dev.off()
 
 gelman.diag(mcmc_out)
 GEP_ET_T_gelman = gelman.diag(mcmc_out)
-```
 
-#Analysis of chains
-
-```{r}
 library('coda')
 library('corrplot')
 
@@ -168,7 +243,6 @@ rm(accepted_pars_thinned_burned)
 
 setwd(paste(working_directory,'/chains/',sep=''))
 
-
 setwd(paste(working_directory,'/figures/',sep=''))
 pdf('Duke_1.pdf')
 par(mfrow=c(3,3))
@@ -181,14 +255,146 @@ for(p in 1:length(mcmc_out1[1,])){
 dev.off()
 ```
 
+### example of run_DAPPER setup for MCMC Fr fitting trials
+### user must modify prepare_update_states and prepare_state_space_obs for each trial to restrict the data measurement typea and months that are read in
 
-```{r setup, include=FALSE}
+rm(list = ls())
+#---CONTROL INFORMATION----------------------------
+# ----- changed inital_WR in plotlist file
+working_directory =  '/Users/laurapuckett/Documents/Research/Current/DAPPER/'
+input_directory = '/Users/laurapuckett/Documents/Research/Current/DAPPER_inputdata/'
+niter = 20000 #150000 #10000 #500000#15000000 #5000000 # 5000000
+chain_number = 1
+burn =  5000 #75000 #25000 #15000000 # 100000 #2500000 #10000000 #500000 #2500000
+thin_interval = 10 # 10 #10 #10 #10 # 50 #500 #100 #100 #100
+run_name = 'LAI_only_LANDSAT_normalized'
+restart_from_chain = FALSE
+restart_chain =  NA #'state_space.1.2017-06-25.16.52.16.Rdata'
+priors_file = 'LAI_only_priors.csv'
+create_plot = TRUE
+only_create_plot = FALSE
+obs_set = 14 #Select which plots are used in analysis.  See prepare_obs.R for number guide 
+focal_plotID =  40001 #Setting a value here causes only a single plot to be simulated and fit
+val_set = 0  #Select which plots are withheld from fitting.  0 includes all plot
+fr_model = 1  # 1 = estimate FR for each plot, 2 = empirical FR model
+FR_fert_assumption = 0 #0 = assume fertilization plots have FR = 1, 1 = do not assume fertilization plots have FR = 1
+FR_separate_npar_groups = TRUE  #Assigns a different parameter group to groups of FR values
+use_fol = TRUE  #TRUE= use allometric estimates of foliage biomass in fitting
+use_dk_pars = 1  #0 = do not use 3 specific parameters for the Duke site, 1 = use the 3 specific parameters
+use_age_edc = 0  #0 = do not use an ecological constraint on the age function (see code); 1 = use the constraint
+use_sm_edc = 0  #0 = do not use an ecological constraint on the soil moisture function (see code); 1 = use the constraint
+use_fr_edc = 0   #0 = do note use an ecological constraint on the SI - FR function (see code); 1 = use the constraint
+nstreams = 19
+state_space = 1
+tracked_plotnum = 1
+windows_machine = FALSE
+#----------------------------------------------------
+all_studies = c(
+  #'/SETRES/TIER4_SETRES',
+  #'/PINEMAP/TIER3_PINEMAP',
+  #'/NC2/TIER4_NC2',
+  '/Duke/TIER4_Duke'
+  #'/Waycross/TIER4_Waycross',
+  #'/FMC_Thinning/TIER1_FMC_Thinning',
+  #'/FBRC_AMERIFLU/TIER2_AMERIFLU',
+  #'/FBRC_IMPAC/TIER1_IMPAC',
+  #'/FBRC_IMPAC2/TIER2_IMPAC2',
+  #'/FBRC_PPINES/TIER2_PPINES',
+  #'/FBRC_VAR1/TIER2_VAR1',
+  #'/FBRC_WPPINES/TIER2_WPPINES',
+  #'/FMC_IMP_TIER1/TIER1_IMP',
+  #'/FMC_IMP_TIER2/TIER2_IMP',
+  #'/FPC_RS1/TIER1_RS1',
+  #'/FPC_RS2/TIER1_RS2',
+  #'/FPC_RS3/TIER1_RS3',
+  #'/FPC_RS5/TIER1_RS5',
+  #'/FPC_RS6/TIER1_RS6',
+  #'/FPC_RS7/TIER1_RS7',
+  #'/FPC_RS8/TIER1_RS8',
+  #'/FPC_RW18/TIER2_RW18'
+  #'/FPC_RW19/TIER2_RW19',
+  #'/FPC_RW20/TIER2_RW20',
+  #'/PMRC_CPCD96_TIER1/TIER1_CPCD96',
+  #'/PMRC_CPCD96_TIER2/TIER2_CPCD96',
+  #'/PMRC_HGLOB87/TIER1_HGLOB87',
+  #'/PMRC_SAGCD96_TIER1/TIER1_SAGCD96',
+  #'/PMRC_SAGCD96_TIER2/TIER2_SAGCD96',
+  #'/PMRC_SAGSP85_TIER1/TIER1_SAGSP85',
+  #'/PMRC_SAGSP85_TIER2/TIER2_SAGSP85',
+  #'/PMRC_WGCD01_TIER1/TIER1_WGCD01',
+  #'/PMRC_WGCD01_TIER2/TIER2_WGCD01',
+  #'/TAMU_GSSS/TIER1_GSSS'
+  #'/FIA/VA_FIA'
+)
+
+#---SELECT COMPONENTS THAT ARE ALLOWED TO HAVE UNCERTAINITY--
+plot_WSx1000 = FALSE  #include plot specific WSx1000 parameter
+plot_thinpower = FALSE #include plot specific thinpower parameter
+plot_mort_rate = FALSE #include plot specific mortality rate parameter
+
+setwd(paste(working_directory,'/scripts/',sep=''))
+source('prepare_DAPPER_MCMC.R')
+
+##### PART 2: ANALYSIS OF Fr FIT WITH MCMC APPROACH
+```{r}
+### Analyzing output from default and 3 experimental trials
+
+# DAPPER fitting of plot 40001, using all data from all Duke plots
+load("/Users/laurapuckett/Documents/Research/Current/DAPPER/chains/Duke_for_EnKF_1.1.2018-03-30.15.11.15.Rdata")
+mcmc_all_data_params = accepted_pars_thinned_burned
+med_FR_all_data = median(mcmc_all_data_params[,78])
+med_FR_all_data
+sd_FR_all_data = sd(mcmc_all_data_params[,78])
+sd_FR_all_data
+
+# All Months ground obs
+load('/Users/laurapuckett/Documents/Research/Current/DAPPER/chains/LAI_all_months.1.2018-05-06.18.10.18.Rdata')
+mcmc_lai_only_all_months_params = accepted_pars_thinned_burned
+med_Fr_all_months = median(mcmc_lai_only_all_months_params[1000:1500,78])
+med_Fr_all_months
+sd_Fr_all_months = sd(mcmc_lai_only_all_months_params[1000:1500,78])
+sd_Fr_all_months
+
+# Winter Only ground obs
+load("/Users/laurapuckett/Documents/Research/Current/DAPPER/chains/LAI_only_winter.1.2018-05-06.18.10.18.Rdata")
+mcmc_lai_only_winter_params = accepted_pars_thinned_burned
+med_Fr_winter_ony = median(mcmc_lai_only_winter_params[1000:1500,78])
+med_Fr_winter_ony 
+sd_Fr_winter_only = sd(mcmc_lai_only_winter_params[1000:1500,78])
+sd_Fr_winter_only
+
+# Winter Only normalized  LANDSAT
+load("/Users/laurapuckett/Documents/Research/Current/DAPPER/chains/LAI_only_LANDSAT_normalized.1.2018-05-06.18.56.18.Rdata")
+# (I took out one outlier from the 2nd year that was about 0.8 (very low) before being normalized)
+mcmc_lai_only_winter_LANDSAT_normalized_params = accepted_pars_thinned_burned
+med_Fr_LANDSAT_normalized = median(mcmc_lai_only_winter_LANDSAT_normalized_params[,78])
+med_Fr_LANDSAT_normalized 
+sd_Fr_LANDSAT_normalized = sd(mcmc_lai_only_winter_LANDSAT_normalized_params[,78])
+sd_Fr_LANDSAT_normalized
+
+# Comparison
+plot(density(mcmc_all_data_params[1000:2501,78]), col = "black", ylim = c(0,10), xlim = c(0.4,1.1), xlab = 'Soil Nutrient Limitation, Fr')
+lines(density(mcmc_lai_only_all_months_params[,78]), col = 'blue')
+lines(density(mcmc_lai_only_winter_params[,78]), col = 'green')
+lines(density(mcmc_lai_only_winter_LANDSAT_normalized_params[,78]), col = 'red')
+  legend(x = 0.4,10,
+         legend = c("all data, all months, field", "LAI only, all months, field", 'LAI only, winter, field', 'LAI only, winter, LANDSAT'),     col=c('black','blue','green','red'), lwd=5, cex= 0.75, horiz = FALSE)
+
+```
+##### PART 2: ANALYSIS OF FR FIT WITH ENKF APPROACH
+
+
+##### setup for EnKF
 knitr::opts_chunk$set(echo = TRUE)
+## TRIAL 1
+#focal_plotID = plotlist 
+run_name = 'EnKF_plot_40001'
 
 #### set working directory
 pathDAPPER = '/Users/laurapuckett/Documents/Research/Current/DAPPER/' 
-EnKF_directory = '/Users/laurapuckett/Documents/Research/Current/DAPPER/analysis_tools/'
+#EnKF_directory = '/Users/laurapuckett/Documents/Research/Current/DAPPER/analysis_tools/'
 setwd(EnKF_directory)
+obs_set = 14 #Select which plots are used in analysis.  See prepare_obs.R for number guide 
 
 #### source required functions
 source('prepare_update_states.R')
@@ -199,96 +405,152 @@ source('EnKF_DAPPER.R')
 working_directory = pathDAPPER # this is referenced in prepare_update_states(), and prepare_obs()
 input_directory = '/Users/laurapuckett/Documents/Research/Current/DAPPER_inputdata/'
 output_directory = '/Users/laurapuckett/Documents/Research/Current/DAPPER_projects/'
-plotlist = c(40005) #Duke Forest 40001, 40005
-focal_plotID = plotlist #
-  
-  
-#---------------------------------------------------------
 nmembers = 500
 NO_UNCERT = FALSE
 #ADD_NOISE_TO_OBS = FALSE
 #USE_SYNTHETIC_DATA = TRUE
 #USE_OBS_COORD = FALSE
 USE_OBS_CONTRAINT = TRUE
-  
-# Define variables needed for prepare_update_states or update_states
 plotnum = 1
 all_studies = c('/Duke/TIER4_Duke')
-  
-original_data = read.csv(file = paste(EnKF_directory,"/duke_input.csv", sep = ""), header = TRUE, sep = ",")
-realdata = original_data[which(original_data$PlotID == plotlist), ]
-observed = realdata[which(realdata$LAI != "NA" & realdata$LAI != -99 & realdata$Age != -99), ]
-
-run_name = 'EnKF_plot_40005'
-restart_chain <- c('Duke_for_EnKF_1.1.2018-03-30.15.11.15.Rdata')
-load(paste(working_directory,'/chains/',restart_chain,sep=''))
 priors_file = 'duke_priors.csv'
-####function output: <-   readRDS(paste(EnKF_directory, "/x.RDS", sep = ""))
+restart_chain <- c('Duke_for_EnKF_1.1.2018-03-30.15.11.15.Rdata')
+load(paste(working_directory,'/chains/',restart_chain,sep='')) 
+fr_dist_from_mcmc = accepted_pars_thinned_burned[ , 77 + plotlist - 40000]
+gamma_lai = median(accepted_pars_thinned_burned[ ,52])
 setwd(EnKF_directory)
-```
 
-```{r, echo = FALSE}
-ntrials = 4
 
+```{r} 
+##### choose plot for EnKF analysis
+
+## TRIAL 1
+#plotlist = c(40001) #Duke Forest 40001, 40005
+focal_plotID = plotlist #
+pathDAPPER = '/Users/laurapuckett/Documents/Research/Current/DAPPER/' 
+EnKF_directory = '/Users/laurapuckett/Documents/Research/Current/DAPPER/analysis_tools/'
+setwd(EnKF_directory)
+obs_set = 14 #Select which plots are used in analysis.  See prepare_obs.R for number guide 
+
+#### source required functions
+source('prepare_update_states.R')
+source('update_states.R')
+source('EnKF_DAPPER.R')
+
+#### define variables needed for DAPPER functions
+#working_directory = pathDAPPER # this is referenced in prepare_update_states(), and prepare_obs()
+input_directory = '/Users/laurapuckett/Documents/Research/Current/DAPPER_inputdata/'
+output_directory = '/Users/laurapuckett/Documents/Research/Current/DAPPER_projects/'
+nmembers = 500
+NO_UNCERT = FALSE
+USE_OBS_CONTRAINT = TRUE
+plotnum = 1
+all_studies = c('/Duke/TIER4_Duke')
+priors_file = 'duke_priors.csv'
+restart_chain <- c('Duke_for_EnKF_1.1.2018-03-30.15.11.15.Rdata')
+years = NULL
+fr_dist_from_mcmc = mcmc_all_data_params[ , 78]
+gamma_lai = median(mcmc_all_data_params[ ,52])
+
+### parameters shared across trials
 Fr_uncert = 0.1 # variation in fr from step to step in model
-psi = 0.05 # uncertainty in lai observations
-LAI_uncert = 0.145 # variation in lai from step to step, comes from chain - MAKE DYNAMIC
-init_Fr = 0.5 
+psi = 0.15 # uncertainty in lai observations
+LAI_uncert = gamma_lai# variation in lai from step to step, comes from chain - MAKE DYNAMIC?
+init_Fr = 1
 
-obs_used = "all"
+#### DUKE TRIAL 1
+run_name = 'DUKE'
+duke_original_data = read.csv(file = paste(EnKF_directory,"/duke_input.csv", sep = ""), header = TRUE, sep = ",")
+duke_temp_realdata = duke_original_data[which(duke_original_data$PlotID == plotlist), ]
+duke_realdata = duke_temp_realdata[which(duke_realdata$LAI != "NA" & duke_realdata$LAI != -99 & duke_realdata$Age != -99), ]
+obs_used = "winter"
 title = paste("Fr_uncert = ", Fr_uncert, ", psi = ", psi^2, ", obs = ", obs_used, ", LAI_uncert = ", LAI_uncert, sep = "")
 print(title)
-observed = realdata[which(realdata$LAI != "NA" & realdata$LAI != -99 & realdata$Age != -99), ]
-EnKF_DAPPER(psi, init_Fr, observed, Fr_uncert, LAI_uncert, run_name = title)
-output_all <-   readRDS(paste(EnKF_directory, "/x.RDS", sep = ""))
-dim_output = dim(output_all)
-output_trials = array(NA, dim = c(ntrials, dim_output))
-output_trials[1, , , ] = output_all
-
-
-obs_used = "february"
-title = paste("Fr_uncert = ", Fr_uncert, ", psi = ", psi^2, ", obs = ", obs_used, ", LAI_uncert = ", LAI_uncert, sep = "")
-print(title)
-observed = realdata[which(realdata$LAI != "NA" & realdata$LAI != -99 & realdata$Age != -99), ]
-observed = observed[which(observed$Month == 2), ]  # | observed$Year == min(observed$Year))
-EnKF_DAPPER(psi, init_Fr, observed, Fr_uncert, LAI_uncert, run_name = title)
-output_february <-   readRDS(paste(EnKF_directory, "/x.RDS", sep = ""))
-output_trials[2, , , ] = output_february
-
-
-obs_used = "august"
-title = paste("Fr_uncert = ", Fr_uncert, ", psi = ", psi^2, ", obs = ", obs_used, ", LAI_uncert = ", LAI_uncert, sep = "")
-print(title)
-observed = realdata[which(realdata$LAI != "NA" & realdata$LAI != -99 & realdata$Age != -99), ]
-observed = observed[which(observed$Month == 8), ] #| observed$Year == min(observed$Year)
-EnKF_DAPPER(psi, init_Fr, observed, Fr_uncert, LAI_uncert, run_name = title)
-output_august <-   readRDS(paste(EnKF_directory, "/x.RDS", sep = ""))
-output_trials[3, , , ] = output_august
-
-
-obs_used = "february & august"
-title = paste("Fr_uncert = ", Fr_uncert, ", psi = ", psi^2, ", obs = ", obs_used, ", LAI_uncert = ", LAI_uncert, sep = "")
-print(title)
-setwd(EnKF_directory)
-observed = realdata[which(realdata$LAI != "NA" & realdata$LAI != -99 & realdata$Age != -99), ]
-observed = observed[which(observed$Month == 8 | observed$Month == 2), ]
-EnKF_DAPPER(psi, init_Fr, observed, Fr_uncert, LAI_uncert, run_name = title)
-output_august_february <-   readRDS(paste(EnKF_directory, "/x.RDS", sep = ""))
-output_trials[4, , , ] = output_august_february
-dim_output = dim(output_trials)
-t_end = dim_output[2]
-range_fr = range(output_trials[ ,t_end,,7])
-
-load(paste(working_directory,'/chains/',restart_chain,sep=''))
-fr_from_mcmc = accepted_pars_thinned_burned[ , 77 + plotlist - 40000]
-
-
+duke_observed = duke_realdata[which(duke_realdata$LAI != "NA" & duke_realdata$LAI != -99 & duke_realdata$Age != -99  & duke_realdata$Year  > 1997 & (duke_realdata$Month == 11 | duke_realdata$Month == 12 | duke_realdata$Month == 1 |   duke_realdata$Month == 2 | duke_realdata$Month == 3)), ]
+EnKF_DAPPER(psi, init_Fr, duke_observed, Fr_uncert, LAI_uncert, run_name = run_name)
+output_DUKE <-   readRDS(paste(EnKF_directory, "/x_", run_name, ".RDS", sep = ""))
+t_end = nrow(output_DUKE)
+range_fr = range(output_DUKE[t_end,,7])
 par(mfrow = c(1,1))
-plot(density(output_trials[1,t_end, , 7]), col = "black", xlim = c(range_fr), ylim = c(0,10))
-lines(density(output_trials[2,t_end, , 7]), col = "brown")
-lines(density(output_trials[3,t_end, , 7]), col = "green")
-lines(density(output_trials[4,t_end, , 7]), col = "orange")
-lines(density(fr_from_mcmc), col = 'red')
+plot(density(output_DUKE[t_end, , 7]), col = "red", xlim = c(range_fr), ylim = c(0,10))
+lines(density(fr_dist_from_mcmc), col = 'black')
 legend(x = "top",inset = 0,
-legend = c("all","february","august","feb & august", "mcmc"), col=c("black","brown","green","orange", "red"), lwd=5, cex= 0.75, horiz = TRUE)
+       legend = c("winter", "mcmc"),     col=c("red","black"), lwd=5, cex= 0.75, horiz = TRUE)
+
+#### LANDSAT TRIAL #1 
+run_name = 'LANDSAT_trial_1'
+original_mean_monthly = read.csv(file = paste(EnKF_directory,"/landsat_mean_monthly_LAI.csv", sep = ""), header = TRUE, sep = ",")
+mean_monthly = original_mean_monthly[which(original_mean_monthly$Year<2005 & original_mean_monthly$Year>1997 & original_mean_monthly$Month != 4),]
+obs_used = "winter"
+title = paste("Fr_uncert = ", Fr_uncert, ", psi = ", psi^2, ", obs = ", obs_used, ", LAI_uncert = ", LAI_uncert, sep = "")
+print(title)
+EnKF_DAPPER(psi, init_Fr, observed = mean_monthly, Fr_uncert, LAI_uncert, run_name =  run_name)
+output_LANDSAT_1 <-   readRDS(paste(EnKF_directory, "/x_", run_name, ".RDS", sep = ""))
+
+### LANDSAT trial #2 (without April and normalized)
+run_name = 'LANDSAT_trial_2'
+original_mean_monthly = read.csv(file = paste(EnKF_directory,"/landsat_mean_monthly_LAI.csv", sep = ""), header = TRUE, sep = ",")
+mean_monthly_normalized = original_mean_monthly[which(original_mean_monthly$Year<2005 & original_mean_monthly$Year>1997 & original_mean_monthly$Month != 4),] 
+mean_monthly_normalized$LAI = mean_monthly_normalized$LAI - 0.4701624
+obs_used = "winter"
+title = paste("Fr_uncert = ", Fr_uncert, ", psi = ", psi^2, ", obs = ", obs_used, ", LAI_uncert = ", LAI_uncert, sep = "")
+print(title)
+EnKF_DAPPER(psi, init_Fr, observed = mean_monthly_normalized, Fr_uncert, LAI_uncert, run_name =  run_name)
+output_LANDSAT_2 <-   readRDS(paste(EnKF_directory, "/x_", run_name, ".RDS", sep = ""))
+
+### Comparison of output with LANDSAT and ground obs
+par(mfrow = c(1,1))
+quant_DUKE = array(NA, dim = c(nrow(output_DUKE), 3))
+for (n in 1:nrow(output_DUKE)){
+  quant_DUKE[n,] = quantile(output_DUKE[ n,, 1],c(0.10, 0.5, 0.90))
+}
+
+quant_LANDSAT_1 = array(NA, dim = c(nrow(output_LANDSAT_1), 3))
+for (n in 1:nrow(output_LANDSAT_1)){
+  quant_LANDSAT_1[n,] = quantile(output_LANDSAT_1[ n,, 1],c(0.10, 0.5, 0.90))
+}
+
+quant_LANDSAT_2 = array(NA, dim = c(nrow(output_LANDSAT_2), 3))
+for (n in 1:nrow(output_LANDSAT_2)){
+  quant_LANDSAT_2[n,] = quantile(output_LANDSAT_2[ n,, 1],c(0.10, 0.5, 0.90))
+}
+
+plot(1998 + (1/12)*1:nrow(output_DUKE), quant_DUKE[ ,1], type = 'l', col = 'orange', ylim = c(0,4))
+lines(1998 + (1/12)*1:nrow(output_DUKE), quant_DUKE[ ,2], col = 'orange')
+lines(1998 + (1/12)*1:nrow(output_DUKE), quant_DUKE[ ,3], col = 'orange')
+lines(1998 + (1/12)*1:nrow(output_LANDSAT_1), quant_LANDSAT_2[ ,1], col = 'blue')
+lines(1998 + (1/12)*1:nrow(output_LANDSAT_1), quant_LANDSAT_2[ ,2], col = 'blue')
+lines(1998 + (1/12)*1:nrow(output_LANDSAT_1), quant_LANDSAT_2[ ,3], col = 'blue')
+lines(1998 + (1/12)*1:nrow(output_LANDSAT_2), quant_LANDSAT_2[ ,1], col = 'purple')
+lines(1998 + (1/12)*1:nrow(output_LANDSAT_2), quant_LANDSAT_2[ ,2], col = 'purple')
+lines(1998 + (1/12)*1:nrow(output_LANDSAT_2), quant_LANDSAT_2[ ,3], col = 'purple')
+points(mean_monthly$Year + (1/12)*mean_monthly$Month, mean_monthly$LAI, col = 'red')
+points(duke_observed$Year + (1/12)*duke_observed$Month, duke_observed$LAI, col = 'green')
+  legend(x = "top",inset = 0,
+       legend = c("DUKE", "LANDSAT_2", 'DUKE', 'LANDSAT_2'),     col=c("blue","orange",'green','red'), lwd=5, cex= 0.75, horiz = TRUE)
+
+  plot(1996 + (1/12)*1:nrow(output_DUKE),output_DUKE[ , 1, 1],type='l',ylim=c(0,5), main = 'DUKE', col = 'blue')
+  for (n in 2:nmembers)
+  {
+    points(1996 + (1/12)*1:nrow(output_DUKE),output_DUKE[ , n, 1],type='l', col = 'blue') 
+  }
+  points(duke_observed$Year + (1/12)*duke_observed$Month, duke_observed$LAI, col = 'green')
+  
+  plot(1996 + (1/12)*1:nrow(output_LANDSAT_2), output_LANDSAT_2[ , 1, 1],type='l', col = 'orange', main = 'LANDSAT_2',  ylim = c(0,5))
+  for (n in 1:nmembers)
+  {
+    points(1996 + (1/12)*1:nrow(output_LANDSAT_2), output_LANDSAT_2[ , n, 1],type='l', col = 'orange') 
+  }
+  points(mean_monthly$Year + (1/12)*mean_monthly$Month, mean_monthly$LAI, col = 'red')
+  
+plot(density(output_DUKE[nrow(output_DUKE), , 7]), col = 'blue', ylim = c(0,12), xlim = c(0.5,1.1))
+lines(density(output_LANDSAT_1[nrow(output_LANDSAT_1), , 7]), col = 'orange', xlim = c(range_fr), ylim = c(0,10))
+lines(density(fr_dist_from_mcmc), col = 'black')
+lines(density(output_LANDSAT_2[nrow(output_LANDSAT_2), , 7]), col = 'cyan', ylim = c(0,12), xlim = c(0.5,1.1))
+lines(density(mcmc_lai_only_winter_params[1000:1500,78]), col = 'red')
+lines(density(mcmc_lai_only_winter_LANDSAT_normalized_params[1000:1500,78]), col = 'purple')
+
+legend(x = "top",inset = 0,
+     legend = c('MCMC all data','MCMC winter ground',"EnKF winter ground",' MCMC LANDSAT normalized','ENKF LANDSAT normalized',"EnKF LANDSAT"),     col=c('black','red',"blue",'purple','cyan',"orange"), lwd=5, cex= 0.75, horiz = FALSE)
+
 ```

@@ -1,13 +1,13 @@
-update_states <- function(mo,plotnum,output_dim,pars,site,nopars,nosite, thin_event, met, exclude_hardwoods, median_pars, ASW_max){ # fix - need to alter to accept initial states as input 
+update_states <- function(mo,pixelnum,output_dim,pars,site,nopars,nosite, thin_event, met, exclude_hardwoods, median_pars){ # fix - need to alter to accept initial states as input 
   #---CONTROL INFORMATION----------------------------
   #rm(list = ls())
   
   tmp=.Fortran( "r3pg_interface",
                 output_dim=as.integer(output_dim),
-                met=as.double(met[plotnum,,mo]), 
+                met=as.double(met[pixelnum,,mo]), 
                 pars=as.double(pars),
                 site = as.double(site),
-                thin_event = as.double(thin_event[plotnum,mo]),
+                thin_event = as.double(thin_event[pixelnum,mo]),
                 out_var=as.double(array(0,dim=c(1,output_dim))),
                 nopars=as.integer(nopars),
                 nomet=as.integer(dim(met)[2]),
@@ -15,7 +15,7 @@ update_states <- function(mo,plotnum,output_dim,pars,site,nopars,nosite, thin_ev
                 nooutputs=as.integer(output_dim),
                 nomonths_plot=as.integer(1),
                 nothin = 1,
-                exclude_hardwoods = as.integer(exclude_hardwoods[plotnum]),
+                exclude_hardwoods = as.integer(exclude_hardwoods[pixelnum]),
                 mo_start_end = as.integer(c(1,1)),
                 nmonths = 1
   )
