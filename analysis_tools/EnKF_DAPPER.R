@@ -1,4 +1,4 @@
-EnKF_DAPPER <- function(psi, init_Fr, observed, Fr_uncert, LAI_uncert, run_name){ 
+EnKF_DAPPER <- function(psi, init_Fr, observed, sigma_Fr, LAI_uncert, run_name){ 
   #rm(list = ls())
   if (!"mvtnorm" %in% installed.packages()) install.packages("mvtnorm")
   if (!"ncdf4" %in% installed.packages()) install.packages("ncdf4")
@@ -73,13 +73,13 @@ EnKF_DAPPER <- function(psi, init_Fr, observed, Fr_uncert, LAI_uncert, run_name)
   # need to incorporate rho into sigma later
   # the values a re squared, because the variance, not std. dev., is what is used in rmvnorm()
   sigma = array(data = NA, dim = nstates)
-  sigma[1] = (LAI_uncert)^2 #0.01*median_pars[52] # gamma_LAI
-  sigma[2] = (median_pars[53] +  median_pars[64]*init_states[2])^2 # WS, gamma_WS+ rho_WS * last stem measurement
-  sigma[3] = (median_pars[54])^2 # WCR
-  sigma[4] = (median_pars[55])^2 ### check this one ## WFR
-  sigma[5] = (.1)^2 # gamma_Stem_Count - look into this, should have a gamma
-  sigma[6] = (.1)^2 # gamma_ASW
-  sigma[7] = (Fr_uncert)^2 ##0.001
+  sigma[1] = (LAI_uncert) #0.01*median_pars[52] # gamma_LAI
+  sigma[2] = (median_pars[53] +  median_pars[64]*init_states[2]) # WS, gamma_WS+ rho_WS * last stem measurement
+  sigma[3] = (median_pars[54]) # WCR
+  sigma[4] = (median_pars[55]) ### check this one ## WFR
+  sigma[5] = (.1) # gamma_Stem_Count - look into this, should have a gamma
+  sigma[6] = (.1) # gamma_ASW
+  sigma[7] = (sigma_Fr) #
   
   Qt = diag(sigma) 
   #rho_LAI = 0 #median_pars[63]
@@ -94,7 +94,7 @@ EnKF_DAPPER <- function(psi, init_Fr, observed, Fr_uncert, LAI_uncert, run_name)
   
   Qt_init = Qt
   x <- array(NA,dim=c(nmonths,nmembers,nstates))
-  x[1,,] <- rmvnorm(n=nmembers, mean=init_states, sigma=as.matrix(Qt_init)) 
+  x[1,,] <- rmvnorm(n=nmembers, mean=init_states, sigma=as.matrix(Qt_init^2)) 
   x[1,which(x[1,,7] < 0),7] = 0
   x[1,which(x[1,,7] > 1 ),7] = 1
   
@@ -133,15 +133,9 @@ EnKF_DAPPER <- function(psi, init_Fr, observed, Fr_uncert, LAI_uncert, run_name)
       
       #Fill x_star with states from DAPPER
       x_star[m,] = c(DAPPER_states,site[12]) # all of the updated states for the current member iteration
-      #NQt = rmvnorm(n=1, sigma=as.matrix(Qt))
       NQt = array(NA, dim = c(7))
-      NQt[1] = rnorm(n=1, 0, sigma[1])
-      NQt[2] = rnorm(n=1, 0, sigma[2])
-      NQt[3] = rnorm(n=1, 0, sigma[3])
-      NQt[4] = rnorm(n=1, 0, sigma[4])
-      NQt[5] = rnorm(n=1, 0, sigma[5])
-      NQt[6] = rnorm(n=1, 0, sigma[6])
-      NQt[7] = rnorm(n=1, 0, sigma[7])
+      NQt = rmvnorm(n=1, sigma=as.matrix(Qt^2))
+      # rmvnorm wants variance, rnorm wants standard deviation
       x_corr[m,] = x_star[m,] + NQt
       
       if(x_corr[m, 7] >1)
@@ -199,7 +193,7 @@ EnKF_DAPPER <- function(psi, init_Fr, observed, Fr_uncert, LAI_uncert, run_name)
         #dit_star[m,] x_star[m,] - ens_mean_star #Adaptive noise estimation
         
         #Observational uncertainity
-        N_psi = rmvnorm(n=1,sigma=as.matrix(psi_t))
+        N_psi = rmvnorm(n=1,sigma=as.matrix(psi_t)^2)
         
         #Ensemble specific innovations
         yit[m,] = t(zt - crossprod(t(H),(x_corr[m,])) + t(N_psi))
@@ -245,15 +239,15 @@ EnKF_DAPPER <- function(psi, init_Fr, observed, Fr_uncert, LAI_uncert, run_name)
   saveRDS(x, file=paste(EnKF_directory, "/x_", run_name, ".RDS", sep = ""))
   ###### PLOTS #############
   
-  par(mfrow = c(3,1), oma=c(0,0,2,0))
-  
   #LAI
-  plot(startyear + (1/12)*1:nrow(x),x[ , 1, 1],type='l',ylim=c(0,5), main = 'LAI')
+  plot(startyear + (1/12)*1:nrow(x),x[ , 1, 1],type='l',ylim=c(0,5), main = 'LAI', ylab = 'LAI')
   for (n in 2:nmembers)
   {
     points(startyear + (1/12)*1:nrow(x),x[ , n, 1],type='l')
   }
   points(startyear + (1/12)*1:nrow(z), z, col = 'red')
+  legend(x = "topright",inset = 0,
+         legend = c("ensemble members", "observations"),     col=c("black","red"), lwd=5, cex= 0.75, horiz = FALSE, lty = c(1,0), pch = c(26,8))
   
   # NOT REAL DATA - making example diagram for paper
   # axis1 = c(1,2,3,4,5);
@@ -276,9 +270,9 @@ EnKF_DAPPER <- function(psi, init_Fr, observed, Fr_uncert, LAI_uncert, run_name)
   }
   
   # LAI model quantiles
-  plot(startyear + (1/12)*1:nrow(x), quant_Fr[ , 1],type='l',ylim=range(quant_Fr, na.rm = TRUE),xlab = 'months',ylab = 'Fr')
-  lines(startyear + (1/12)*1:nrow(x), quant_Fr[ ,2])
-  lines(startyear + (1/12)*1:nrow(x), quant_Fr[ ,3])
+  plot(startyear + (1/12)*1:nrow(x) -(1/12), quant_Fr[ , 1],type='l',ylim=range(quant_Fr, na.rm = TRUE),xlab = 'months',ylab = 'Fr')
+  lines(startyear + (1/12)*1:nrow(x) -(1/12), quant_Fr[ ,2])
+  lines(startyear + (1/12)*1:nrow(x)-(1/12), quant_Fr[ ,3])
   
   #Fr as histogram
   hist(x[nmonths, , 7], main = 'Fr at last step')
