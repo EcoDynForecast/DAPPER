@@ -34,16 +34,18 @@ noutput_variables = 68
 process_model_pars = 51
 #----------------------------------------------------
 
-priors_in = read.csv(paste(working_directory,priors_file,sep=''))
+priors_in = read.csv(paste0(working_directory,'/',priors_file))
+
 npars = length(priors_in$parnames)
 priormatrix = matrix(NA,npars,6)
 priormatrix[,1] = priors_in$initial_value
 priormatrix[,2] = priors_in$dist_par1
 priormatrix[,3] = priors_in$dist_par2
-priormatrix[,4] = priors_in$dist_type
-priormatrix[,5] = priors_in$fit_par
+priormatrix[which(priors_in$dist_type == 'uniform'),4] = 1
+priormatrix[which(priors_in$dist_type == 'normal'),4] = 2
+priormatrix[which(priors_in$fit_par == 'TRUE'),5] = 0
+priormatrix[which(priors_in$fit_par == 'FALSE'),5] = 1
 priormatrix[,6] = priors_in$par_group
-
 parnames = priors_in$parnames
 
 index = 1
