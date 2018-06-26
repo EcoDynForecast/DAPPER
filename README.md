@@ -213,7 +213,7 @@ Create a working directory (e.g., DAPPER_example_run) and copy the files out of 
 ```{r}
 rm(list = ls())
 #---CONTROL INFORMATION----------------------------
-working_directory = "/Users/quinn/Dropbox/Research/DAPPER_example_run"
+working_directory = "/Users/quinn/Dropbox/Research/DAPPER_example_run/"
 DAPPER_directory =  "/Users/quinn/Dropbox/Research/DAPPER/"
 input_directory = "/Users/quinn/Dropbox/Research/DAPPER_inputdata_public"
 niter = 100
