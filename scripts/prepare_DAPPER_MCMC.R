@@ -73,14 +73,18 @@ final_pdf = paste(working_directory,run_name,'.pdf',sep='')
 #----------------------------------------------------
 
 #---  PREPARE OBSERVATIONS ---------------------------
-obs_list = prepare_obs(obs_set,FR_fert_assumption,use_fol)
-plotlist = obs_list$plotlist
-nplots= obs_list$nplots
-observations= obs_list$observations
-initdata= obs_list$initdata
-met_in = obs_list$met_in
-co2_in = obs_list$co2_in
-use_fol_state = obs_list$use_fol_state
+initdata = read.csv(paste0(working_directory,'/',plot_file))
+observations = read.csv(paste0(working_directory,'/',observations_file))
+met_in = read.csv(paste0(working_directory,'/',met_file))
+plotlist = unique(initdata$PlotID)
+nplots= length(plotlist)
+use_fol_state = array(0,dim=nplots)
+for(plotnum in 1:nplots){
+  tmp = observations[which(observations$PlotID == initdata$PlotID[plotnum]),]
+  if(length(which(tmp$FOL != -99)) != 0 & length(which(tmp$LAI != -99))==0){
+    use_fol_state[plotnum] = 1
+  }
+}
 #-------------------------------------------------
 data_uncertainity_npar_group = index
 index = index + 1
@@ -120,9 +124,9 @@ obs_uncert = state_space_obs$obs_uncert
 init_obs = state_space_obs$init_obs
 init_uncert = state_space_obs$init_uncert
 
-if(length(which(all_studies == '/FMC_Thinning/TIER1_FMC'))){
-  thinning_study_second_thin = read.csv(paste(input_directory,'/FMC_Thinning/TIER1_FMC_list_of_second_thin_plots.csv',sep=''))
-}
+#if(length(which(all_studies == '/FMC_Thinning/TIER1_FMC'))){
+#  thinning_study_second_thin = read.csv(paste(input_directory,'/FMC_Thinning/TIER1_FMC_list_of_second_thin_plots.csv',sep=''))
+#}
 
 thin_event = array(0,dim=c(nplots,nmonths))
 for(plotnum in 1:nplots){
@@ -130,11 +134,11 @@ for(plotnum in 1:nplots){
   prev_nha = init_obs[5,plotnum]
   thin_occured = 0
   double_thin = 0
-  if(length(which(all_studies == '/FMC_Thinning/TIER1_FMC'))){
-    if(length(which(thinning_study_second_thin$PlotID ==  tmp_initdata$Plot)) == 1 & plotlist[plotnum] > 10000 & plotlist[plotnum] < 20000){
-      double_thin = 1
-    }
-  }
+  #if(length(which(all_studies == '/FMC_Thinning/TIER1_FMC'))){
+  #  if(length(which(thinning_study_second_thin$PlotID ==  tmp_initdata$Plot)) == 1 & plotlist[plotnum] > 10000 & plotlist[plotnum] < 20000){
+  #    double_thin = 1
+  #  }
+ # }
   for(mo in (mo_start_end[plotnum,1]+1):mo_start_end[plotnum,2])
     if(obs[5,plotnum,mo] != -99){
       thin_event[plotnum,mo-1] =  prev_nha - obs[5,plotnum,mo] 
@@ -186,7 +190,7 @@ control_plot_index =  control_list$control_plot_index
 matched_FR_plot_index = control_list$matched_FR_plot_index
 
 #--- CREATE CLIMATE INPUT ARRAYS --------------------------------
-met_tmp = prepare_met(met_in,initdata,mo_start_end,co2_in,nplots,nmonths,months,years)
+met_tmp = prepare_met(met_in,initdata,mo_start_end,nplots,nmonths,months,years)
 met = array(NA,dim=c(nplots,6,length(met_tmp$tmin[1,])))
 met[,1,] = met_tmp$tmin
 met[,2,] = met_tmp$tmax
@@ -303,7 +307,8 @@ if(only_create_plot == FALSE){
                                             as.integer(use_age_edc),
                                             as.integer(use_fr_edc),
                                             as.integer(use_sm_edc),
-                                            as.integer(state_space))
+                                            as.integer(state_space),
+                                            as.integer(print_debug))
                           ,npar_groups = as.integer(npar_groups)
                           ,data_uncertainity_npar_group  = as.integer(data_uncertainity_npar_group)
                           ,nstreams = as.integer(nstreams)

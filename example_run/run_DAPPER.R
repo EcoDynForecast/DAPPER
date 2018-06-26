@@ -1,20 +1,23 @@
 rm(list = ls())
 #---CONTROL INFORMATION----------------------------
-working_directory = "/Users/quinn/Dropbox/Research/DAPPER/example_run/"
-DAPPER_directory =  "/Users/quinn/Dropbox/Research/DAPPER/"
+working_directory = "/Users/quinn/Dropbox (VTFRS)/Research/DAPPER_branch/DAPPER/example_run/"
+DAPPER_directory =  "/Users/quinn/Dropbox (VTFRS)/Research/DAPPER_branch/DAPPER/"
 input_directory = "/Users/quinn/Dropbox/Research/DAPPER_inputdata_public/"
-niter = 100
+niter = 1
 chain_number = 1
 burn =  1
 thin_interval = 1
+print_debug = 0
 run_name = 'Your_duke_assimilation'
 restart_from_chain = FALSE
 restart_chain =  NA
 priors_file = 'example_priors.csv'
 validation_set_file = NA #file name of .csv that defines plot numbers for plots that are not fit but are compared to the obs.
+met_file = 'example_met.csv'
+plot_file = 'example_plots.csv'
+observations_file = 'example_observations.csv'
 create_plot = TRUE
 only_create_plot = FALSE
-obs_set = 14 #Select which plots are used in analysis.  See prepare_obs.R for number guide 
 focal_plotID = NA #30001 #Setting a value here causes only a single plot to be simulated and fit
 fr_model = 1  # 1 = estimate FR for each plot, 2 = empirical FR model
 FR_fert_assumption = 0 #0 = assume fertilization plots have FR = 1, 1 = do not assume fertilization plots have FR = 1
@@ -35,9 +38,10 @@ state_space = 1
 tracked_plotnum = 1
 windows_machine = FALSE
 #----------------------------------------------------
-all_studies = c(
-  '/Duke/TIER4_Duke'
-)
+#obs_set = 14 #Select which plots are used in analysis.  See prepare_obs.R for number guide 
+#all_studies = c(
+#  '/Duke/TIER4_Duke'
+#)
 
 #---SELECT COMPONENTS THAT ARE ALLOWED TO HAVE UNCERTAINITY--
 plot_WSx1000 = FALSE  #include plot specific WSx1000 parameter

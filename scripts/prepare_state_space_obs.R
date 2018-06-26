@@ -104,9 +104,7 @@ prepare_state_space_obs <- function(){
           meas_month = tmp$MonthMeas[which(tmp$LAI != -99)][i]
           index = (meas_year - earliestYear)*12+1 + (meas_month-earliestMonth)
           obs[1,plotnum,index] = tmp$LAI[which(tmp$LAI != -99)][i]
-          #ONLY USE AUGUST LAI VALUES AT DUKE
-          #if(meas_month != 8 & tmp$PlotID[1] > 40000 & tmp$PlotID[1] < 41000){obs[1,plotnum,index]=-99}
-          obs_uncert[1,plotnum,index] = tmp$LAI[which(tmp$LAI != -99)][i]*obs_uncertainity_proportion
+          obs_uncert[1,plotnum,index] = tmp$LAI_sd[which(tmp$LAI != -99)][i]
         }
       }
     }else{
@@ -118,9 +116,6 @@ prepare_state_space_obs <- function(){
           index = (meas_year - earliestYear)*12+1 + (meas_month-earliestMonth)
           obs[1,plotnum,index] = tmp$FOL[which(tmp$FOL != -99)][i]
           obs_uncert[1,plotnum,index] = tmp$WFest_sd[i]
-          if(tmp$WFest_sd[i] == -99){
-            obs_uncert[1,plotnum,index] = tmp$FOL[which(tmp$FOL != -99)][i]*obs_uncertainity_proportion
-          }
         }
       }
     }
@@ -132,10 +127,7 @@ prepare_state_space_obs <- function(){
         meas_month = tmp$MonthMeas[which(tmp$WOODY != -99)][i]
         index = (meas_year - earliestYear)*12+1 + (meas_month-earliestMonth)
         obs[2,plotnum,index] = tmp$WOODY[which(tmp$WOODY != -99)][i]
-        obs_uncert[2,plotnum,index] = tmp$WSest_sd[i]
-        if(tmp$WSest_sd[i] == -99){
-          obs_uncert[2,plotnum,index] = tmp$WOODY[which(tmp$WOODY != -99)][i]*0.025
-        }
+        obs_uncert[2,plotnum,index] = tmp$WSest_sd[which(tmp$WOODY != -99)][i]
       }
     }
     #Coarse Roots
@@ -145,7 +137,7 @@ prepare_state_space_obs <- function(){
         meas_month = tmp$MonthMeas[which(tmp$ROOT_COARSE != -99)][i]
         index = (meas_year - earliestYear)*12+1 + (meas_month-earliestMonth)
         obs[3,plotnum,index] = tmp$ROOT_COARSE[which(tmp$ROOT_COARSE != -99)][i]
-        obs_uncert[3,plotnum,index] = tmp$ROOT_COARSE[which(tmp$ROOT_COARSE != -99)][i]*obs_uncertainity_proportion
+        obs_uncert[3,plotnum,index] = tmp$ROOT_COARSE_sd[which(tmp$ROOT_COARSE != -99)][i]
       }
     }
     
@@ -156,7 +148,7 @@ prepare_state_space_obs <- function(){
         meas_month = tmp$MonthMeas[which(tmp$ROOT_FINE != -99)][i]
         index = (meas_year - earliestYear)*12+1 + (meas_month-earliestMonth)
         obs[4,plotnum,index] = tmp$ROOT_FINE[which(tmp$ROOT_FINE != -99)][i]
-        obs_uncert[4,plotnum,index] = tmp$ROOT_FINE[which(tmp$ROOT_FINE != -99)][i]*obs_uncertainity_proportion
+        obs_uncert[4,plotnum,index] = tmp$ROOT_FINE_sd[which(tmp$ROOT_FINE != -99)][i]
       }
     }
     
@@ -167,7 +159,7 @@ prepare_state_space_obs <- function(){
         meas_month = tmp$MonthMeas[which(tmp$Nha != -99)][i]
         index = (meas_year - earliestYear)*12+1 + (meas_month-earliestMonth)
         obs[5,plotnum,index] = tmp$Nha[which(tmp$Nha != -99)][i]
-        obs_uncert[5,plotnum,index] = tmp$Nha[which(tmp$Nha != -99)][i]*0.01
+        obs_uncert[5,plotnum,index] = tmp$Nha_sd[which(tmp$Nha != -99)][i]
       }
     }
     #Hardwood LAI
@@ -177,14 +169,10 @@ prepare_state_space_obs <- function(){
         meas_month = tmp$MonthMeas[which(tmp$LAI_H != -99)][i]
         index = (meas_year - earliestYear)*12+1 + (meas_month-earliestMonth)
         obs[6,plotnum,index] = tmp$LAI_H[which(tmp$LAI_H != -99)][i]
-        #if(obs[6,plotnum,index]  == 0.0){
-        #  obs[6,plotnum,index] = -99
-        #}
         if(meas_month != 8 & meas_month != 7 & meas_month != 6 & tmp$PlotID[1] > 40000 & tmp$PlotID[1] < 42000){
           obs[6,plotnum,index]=-99
         }
-        
-        obs_uncert[6,plotnum,index] = tmp$LAI_H[which(tmp$LAI_H != -99)][i]*obs_uncertainity_proportion
+        obs_uncert[6,plotnum,index] = tmp$LAI_H_sd[which(tmp$LAI_H != -99)][i]
         if(obs_uncert[6,plotnum,index] == 0.0){obs_uncert[6,plotnum,index]= 0.001}
       }
     }
@@ -195,7 +183,7 @@ prepare_state_space_obs <- function(){
         meas_month = tmp$MonthMeas[which(tmp$WOODY_H != -99)][i]
         index = (meas_year - earliestYear)*12+1 + (meas_month-earliestMonth)
         obs[7,plotnum,index] = tmp$WOODY_H[which(tmp$WOODY_H != -99)][i]
-        obs_uncert[7,plotnum,index] = tmp$WOODY_H[which(tmp$WOODY_H != -99)][i]*obs_uncertainity_proportion
+        obs_uncert[7,plotnum,index] = tmp$WOODY_H_sd[which(tmp$WOODY_H != -99)][i]
       }
     } 
     #Hardwood coarse roots
@@ -225,9 +213,6 @@ prepare_state_space_obs <- function(){
         index = (meas_year - earliestYear)*12+1 + (meas_month-earliestMonth)
         obs[12,plotnum,index] = tmp$GEP[which(tmp$GEP != -99)][i]
         obs_uncert[12,plotnum,index] = tmp$GEP_sd[which(tmp$GEP != -99)][i]
-        if(tmp$GEP_sd[which(tmp$GEP != -99)][i] == -99){
-          obs_uncert[12,plotnum,index] = tmp$GEP[which(tmp$GEP != -99)][i]*obs_uncertainity_proportion
-        }
       }
     }
     #ET
@@ -238,9 +223,6 @@ prepare_state_space_obs <- function(){
         index = (meas_year - earliestYear)*12+1 + (meas_month-earliestMonth)
         obs[14,plotnum,index] = tmp$ET[which(tmp$ET != -99)][i]
         obs_uncert[14,plotnum,index] = tmp$ET_sd[which(tmp$ET != -99)][i]
-        if(tmp$ET_sd[which(tmp$ET != -99)][i] == -99){
-          obs_uncert[14,plotnum,index] = tmp$ET[which(tmp$ET != -99)][i]*obs_uncertainity_proportion
-        }
       }
     } 
     #Ctrans
@@ -251,9 +233,6 @@ prepare_state_space_obs <- function(){
         index = (meas_year - earliestYear)*12+1 + (meas_month-earliestMonth)
         obs[15,plotnum,index] = tmp$Ctrans[which(tmp$Ctrans != -99)][i]
         obs_uncert[15,plotnum,index] = tmp$Ctrans_sd[which(tmp$Ctrans != -99)][i]
-        if(tmp$Ctrans_sd[which(tmp$Ctrans != -99)][i] == -99){
-          obs_uncert[15,plotnum,index] = tmp$Ctrans[which(tmp$Ctrans != -99)][i]*obs_uncertainity_proportion
-        }
       }
     } 
     
@@ -266,10 +245,6 @@ prepare_state_space_obs <- function(){
         obs[16,plotnum,index] = tmp$Ctrans_H[which(tmp$Ctrans_H != -99)][i]
         if((meas_month < 6 | meas_month > 9) & tmp$PlotID[1] > 40000 & tmp$PlotID[1] < 42000){obs[16,plotnum,index]=-99}
         obs_uncert[16,plotnum,index] = tmp$Ctrans_H_sd[which(tmp$Ctrans_H != -99)][i]
-        if(tmp$Ctrans_H_sd[which(tmp$Ctrans_H != -99)][i] == -99){
-          obs_uncert[16,plotnum,index] = tmp$Ctrans_H[which(tmp$Ctrans_H != -99)][i]*obs_uncertainity_proportion
-        }
-        
       }
     }  
     
@@ -280,7 +255,7 @@ prepare_state_space_obs <- function(){
         meas_month = tmp$MonthMeas[which(tmp$ROOT_PROD_TOTAL != -99)][i]
         index = (meas_year - earliestYear)*12+1 + (meas_month-earliestMonth)
         obs[17,plotnum,index] = tmp$ROOT_PROD_TOTAL[which(tmp$ROOT_PROD_TOTAL != -99)][i]
-        obs_uncert[17,plotnum,index] = tmp$ROOT_PROD_TOTAL[which(tmp$ROOT_PROD_TOTAL != -99)][i]*obs_uncertainity_proportion
+        obs_uncert[17,plotnum,index] = tmp$ROOT_PROD_TOTAL_sd[which(tmp$ROOT_PROD_TOTAL != -99)][i]
       }
     }
     #Total Foliage Production
@@ -290,7 +265,7 @@ prepare_state_space_obs <- function(){
         meas_month = tmp$MonthMeas[which(tmp$FOL_PROD_TOTAL != -99)][i]
         index = (meas_year - earliestYear)*12+1 + (meas_month-earliestMonth)
         obs[18,plotnum,index] = tmp$FOL_PROD_TOTAL[which(tmp$FOL_PROD_TOTAL != -99)][i]
-        obs_uncert[18,plotnum,index] = tmp$FOL_PROD_TOTAL[which(tmp$FOL_PROD_TOTAL != -99)][i]*obs_uncertainity_proportion
+        obs_uncert[18,plotnum,index] = tmp$FOL_PROD_TOTAL_sd[which(tmp$FOL_PROD_TOTAL != -99)][i]
       }
     }
     
@@ -302,7 +277,7 @@ prepare_state_space_obs <- function(){
         index = (meas_year - earliestYear)*12+1 + (meas_month-earliestMonth)
         obs[19,plotnum,index] = tmp$LAI_TOTAL[which(tmp$LAI_TOTAL != -99)][i]
         if((meas_month != 8) & tmp$PlotID[1] > 40000 & tmp$PlotID[1] < 42000){obs[19,plotnum,index]=-99}
-        obs_uncert[19,plotnum,index] = tmp$LAI_TOTAL[which(tmp$LAI_TOTAL != -99)][i]*obs_uncertainity_proportion
+        obs_uncert[19,plotnum,index] = tmp$LAI_TOTAL_sd[which(tmp$LAI_TOTAL != -99)][i]
       }
     }
     

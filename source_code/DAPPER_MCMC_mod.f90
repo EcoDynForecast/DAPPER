@@ -65,7 +65,7 @@ subroutine DAPPER_MCMC( &
                     	,fit_plot(nplots) &
                     	,matched_FR_plot_index(nplots) &
                     	,par_group(nopars) &
-                    	,control_pars(11) &
+                    	,control_pars(12) &
                     	,npar_groups & 
                     	,data_uncertainity_npar_group &
                     	,nstreams &
@@ -109,7 +109,7 @@ subroutine DAPPER_MCMC( &
    	integer :: nadapt = 100
    
    	integer :: p,pass,index,iter,count1,niter,start_adapt,cost_type,fr_model,pgroup,use_dk_pars
-   	integer :: use_age_edc,use_fr_edc,use_sm_edc,high_freq_obs
+   	integer :: use_age_edc,use_fr_edc,use_sm_edc,high_freq_obs,print_debug
    	integer :: global_accept(npar_groups),local_accept(npar_groups)
    	double precision :: PlotID,DroughtLevel,FertFlag,FR,prior,pnew,new_pars(nopars),IrrFlag, &
    		local_accept_rate, r, z, like_new,FR1_new, FR2_new, FR3_new,SI,MeanTemp,MeanPrecip
@@ -160,6 +160,7 @@ subroutine DAPPER_MCMC( &
     use_fr_edc = control_pars(9)
     use_sm_edc = control_pars(10)
     state_space = control_pars(11)
+    print_debug = control_pars(12)
 
 	print *, 'Start fitting'
 	

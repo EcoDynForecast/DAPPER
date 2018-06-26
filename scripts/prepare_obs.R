@@ -157,14 +157,6 @@ prepare_obs <- function(obs_set,FR_fert_assumption,use_fol){
     observations$GEP_sd = 0.001
   }
   
-  met_in = NULL
-  for(s in 1:length(all_studies)){
-    d = read.csv(paste(input_directory,all_studies[s],'_met.csv',sep=''))
-    met_in = rbind(met_in,d)
-  }
-  
-  co2_in = read.csv(paste(input_directory,'/CO2/CO2_Concentrations_from_CMIP5_1950-2095.csv',sep=''))
-  
   initdata = initdata[which(!is.na(initdata$ASW_max) & initdata$ASW_max > 0.0),]
   
   observations = observations[observations$PlotID %in% initdata$PlotID, ]

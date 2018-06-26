@@ -52,7 +52,7 @@ subroutine likelihood(plotnum &
                     	,fit_plot(nplots) &
                     	,matched_FR_plot_index(nplots) &
                     	,par_group(nopars) &
-                    	,control_pars(11) &
+                    	,control_pars(12) &
                     	,npar_groups & 
                     	,nstreams &
                     	,nmonths &
@@ -90,7 +90,7 @@ subroutine likelihood(plotnum &
    	double precision :: new_FR,control_FR, prob_FR, prob_pFS,prob_plot_params   
    	double precision :: site(27), annual_fol_prod, annual_root_prod
 
-   	integer::control_plotnum, index, index2,i, num,y_index, start_index,first_full_year
+   	integer::control_plotnum, index, index2,i, num,y_index, start_index,first_full_year,print_debug
    	
    	integer :: PlantedYear, PlantedMonth,InitialYear, InitialMonth,EndMonth, StartAge, EndYear
 	double precision :: WFi, WRi,WSi,WCRi, StemNum,measurement_year,measurement_month,WFi_H 
@@ -105,6 +105,7 @@ subroutine likelihood(plotnum &
  	high_freq_obs = control_pars(5)
  	use_dk_pars = control_pars(7)
  	state_space = control_pars(11)
+ 	print_debug = control_pars(12)
  	
    	pars = new_pars(1:npars_used_by_fortran)
  
@@ -397,7 +398,7 @@ subroutine likelihood(plotnum &
     	! ASSIGN THE PREDATIONS THAT ARE USED IN THE LATENT STATE CALCULATIONS
                            
          pred_new(:,plotnum,mo) =  modeled(:)
-                  
+
         !-------  COMPARE MODEL PREDICTIONS TO LATENT STATES AND COMPARED LATENT STATES TO OBSERVATIONS
 		!STATE-SPACE DATA STREAM
 		do data_stream=1,7
@@ -572,6 +573,13 @@ subroutine likelihood(plotnum &
 					   LL(12) + LL(14) + LL(15) + LL(16) + &
 					   LL(17)+ LL(18) + prob_FR + prob_plot_params 
 					   
+	if(print_debug == 1) then
+		print *, 'start'
+		print *, LL(1),LL(2),LL(3), LL(4),LL(5), LL(6)
+		print *, LL(7),LL(8),LL(9), LL(10),LL(11), LL(12)
+		print *, LL(13),LL(14),LL(15), LL(16),LL(17), LL(18)	
+	endif
+				   
 end subroutine likelihood
 
 end module DAPPER_plot_mod
