@@ -1,13 +1,9 @@
-figures/*.pdf
-figures/*.csv
-chains/*.Rdata
 source_code/*.o
 source_code/*.mod
 source_code/*.so
-priors/*.csv
 .DS_Store
-figures/.DS_Store
-chains/.DS_Store
 source_code/.DS_Store
-priors/.DS_Store
 scripts/.DS_Store
+example_run/*.Rdata
+example_run/*.pdf
+example_run/*observed.csv
