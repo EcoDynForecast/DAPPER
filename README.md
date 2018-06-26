@@ -154,11 +154,11 @@ all_studies = c(
 
 **Step 10: Set other options**
 
+`validation_set_file`: (NA or file name) If you want to hold a subset of plots out from the assimilation as validation, define the validation set file name here.
+
 `create_plot`: (TRUE/FALSE) If TRUE, then a PDF analyzing the assimilation will be produced
 
 `only_create_plot`: (TRUE/FALSE) If TRUE, then use the restart_chain to make PDF analyzing the chain without running a new assimilation
-
-`val_set`: (integer) If you want to hold a subset of plots out from the assimilation as validation, define the validation set here.  The validation set is an integer that corresponds to a set of plots defined in the `/working_directory/validation_sets/validation_sets.csv` file.
 
 `fr_model`: (1 or 2) 1 = estimate the plot-specific soil fertility parameter (FR or lambda) for each plot; 2 = use the empirical model to estimate the parameter for non-fertilized plots (currently a function of site index and mean annual temperature)
 
@@ -224,11 +224,11 @@ run_name = 'Your_duke_assimilation'
 restart_from_chain = FALSE
 restart_chain =  NA
 priors_file = 'example_priors.csv'
+validation_set_file = NA #file name of .csv that defines plot numbers for plots that are not fit but are compared to the obs.
 create_plot = TRUE
 only_create_plot = FALSE
-obs_set = 9 #Select which plots are used in analysis.  See prepare_obs.R for number guide 
+obs_set = 14 #Select which plots are used in analysis.  See prepare_obs.R for number guide 
 focal_plotID = NA #30001 #Setting a value here causes only a single plot to be simulated and fit
-val_set = 0  #Select which plots are withheld from fitting.  0 includes all plot
 fr_model = 1  # 1 = estimate FR for each plot, 2 = empirical FR model
 FR_fert_assumption = 0 #0 = assume fertilization plots have FR = 1, 1 = do not assume fertilization plots have FR = 1
 FR_separate_npar_groups = 2  #Assigns a different parameter group to groups of FR values: 0 = all one group, 1 = separate groups, 2 = all plots separate
