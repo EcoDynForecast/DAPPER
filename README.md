@@ -2,7 +2,7 @@
 
 The approach uses the language R to initiate and analyze a simulation and uses Fortran to execute a simulation.  We are assuming that you have R and a fortran compiler on your computer or cluster.
 
-The repository has the latest updates.  If you are interested in the code used in Thomas et al. 2018 Ecological Applications, please download Tag 'Regional_Forecasting_Paper_2017'
+The repository has the latest updates.  If you are interested in the code used in Thomas et al. 2018 Ecological Applications, please download Tag 'Regional_Forecasting_Paper_2017' (be sure to follow the README.md guide for that version)
 
 Please use the following citations to reference the DAPPER approach
 
