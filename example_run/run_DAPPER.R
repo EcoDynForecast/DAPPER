@@ -1,8 +1,8 @@
 rm(list = ls())
 #---CONTROL INFORMATION----------------------------
-working_directory = "/Users/quinn/Dropbox/Research/DAPPER/example_run"
+working_directory = "/Users/quinn/Dropbox/Research/DAPPER/example_run/"
 DAPPER_directory =  "/Users/quinn/Dropbox/Research/DAPPER/"
-input_directory = "/Users/quinn/Dropbox/Research/DAPPER_inputdata_public"
+input_directory = "/Users/quinn/Dropbox/Research/DAPPER_inputdata_public/"
 niter = 1
 chain_number = 1
 burn =  1
