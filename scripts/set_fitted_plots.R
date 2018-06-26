@@ -1,6 +1,6 @@
 set_fitted_plots <- function(nplots,val_set,plotlist,initdata){
   
-  fit_set_all = read.csv(paste(working_directory,'/validation_sets/validation_sets.csv',sep=''))  
+  fit_set_all = read.csv(paste(working_directory,'validation_sets.csv',sep=''))  
   fit_plot = rep(1,nplots)
    if(val_set > 0){
     not_fit_set = fit_set_all$PlotID[which(fit_set_all[,1] == val_set)]

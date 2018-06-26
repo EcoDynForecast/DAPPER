@@ -648,7 +648,7 @@ plot_output <- function(){
   abline(0,1)
   dev.off()
   
-  fname = paste(working_directory,'/figures/',sep='')
+  fname = paste(working_directory,sep='')
   write.table(data.frame(PlotID = initdata[,1],fit_plot,FertFlag=initdata[,18],IrrFlag=initdata[,33],DroughtLevel=initdata[,16],
                          CO2flag=initdata[,19],InitFR = initdata[,12],Mean_temp = initdata[,26],mean_precip = initdata[,27]),
               paste(fname,run_name,'_predicted_vs_observed.csv',sep=""),sep=",",col.names = TRUE,row.names = FALSE)

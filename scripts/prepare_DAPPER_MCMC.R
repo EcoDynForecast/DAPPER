@@ -16,7 +16,7 @@ nadapt = 1000
 adaptfac = 1.5
 std_fac = 2
 #----------------------------------------------------
-setwd(paste(working_directory,'/scripts/',sep=''))
+setwd(paste(DAPPER_directory,'/scripts/',sep=''))
 source('prepare_obs.R')
 source('prepare_state_space_obs.R')
 source('set_fitted_plots.R')
@@ -34,7 +34,7 @@ noutput_variables = 68
 process_model_pars = 51
 #----------------------------------------------------
 
-priors_in = read.csv(paste(working_directory,'/priors/',priors_file,sep=''))
+priors_in = read.csv(paste(working_directory,priors_file,sep=''))
 npars = length(priors_in$parnames)
 priormatrix = matrix(NA,npars,6)
 priormatrix[,1] = priors_in$initial_value
@@ -60,14 +60,14 @@ for(p in 1:npars){
 
 #---- ENTER THE FORTRAN LIBRARY NAMES HERE ----------
 if(windows_machine){
-  code_library_iter = paste(working_directory,'/source_code/DAPPER_MCMC.dll',sep='')
-  code_library_plot = paste(working_directory,'/source_code/r3pg_interface.dll',sep='')
+  code_library_iter = paste(DAPPER_directory,'/source_code/DAPPER_MCMC.dll',sep='')
+  code_library_plot = paste(DAPPER_directory,'/source_code/r3pg_interface.dll',sep='')
 }else{
-  code_library_iter = paste(working_directory,'/source_code/DAPPER_MCMC.so',sep='')
-  code_library_plot = paste(working_directory,'/source_code/r3pg_interface.so',sep='')
+  code_library_iter = paste(DAPPER_directory,'/source_code/DAPPER_MCMC.so',sep='')
+  code_library_plot = paste(DAPPER_directory,'/source_code/r3pg_interface.so',sep='')
 }
 
-final_pdf = paste(working_directory,'/figures/',run_name,'.pdf',sep='')
+final_pdf = paste(working_directory,run_name,'.pdf',sep='')
 #----------------------------------------------------
 
 #---  PREPARE OBSERVATIONS ---------------------------
@@ -118,9 +118,9 @@ obs_uncert = state_space_obs$obs_uncert
 init_obs = state_space_obs$init_obs
 init_uncert = state_space_obs$init_uncert
 
-
-thinning_study_second_thin = read.csv(paste(input_directory,'/FMC_Thinning/TIER1_FMC_list_of_second_thin_plots.csv',sep=''))
-
+if(length(which(all_studies == '/FMC_Thinning/TIER1_FMC'))){
+  thinning_study_second_thin = read.csv(paste(input_directory,'/FMC_Thinning/TIER1_FMC_list_of_second_thin_plots.csv',sep=''))
+}
 
 thin_event = array(0,dim=c(nplots,nmonths))
 for(plotnum in 1:nplots){
@@ -128,8 +128,10 @@ for(plotnum in 1:nplots){
   prev_nha = init_obs[5,plotnum]
   thin_occured = 0
   double_thin = 0
-  if(length(which(thinning_study_second_thin$PlotID ==  tmp_initdata$Plot)) == 1 & plotlist[plotnum] > 10000 & plotlist[plotnum] < 20000){
-    double_thin = 1
+  if(length(which(all_studies == '/FMC_Thinning/TIER1_FMC'))){
+    if(length(which(thinning_study_second_thin$PlotID ==  tmp_initdata$Plot)) == 1 & plotlist[plotnum] > 10000 & plotlist[plotnum] < 20000){
+      double_thin = 1
+    }
   }
   for(mo in (mo_start_end[plotnum,1]+1):mo_start_end[plotnum,2])
     if(obs[5,plotnum,mo] != -99){
@@ -233,7 +235,7 @@ date = tmp[[1]][1]
 time = strsplit(as.character(tmp[[1]][2]), ":")
 #chain_file_name = paste(run_name,chain_number,date,time[[1]][1],time[[1]][2],time[[1]][1],'Rdata',sep=".")
 chain_file_name = paste(run_name,'Rdata',sep=".")
-final_chain_file_name = paste(working_directory,'/chains/',chain_file_name,sep="")
+final_chain_file_name = paste(working_directory,chain_file_name,sep="")
 
 #-----------------------------------------------------------------
 
@@ -248,12 +250,12 @@ if(restart_from_chain){ #start from a previously run chain
   #if the chain number is 1 then start from the end of the previous chain
   if(chain_number == 1){
     rm(jump_pars)
-    load(paste(working_directory,'/chains/',restart_chain,sep=''))
+    load(paste(working_directory,restart_chain,sep=''))
     max_iter = dim(accepted_pars_thinned_burned)[1]
     init_pars=accepted_pars_thinned_burned[max_iter,]
   }else{
     rm(jump_pars)
-    load(paste(working_directory,'/chains/',restart_chain,sep=''))
+    load(paste(working_directory,restart_chain,sep=''))
     max_iter = dim(accepted_pars_thinned_burned)[1]
     s = sample(1,seq(1,max_iter,1))
     init_pars=accepted_pars_thinned_burned[s,]
@@ -354,7 +356,7 @@ if(only_create_plot == FALSE){
        latent,age,tracked_plot,tracked_plotnum,file = final_chain_file_name)
   #-----------------------------------------------------------------
 }else{
-  load(paste(working_directory,'/chains/',restart_chain,sep=''))
+  load(paste(working_directory,restart_chain,sep=''))
 }
 #------PLOT FINAL RESULTS FROM CHAIN------------------------------
 if(create_plot){
