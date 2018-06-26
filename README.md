@@ -2,7 +2,7 @@
 
 The approach uses the language R to initiate and analyze a simulation and uses Fortran to execute a simulation.  We are assuming that you have R and a fortran compiler on your computer or cluster.
 
-The repository has the latest updates.  If you are interested in the code used in Thomas et al. Submitted, please download Tag 'Regional_Forecasting_Paper_2017'
+The repository has the latest updates.  If you are interested in the code used in Thomas et al. 2018 Ecological Applications, please download Tag 'Regional_Forecasting_Paper_2017'
 
 Please use the following citations to reference the DAPPER approach
 
@@ -13,7 +13,6 @@ Thomas, R. Q., A. L. Jersild, E. B. Brooks, V. A. Thomas, R. H. Wynne. A mid-cen
 **Step 1: Compile the fortran code**
 
 Obtain a fortran compiler for your computer. We have tested the code for gfortran on Macs and the Linux cluster at Virginia Tech.  
-
 
 At the command line use the appropriate commands below.  We encourage the use of openmp to parallelize the data assimilation.  The parallelization works by assigning different plots to different cores during an iteration of the MCMC.
 
@@ -68,7 +67,7 @@ You need a separate directory to hold the input files.  The directory should con
 
 The first is the meterology drivers, the second is the observations that are compared to the model predictions, and the third is characteristics of each plot including the initial conditions and soil information.
 
-The *DAPPER_inputdata_public* repository (https://code.vt.edu/rqthomas/DAPPER_inputdata_public) provides an example of the input directory using the plots at the Duke site (McCarthy et al. 2010 New Phytologist).
+The *DAPPER_inputdata_public* repository (https://github.com/EcoDynForecast/DAPPER_inputdata_public) provides an example of the input directory using the plots at the Duke site (McCarthy et al. 2010 New Phytologist).
 
 
 **Step 3: Change the paths in the `run_DAPPER.R` script**
@@ -76,8 +75,9 @@ The *DAPPER_inputdata_public* repository (https://code.vt.edu/rqthomas/DAPPER_in
 The 'run_DAPPER.R` script runs the full analysis.  Change the following paths for the DAPPER code and DAPPER input data to match the paths on your computer
 
 ```{r}
-working_directory =  '/Users/quinn/Dropbox/Research/DAPPER_papers/regional_forecasting/DAPPER'
-input_directory = '/Users/quinn/Dropbox/Research/DAPPER_papers/regional_forecasting/DAPPER_inputdata'
+working_directory = "/Users/quinn/Dropbox/Research/test_DAPPER_run/"
+DAPPER_directory =  "/Users/quinn/Dropbox/Research/DAPPER/"
+input_directory = "/Users/quinn/Dropbox/Research/DAPPER_inputdata_public"
 ```
 **Step 4: Change your MCMC chain options**
 
@@ -179,47 +179,68 @@ all_studies = c(
 
 `plot_WSx1000`,`plot_thinpower`,`plot_mort_rate`: Development stage, always set to FALSE
 
+`use_gep` (0 or 1) use gross ecosystem productivity in likelihood
+
+`use_et` (0 or 1) use evapotranspiration in likelihood
+
+`use_ctrans` (0 or 1) use canopy transpiration in likelihood
+
+`use_gep_uncert` (0 or 1) include observational uncertainity in GEP
+
+`use_et_uncert` (0 or 1) include observational uncertainity in ET
+
+`use_ctrans_uncert` (0 or 1) include observational uncertainity in Ctrans
+
 **Step 10: Run run_DAPPER.R script**
 
 Run the entire `run_DAPPER.R` script.  This will run all the other scripts and code.
 
 **Step 11: Analyze assimilation**
 
-Your chain will be located in the `working_directory/chains/` directory
+Your chain will be located in the `working_directory` directory
 
-A PDF with the chains, marginal histograms of the parameters, plot predictions with observations, and latent state for the focal plot is found in `working_directory/figures/`
+A PDF with the chains, marginal histograms of the parameters, plot predictions with observations, and latent state for the focal plot is found in `working_directory`
 
 **EXAMPLE**
 
 As a example we provide the `run_DAPPER.R` script for assimilating observations from the Duke site.  This assimilation uses observations of GEP and ET from the Ameriflux database, biomass observations from McCarthy et al. 2010 (New Phytologist), and LAI produced by Eric Ward. 
 
+Create a working directory (e.g., DAPPER_example_run) and copy the files out of the `/DAPPER/example_run/` directory to your working directory. Create the run_DAPPER.R script in your working directory and add the code below to the script.
+
 ```{r}
 rm(list = ls())
 #---CONTROL INFORMATION----------------------------
-working_directory =  '/Users/quinn/Dropbox/Research/DAPPER_papers/regional_forecasting/DAPPER'
-input_directory = '/Users/quinn/Dropbox/Research/DAPPER_papers/regional_forecasting/DAPPER_inputdata'
-niter = 20000
+working_directory = "/Users/quinn/Dropbox/Research/DAPPER_example_run"
+DAPPER_directory =  "/Users/quinn/Dropbox/Research/DAPPER/"
+input_directory = "/Users/quinn/Dropbox/Research/DAPPER_inputdata_public"
+niter = 1
 chain_number = 1
-burn =  10000
-thin_interval = 2
+burn =  1
+thin_interval = 1
 run_name = 'Your_duke_assimilation'
 restart_from_chain = FALSE
 restart_chain =  NA
-priors_file = 'default_priors.csv'
+priors_file = 'example_priors.csv'
 create_plot = TRUE
 only_create_plot = FALSE
-obs_set = 14 #Select which plots are used in analysis.  See prepare_obs.R for number guide 
+obs_set = 9 #Select which plots are used in analysis.  See prepare_obs.R for number guide 
 focal_plotID = NA #30001 #Setting a value here causes only a single plot to be simulated and fit
 val_set = 0  #Select which plots are withheld from fitting.  0 includes all plot
 fr_model = 1  # 1 = estimate FR for each plot, 2 = empirical FR model
 FR_fert_assumption = 0 #0 = assume fertilization plots have FR = 1, 1 = do not assume fertilization plots have FR = 1
-FR_separate_npar_groups = TRUE  #Assigns a different parameter group to groups of FR values
+FR_separate_npar_groups = 2  #Assigns a different parameter group to groups of FR values: 0 = all one group, 1 = separate groups, 2 = all plots separate
 use_fol = TRUE  #TRUE= use allometric estimates of foliage biomass in fitting
 use_dk_pars = 1  #0 = do not use 3 specific parameters for the Duke site, 1 = use the 3 specific parameters
 use_age_edc = 0  #0 = do not use an ecological constraint on the age function (see code); 1 = use the constraint
 use_sm_edc = 0  #0 = do not use an ecological constraint on the soil moisture function (see code); 1 = use the constraint
 use_fr_edc = 0   #0 = do note use an ecological constraint on the SI - FR function (see code); 1 = use the constraint
 nstreams = 19
+use_gep = 1
+use_et = 1  
+use_ctrans =1 
+use_gep_uncert = 1
+use_et_uncert = 1
+use_ctrans_uncert = 1
 state_space = 1
 tracked_plotnum = 1
 windows_machine = FALSE
@@ -233,6 +254,6 @@ plot_WSx1000 = FALSE  #include plot specific WSx1000 parameter
 plot_thinpower = FALSE #include plot specific thinpower parameter
 plot_mort_rate = FALSE #include plot specific mortality rate parameter
 
-setwd(paste(working_directory,'/scripts/',sep=''))
+setwd(paste(DAPPER_directory,'/scripts/',sep=''))
 source('prepare_DAPPER_MCMC.R')
 ```
