@@ -633,6 +633,10 @@ subroutine DAPPER_MCMC( &
 
              pnew = like_new  + prior
              
+             if(print_debug == 1) then
+             	print *, 'likelihood ',like_new, 'priors ', prior
+             endif
+             
 			if(pnew < -1e30) then
       			pnew=-1e30
    			endif

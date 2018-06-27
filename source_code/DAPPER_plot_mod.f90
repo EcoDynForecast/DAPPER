@@ -471,6 +471,7 @@ subroutine likelihood(plotnum &
 						modeled(data_stream),SD1(data_stream)+modeled(data_stream)*SD2(data_stream)))
 					LL(data_stream)  = LL(data_stream)  + log(normal_pdf(latent(data_stream,plotnum,mo),&
 						obs(data_stream,plotnum,mo),obs_uncert(data_stream,plotnum,mo)))
+						
     			endif
         	end do
         endif
@@ -574,10 +575,10 @@ subroutine likelihood(plotnum &
 					   LL(17)+ LL(18) + prob_FR + prob_plot_params 
 					   
 	if(print_debug == 1) then
-		print *, 'start'
-		print *, LL(1),LL(2),LL(3), LL(4),LL(5), LL(6)
-		print *, LL(7),LL(8),LL(9), LL(10),LL(11), LL(12)
-		print *, LL(13),LL(14),LL(15), LL(16),LL(17), LL(18)	
+		!write(*,('A')), 'start'
+		!print *, LL(1),LL(2),LL(3), LL(4),LL(5), LL(6)
+		!print *, LL(7),LL(8),LL(9), LL(10),LL(11), LL(12)
+		!print *, LL(13),LL(14),LL(15), LL(16),LL(17), LL(18)	
 	endif
 				   
 end subroutine likelihood
