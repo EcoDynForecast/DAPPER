@@ -180,7 +180,6 @@ EnKF_DAPPER <- function(psi, init_Fr, observed, sigma_Fr, LAI_uncert, run_name){
       #Extract the data uncertainity for LAI at time-step
       psi_t = psi[z_index]
       
-      
       #Ensemble mean
       ens_mean = apply(x_corr,2, mean)
       #ens_mean_star = apply(x_star, 2, mean) #Adaptive noise estimation
@@ -192,45 +191,23 @@ EnKF_DAPPER <- function(psi, init_Fr, observed, sigma_Fr, LAI_uncert, run_name){
         dit[m,] = x_corr[m,]-ens_mean
         #dit_star[m,] x_star[m,] - ens_mean_star #Adaptive noise estimation
         
-        #Observational uncertainity
-        N_psi = rmvnorm(n=1,sigma=as.matrix(psi_t)^2)
-        
-        #Ensemble specific innovations
-        yit[m,] = t(zt - crossprod(t(H),(x_corr[m,])) + t(N_psi))
-        
         #Ensemble specific estimate and innovation covariance
         if(m == 1){
-          Pit = tcrossprod(dit[m,])
-          Sit = tcrossprod(yit[m,])
+          Pit = dit[m,] %*% t(dit[m,]) 
         }else{
-          Pit = tcrossprod(dit[m,]) +  Pit
-          Sit = tcrossprod(yit[m,]) +  Sit
+          Pit = dit[m,] %*% t(dit[m,])  +  Pit
         }
       }
       
       #estimate covariance
-      Pt = Pit/nmembers
-      #Pt_star = Pit_star/nmembers  #Adaptive noise estimation
-      #Innovations covariance
-      St = Sit/nmembers
+      Pt <- Pit/nmembers
       
       #Kalman gain
-      Kt <- crossprod(t(crossprod(Pt,t(H))), solve(St, tol=1e-30))
+      Kt <- Pt %*% t(H) %*% solve(H%*%Pt%*%t(H)+psi_t)
+    
+      #Update states array (transposes are necessary to convert between the dims here and the dims in the EnKF formulations)
+      x[i,,] <- t(t(x_corr) + Kt%*%(D_mat - H%*%t(x_corr)))
       
-      #Adaptive noise estimation
-      
-      #Ensemble specific updated state
-      for(m in 1:nmembers){
-        x[i,m,] = t((x_corr[m,]) + crossprod(t(Kt), yit[m,]))
-        if(NO_UNCERT){
-          x[i,m,] = x_star[m,]
-        }
-        for(n in 1:nstates){
-          if( x[i,m,n] < 0 ){
-            x[i,m,n] = 0
-          }
-        }
-      }
       if(length(which(is.na(x[i,,]))) > 0){dies = i}
     }
   }
