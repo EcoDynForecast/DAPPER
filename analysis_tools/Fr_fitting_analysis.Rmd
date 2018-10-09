@@ -41,7 +41,7 @@ for (y in 1996:2017)
 
 ```{r}
 rm(list = ls())
-working_directory =  '/Users/laurapuckett/Documents/Research/Current/DAPPER/'
+pathDAPPER = '/Users/laurapuckett/Documents/Research/Current/DAPPER/' 
 EnKF_directory = '/Users/laurapuckett/Documents/Research/Current/DAPPER/analysis_tools/'
 plotlist = c(40001)
 
