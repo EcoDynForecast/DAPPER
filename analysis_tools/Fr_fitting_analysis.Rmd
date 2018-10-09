@@ -9,6 +9,18 @@ output:
 ```{r setup, include=TRUE}
 knitr::opts_chunk$set(echo = TRUE)
 ```
+
+```{r}
+rm(list = ls())
+working_directory =  '/Users/laurapuckett/Desktop/DAPPER copy/'
+EnKF_directory = paste(working_directory, "analysis_tools/", sep = "")
+input_directory = paste('/Users/laurapuckett/Desktop/', '/DAPPER_inputdata/', sep = "")
+output_directory = paste('/Users/laurapuckett/Desktop/', 'DAPPER/analysis_tools/', sep = "")
+plotlist = c(40001)
+
+```
+
+
 ##### PART 1: Organizing Data & Getting Parameter Chains Needed for Analysis
  
 ### Code used for Processing Landsat LAI measurements
@@ -38,14 +50,6 @@ for (y in 1996:2017)
 # }
 # monthly_observed = monthly_observed[which(monthly_observed[,5] != "NA"),]
 
-
-```{r}
-rm(list = ls())
-working_directory =  '/Users/laurapuckett/Desktop/DAPPER-EnKF 2/'
-EnKF_directory = paste(working_directory, "analysis_tools/", sep = "")
-plotlist = c(40001)
-
-```
 
 ```{r} 
 ### comparison of LAI observations
@@ -436,9 +440,6 @@ source('update_states.R')
 source('EnKF_DAPPER.R')
 
 #### define variables needed for DAPPER functions
-#working_directory = pathDAPPER # this is referenced in prepare_update_states(), and prepare_obs()
-input_directory = paste('/Users/laurapuckett/Desktop/', '/DAPPER_inputdata/', sep = "")
-output_directory = paste('/Users/laurapuckett/Desktop/', 'DAPPER_projects/', sep = "")
 nmembers = 500
 NO_UNCERT = FALSE
 USE_OBS_CONTRAINT = TRUE
